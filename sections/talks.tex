@@ -1,0 +1,82 @@
+%==============================================================================
+% INVITED TALKS
+%
+% TOGGLE GUIDE (set in main.tex):
+%   \toggletrue{showAllTalks}  → show ALL entries (full CV)
+%   \togglefalse{showAllTalks} → show only selected entries
+%
+% Use \cvhonorselected for entries that always print.
+% Wrap additional entries in \iftoggle{showAllTalks}{...}{}.
+%==============================================================================
+
+\iftoggle{showAllTalks}
+  {\cvsection{Invited Talks}}
+  {\cvsection{Selected Invited Talks}}
+
+\begin{cvhonors}
+
+  % ── SELECTED (always shown) ────────────────────────────────────────────────
+
+  \cvhonor
+    {West Coast Neuroeconomics Mini-Symposium}
+    {``Abstract semantic prompts shape sequential decision making in design.''}
+    {San Diego, CA}
+    {2025}
+
+  \cvhonor
+    {2025 Annual Convention of the Western Psychological Association}
+    {``Neuroforecasting market demand for electrified vehicles: Leveraging the neuroscience of affect and motivation to predict future consumer behaviors.''}
+    {Las Vegas, NV}
+    {2025}
+
+  \cvhonor
+    {``Rethinking How `Design Spaces' are Constructed'' Workshop at DCC'24}
+    {\textbf{Hakimi, S}, Hong, M, \& Klenk, M. ``Resolving mental simulation of possible futures for understanding and supporting design.''}
+    {Montréal, Canada}
+    {2024}
+
+  \cvhonor
+    {Berkeley Institute of Design Seminar}
+    {``Rethinking user understanding and applications for innovation in design.''}
+    {Berkeley, CA}
+    {2024}
+
+  \cvhonor
+    {Temple University, Department of Psychology}
+    {``Learning to self-regulate motivation using real-time fMRI neurofeedback.''}
+    {Philadelphia, PA}
+    {2018}
+
+  \cvhonor
+    {University of Zürich, Department of Economics}
+    {``Learning to regulate motivation using real-time neurofeedback.''}
+    {Zürich, Switzerland}
+    {2018}
+
+  % ── FULL CV ONLY ──────────────────────────────────────────────────────────
+
+  \iftoggle{showAllTalks}{
+
+    \cvhonor
+      {Duke University Center for Cognitive Neuroscience Colloquium}
+      {``The academic, there and back again.''}
+      {Durham, NC}
+      {2019}
+
+    \cvhonor
+      {Central Institute of Mental Health (ZI)}
+      {``Modeling the neural basis of individual differences in intertemporal choice.''}
+      {Mannheim, Germany}
+      {2016}
+
+    \cvhonor
+      {University of Colorado, Department of Computer Science}
+      {``Neural correlates of intertemporal choice.''}
+      {Boulder, CO}
+      {2015}
+
+    % Add additional invited talks below this line:
+
+  }{}
+
+\end{cvhonors}

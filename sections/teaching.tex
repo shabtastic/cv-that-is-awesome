@@ -1,0 +1,62 @@
+%==============================================================================
+% TEACHING
+%
+% TOGGLE GUIDE (set in main.tex):
+%   \toggletrue{showAllTeaching}  → show ALL entries (full CV)
+%   \togglefalse{showAllTeaching} → show only selected entries
+%==============================================================================
+
+\iftoggle{showAllTeaching}
+  {\cvsection{Teaching}}
+  {\cvsection{Selected Teaching}}
+
+\begin{cventries}
+
+  % ── SELECTED (always shown) ────────────────────────────────────────────────
+
+  \cventry
+    {Guest Lecturer}
+    {Duke University}
+    {Durham, NC}
+    {Fall 2018}
+    {\begin{cvitems}
+      \item {\textit{``Motivation and Decision Making''}}
+      \item {DECSCI 101 / PSY 141: Fundamentals of Decision Science}
+    \end{cvitems}}
+
+  \cventry
+    {Guest Lecturer \& Curriculum Designer}
+    {California Institute of Technology}
+    {Pasadena, CA}
+    {Fall 2011}
+    {\begin{cvitems}
+      \item {CNS/Bi/Ph 107: Writing About Scientific Research}
+    \end{cvitems}}
+
+  \cventry
+    {Teaching Assistant}
+    {California Institute of Technology}
+    {Pasadena, CA}
+    {Fall 2009}
+    {\begin{cvitems}
+      \item {Bi/CNS 150: Introduction to Neurobiology}
+    \end{cvitems}}
+
+  % ── FULL CV ONLY ──────────────────────────────────────────────────────────
+
+  \iftoggle{showAllTeaching}{
+
+    \cventry
+      {Teaching Assistant}
+      {Wellcome Trust Conference Center}
+      {Hinxton, Cambridge, UK}
+      {Summer 2009}
+      {\begin{cvitems}
+        \item {Wellcome Trust School on the Biology of Social Cognition}
+      \end{cvitems}}
+
+    % Add additional teaching entries below this line:
+
+  }{}
+
+\end{cventries}
