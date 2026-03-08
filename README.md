@@ -1,3 +1,6 @@
+![Build Status](https://github.com/shabtastic/cv-that-is-awesome/actions/workflows/build.yml/badge.svg)
+
+
 # Shabnam Hakimi — CV in LaTeX (Awesome-CV)
 
 ## Project Structure
@@ -11,9 +14,10 @@ cv/
 │   ├── education.tex
 │   ├── experience.tex
 │   ├── grants.tex
+|   ├── reviewer.tex
 │   ├── talks.tex
 │   ├── teaching.tex
-│   └── service.tex             # Also contains reviewer section
+│   └── service.tex             
 ├── refs/
 │   ├── journals.bib            # @article entries
 │   ├── preprints.bib           # @unpublished entries
