@@ -26,7 +26,7 @@
 % styles (numeric, ieee, nature). For author-year styles, also set:
 %   \togglefalse{showBibNumbers}
 %------------------------------------------------------------------------------
-\PassOptionsToPackage{style=ieee}{biblatex}   % ← change style here
+\PassOptionsToPackage{style=numeric}{biblatex}   % ← change style here
 
 \usepackage[backend=biber,
             sorting=none]{biblatex}
@@ -169,32 +169,42 @@
 \AtBeginDocument{\IfFileExists{cvbibcounts.tex}{\input{cvbibcounts.tex}}{}}
 
 %------------------------------------------------------------------------------
-% EQUAL CONTRIBUTION — custom author display
+% BOLD OWN NAME IN BIBLIOGRAPHY
+%
+% Entries that go through the normal name formatter (no authorlist field)
+% will have "Hakimi" bolded automatically. Entries with an authorlist field
+% bypass the formatter — bold is applied manually via \textbf in the .bib.
+% Change \cvownfamilyname if the CV owner's name changes.
 %------------------------------------------------------------------------------
-\newcommand*{\ifnameinequalcontrib}[3]{%
-  \IfSubStr{#2}{#1}{#3}{}%
-}
+\def\cvownfamilyname{Hakimi}
 
-\DeclareNameFormat{equalcontribformat}{%
-  \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}
-               {\namepartprefix}{\namepartsuffix}%
+\DeclareNameFormat{boldifown}{%
+  \ifstrequal{\namepartfamily}{\cvownfamilyname}{%
+    \textbf{%
+      \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
+                                     {\namepartprefix}{\namepartsuffix}%
+    }%
+  }{%
+    \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
+                                   {\namepartprefix}{\namepartsuffix}%
+  }%
   \usebibmacro{name:andothers}%
 }
 
-\newbibmacro*{author:equalcontrib}{%
-  \iffieldundef{equalcontrib}{%
-    \printnames{author}%
-  }{%
-    \begingroup
-      \renewcommand*{\multinamedelim}{\addcomma\space}%
-      \renewcommand*{\finalnamedelim}{\addcomma\space}%
-      \def\do##1{*##1\addcomma\space}%
-      \textbf{*}\printfield{equalcontrib}%
-    \endgroup
-    \printnames{author}%
-  }%
-}
+% NOTE: entries using the `authorlist` field bypass the name formatter.
+% Bold your name manually there, e.g.: authorlist = {\textbf{Hakimi, S}, ...}
 
+%------------------------------------------------------------------------------
+% AUTHORLIST FIELD
+%
+% Custom verbatim field for pre-formatted author strings with LaTeX commands
+% (\textbf, \cvfnmark, etc.). Declared verbatim so biber does not sanitise it.
+% The author macro checks for this field and uses it instead of \printnames.
+%------------------------------------------------------------------------------
+% authorlist: custom verbatim field for pre-formatted author strings.
+% Declared for all common entry types so biber passes it through unmodified.
+\DeclareDatamodelFields[type=field, datatype=verbatim]{authorlist}
+\DeclareDatamodelEntryfields[article,inproceedings,unpublished,misc,patent,incollection]{authorlist}
 \DeclareFieldFormat{authorlist}{#1}
 
 \renewbibmacro*{author}{%
@@ -204,6 +214,30 @@
     \printfield{authorlist}%
   }%
 }
+
+% Apply boldifown alias at begin-document so it overrides biblatex's own
+% default aliases (which are set during \begin{document}).
+\AtBeginDocument{%
+  \DeclareNameAlias{author}{boldifown}%
+  \DeclareNameAlias{editor}{boldifown}%
+}
+
+%------------------------------------------------------------------------------
+% NOTE FIELD SUPPRESSION
+%
+% The note field is used in some .bib entries for equal-contribution text
+% (e.g. "* equal contributions"). We suppress it from printing inline since
+% that information is handled by \cvfnmark in the authorlist field instead.
+%
+% Exception: @misc entries (Science Communication) may use note legitimately.
+% We restore note printing for @misc via a per-type field format override.
+%------------------------------------------------------------------------------
+\DeclareFieldFormat{note}{}
+\renewbibmacro*{note+pages}{%
+  \printfield{pages}%
+}
+% Restore note for @misc entries (scicomm uses it for publication details)
+\DeclareFieldFormat[misc]{note}{#1}
 
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
@@ -226,6 +260,11 @@
 %------------------------------------------------------------------------------
 % BIBLATEX CUSTOM CHECKS — patent status × selected toggle
 %------------------------------------------------------------------------------
+
+% Exclude entries tagged keyword=presentation from preprints section
+\defbibcheck{notpresentation}{%
+  \ifkeyword{presentation}{\skipentry}{}%
+}
 \defbibcheck{grantedpatents}{%
   \ifentrytype{patent}{%
     \iffieldequalstr{status}{Granted}{}{\skipentry}%
@@ -264,28 +303,28 @@
     \ifthenelse{\equal{\patentMode}{granted}}{%
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
-                           title={Patents --- Granted},
+                           title={Granted},
                            heading=cvsubsection]%
       }{%
         \leavevmode\printbibliography[check=grantedpatents,
-                           title={Patents --- Granted},
+                           title={Granted},
                            heading=cvsubsection]%
       }%
     }{%
       % All (granted + filed)
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
-                           title={Patents --- Granted},
+                           title={Granted},
                            heading=cvsubsection]%
         \leavevmode\printbibliography[check=filedpatentsselected,
-                           title={Patents --- Filed},
+                           title={Filed},
                            heading=cvsubsection]%
       }{%
         \leavevmode\printbibliography[check=grantedpatents,
-                           title={Patents --- Granted},
+                           title={Granted},
                            heading=cvsubsection]%
         \leavevmode\printbibliography[check=filedpatents,
-                           title={Patents --- Filed},
+                           title={Filed},
                            heading=cvsubsection]%
       }%
     }%
@@ -474,10 +513,12 @@
     \startbibsection{preprints}%
     \iftoggle{selectedOnlyPreprints}{%
       \leavevmode\printbibliography[type=unpublished, keyword=selected,
+                         check=notpresentation,
                          title={Preprints \& Working Papers (Selected)},
                          heading=cvsubsection]%
     }{%
       \leavevmode\printbibliography[type=unpublished,
+                         check=notpresentation,
                          title={Preprints \& Working Papers},
                          heading=cvsubsection]%
     }%

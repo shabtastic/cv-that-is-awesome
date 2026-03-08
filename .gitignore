@@ -1,0 +1,9 @@
+*.aux
+*.log
+*.out
+*.pdf
+*.xml
+*.bbl
+*.bcf
+*.blg
+.DS_Store
