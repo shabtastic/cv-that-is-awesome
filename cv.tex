@@ -9,8 +9,26 @@
 % PACKAGES
 %------------------------------------------------------------------------------
 \usepackage{etoolbox}
+
+%------------------------------------------------------------------------------
+% BIBLIOGRAPHY STYLE
+%
+% Change the style name below. Common options:
+%   numeric      — [1], [2], … (default)
+%   ieee         — numbered, abbreviated authors & journal names
+%   nature       — numbered superscripts, condensed
+%   apa          — author-year (disable showBibNumbers / reverseBibNumbers)
+%   authoryear   — generic author-year
+%   chicago-authordate
+%   mla
+%
+% NOTE: showBibNumbers and reverseBibNumbers only work with numeric-family
+% styles (numeric, ieee, nature). For author-year styles, also set:
+%   \togglefalse{showBibNumbers}
+%------------------------------------------------------------------------------
+\PassOptionsToPackage{style=ieee}{biblatex}   % ← change style here
+
 \usepackage[backend=biber,
-            style=numeric,
             sorting=none]{biblatex}
 \usepackage{xstring}
 \usepackage[symbol,perpage]{footmisc}  % symbol footnotes, reset per page
