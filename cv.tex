@@ -197,6 +197,15 @@
 \nocite{*}  % include all entries from all .bib files
 
 %------------------------------------------------------------------------------
+% BIBLATEX HEADING — cvsubsection style
+% Renders bibliography section titles using \cvsubsection (Awesome-CV).
+% Usage: heading=cvsubsection  (replaces heading=subbibliography)
+%------------------------------------------------------------------------------
+\defbibheading{cvsubsection}[\bibname]{%
+  \cvsubsection{#1}%
+}
+
+%------------------------------------------------------------------------------
 % BIBLATEX CUSTOM CHECKS — patent status × selected toggle
 %------------------------------------------------------------------------------
 \defbibcheck{grantedpatents}{%
@@ -238,28 +247,28 @@
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Patents --- Granted},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
       }{%
         \leavevmode\printbibliography[check=grantedpatents,
                            title={Patents --- Granted},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
       }%
     }{%
       % All (granted + filed)
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Patents --- Granted},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
         \leavevmode\printbibliography[check=filedpatentsselected,
                            title={Patents --- Filed},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
       }{%
         \leavevmode\printbibliography[check=grantedpatents,
                            title={Patents --- Granted},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
         \leavevmode\printbibliography[check=filedpatents,
                            title={Patents --- Filed},
-                           heading=subbibliography]%
+                           heading=cvsubsection]%
       }%
     }%
   }%
@@ -305,11 +314,15 @@
 %==============================================================================
 % TOGGLES — PUBLICATION FILTERS
 %==============================================================================
+\newtoggle{selectedOnlyPublications}    % true = "Selected Publications" section title
+\newtoggle{selectedOnlyPatents}         % true = "Selected Patents" section title
 \newtoggle{selectedOnlyJournals}
 \newtoggle{selectedOnlyConferenceProceedings}
 \newtoggle{selectedOnlyPreprints}
 \newtoggle{selectedOnlyPresentations}
 
+\togglefalse{selectedOnlyPublications}  % true = "Selected Publications" heading
+\togglefalse{selectedOnlyPatents}       % true = "Selected Patents" heading (mirrors patentFilter)
 \togglefalse{selectedOnlyJournals}
 \togglefalse{selectedOnlyConferenceProceedings}
 \togglefalse{selectedOnlyPreprints}
@@ -398,98 +411,141 @@
 
 \iftoggle{showGrants}{\input{sections/grants}}{}
 
-%-- Publications & Scholarship ------------------------------------------------
+%-- Publications --------------------------------------------------------------
+% Top-level heading: "Publications" or "Selected Publications"
+% Subsections: Journals · Preprints · Conference Proceedings ·
+%              Conference Presentations · Book Chapters
+%
+% Toggle \toggletrue{selectedOnlyPublications} to switch the section title.
+% Individual subsection selected-only filters remain independent.
 
-\iftoggle{showJournals}{
-  \startbibsection{journals}
-  \iftoggle{selectedOnlyJournals}{%
-    \leavevmode\printbibliography[type=article, keyword=selected,
-                       title={Peer-Reviewed Journal Publications (Selected)},
-                       heading=subbibliography]%
+\newbool{showPublications}
+\boolfalse{showPublications}
+\iftoggle{showJournals}{\booltrue{showPublications}}{}
+\iftoggle{showPreprints}{\booltrue{showPublications}}{}
+\iftoggle{showConferenceProceedings}{\booltrue{showPublications}}{}
+\iftoggle{showConferencePresentations}{\booltrue{showPublications}}{}
+\iftoggle{showBookChapters}{\booltrue{showPublications}}{}
+
+\ifbool{showPublications}{%
+  \iftoggle{selectedOnlyPublications}{%
+    \cvsection{Selected Publications}%
   }{%
-    \leavevmode\printbibliography[type=article,
-                       title={Peer-Reviewed Journal Publications},
-                       heading=subbibliography]%
-  }
-  \finishbibsection{journals}
-  \begin{cvpubfootnotes}
-    \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-    \cvfnnote{alphalist}{authors listed alphabetically}
-  \end{cvpubfootnotes}
+    \cvsection{Publications}%
+  }%
+
+  \iftoggle{showJournals}{%
+    \startbibsection{journals}%
+    \iftoggle{selectedOnlyJournals}{%
+      \leavevmode\printbibliography[type=article, keyword=selected,
+                         title={Peer-Reviewed Journal Publications (Selected)},
+                         heading=cvsubsection]%
+    }{%
+      \leavevmode\printbibliography[type=article,
+                         title={Peer-Reviewed Journal Publications},
+                         heading=cvsubsection]%
+    }%
+    \finishbibsection{journals}%
+    \begin{cvpubfootnotes}
+      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
+      \cvfnnote{alphalist}{authors listed alphabetically}
+    \end{cvpubfootnotes}%
+  }{}
+
+  \iftoggle{showPreprints}{%
+    \startbibsection{preprints}%
+    \iftoggle{selectedOnlyPreprints}{%
+      \leavevmode\printbibliography[type=unpublished, keyword=selected,
+                         title={Preprints \& Working Papers (Selected)},
+                         heading=cvsubsection]%
+    }{%
+      \leavevmode\printbibliography[type=unpublished,
+                         title={Preprints \& Working Papers},
+                         heading=cvsubsection]%
+    }%
+    \finishbibsection{preprints}%
+    \begin{cvpubfootnotes}
+      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
+    \end{cvpubfootnotes}%
+  }{}
+
+  \iftoggle{showConferenceProceedings}{%
+    \startbibsection{conference}%
+    \iftoggle{selectedOnlyConferenceProceedings}{%
+      \leavevmode\printbibliography[type=inproceedings, keyword=selected,
+                         title={Peer-Reviewed Conference Proceedings (Selected)},
+                         heading=cvsubsection]%
+    }{%
+      \leavevmode\printbibliography[type=inproceedings,
+                         title={Peer-Reviewed Conference Proceedings},
+                         heading=cvsubsection]%
+    }%
+    \finishbibsection{conference}%
+    \begin{cvpubfootnotes}
+      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
+      \cvfnnote{bestpaper}{Best Paper Award recognition}
+    \end{cvpubfootnotes}%
+  }{}
+
+  \iftoggle{showConferencePresentations}{%
+    \startbibsection{presentations}%
+    \iftoggle{selectedOnlyPresentations}{%
+      \leavevmode\printbibliography[type=unpublished, keyword=presentation, keyword=selected,
+                         title={Selected Conference Presentations},
+                         heading=cvsubsection]%
+    }{%
+      \leavevmode\printbibliography[type=unpublished, keyword=presentation,
+                         title={Conference Presentations},
+                         heading=cvsubsection]%
+    }%
+    \finishbibsection{presentations}%
+  }{}
+
+  \iftoggle{showBookChapters}{%
+    \startbibsection{bookchapters}%
+    \leavevmode\printbibliography[type=incollection,
+                       title={Reviews, Book Chapters \& Commentaries},
+                       heading=cvsubsection]%
+    \finishbibsection{bookchapters}%
+  }{}
 }{}
 
-\iftoggle{showPreprints}{
-  \startbibsection{preprints}
-  \iftoggle{selectedOnlyPreprints}{%
-    \leavevmode\printbibliography[type=unpublished, keyword=selected,
-                       title={Preprints \& Working Papers (Selected)},
-                       heading=subbibliography]%
-  }{%
-    \leavevmode\printbibliography[type=unpublished,
-                       title={Preprints \& Working Papers},
-                       heading=subbibliography]%
-  }
-  \finishbibsection{preprints}
-  \begin{cvpubfootnotes}
-    \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-  \end{cvpubfootnotes}
-}{}
-
-\iftoggle{showConferenceProceedings}{
-  \startbibsection{conference}
-  \iftoggle{selectedOnlyConferenceProceedings}{%
-    \leavevmode\printbibliography[type=inproceedings, keyword=selected,
-                       title={Peer-Reviewed Conference Proceedings (Selected)},
-                       heading=subbibliography]%
-  }{%
-    \leavevmode\printbibliography[type=inproceedings,
-                       title={Peer-Reviewed Conference Proceedings},
-                       heading=subbibliography]%
-  }
-  \finishbibsection{conference}
-  \begin{cvpubfootnotes}
-    \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-    \cvfnnote{bestpaper}{Best Paper Award recognition}
-  \end{cvpubfootnotes}
-}{}
+%-- Patents -------------------------------------------------------------------
 
 \iftoggle{showPatents}{%
-  \startbibsection{patents}
-  \printpatents
-  \finishbibsection{patents}
+  \ifthenelse{\equal{\patentMode}{none}}{}{%
+    \iftoggle{selectedOnlyPatents}{%
+      \cvsection{Selected Patents}%
+    }{%
+      \cvsection{Patents}%
+    }%
+    \startbibsection{patents}%
+    \printpatents
+    \finishbibsection{patents}%
+  }%
 }{}
 
-\iftoggle{showSciComm}{
-  \startbibsection{scicomm}
-  \leavevmode\printbibliography[type=misc, keyword=scicomm,
-                     title={Science Communication},
-                     heading=subbibliography]
-  \finishbibsection{scicomm}
-}{}
+%-- Talks & Science Communication ---------------------------------------------
 
-\iftoggle{showBookChapters}{
-  \startbibsection{bookchapters}
-  \leavevmode\printbibliography[type=incollection,
-                     title={Reviews, Book Chapters \& Commentaries},
-                     heading=subbibliography]
-  \finishbibsection{bookchapters}
-}{}
+\newbool{showTalksSection}
+\boolfalse{showTalksSection}
+\iftoggle{showTalks}{\booltrue{showTalksSection}}{}
+\iftoggle{showSciComm}{\booltrue{showTalksSection}}{}
 
-%-- Talks & Presentations -----------------------------------------------------
-\iftoggle{showTalks}{\input{sections/talks}}{}
+\ifbool{showTalksSection}{%
+  \cvsection{Talks \& Science Communication}%
 
-\iftoggle{showConferencePresentations}{
-  \startbibsection{presentations}
-  \iftoggle{selectedOnlyPresentations}{%
-    \leavevmode\printbibliography[type=unpublished, keyword=presentation, keyword=selected,
-                       title={Selected Conference Presentations},
-                       heading=subbibliography]%
-  }{%
-    \leavevmode\printbibliography[type=unpublished, keyword=presentation,
-                       title={Conference Presentations},
-                       heading=subbibliography]%
-  }
-  \finishbibsection{presentations}
+  % sections/talks.tex should use \cvsubsection{Invited Talks} (not \cvsection)
+  % to render as a subsection under this top-level heading.
+  \iftoggle{showTalks}{\input{sections/talks}}{}
+
+  \iftoggle{showSciComm}{%
+    \startbibsection{scicomm}%
+    \leavevmode\printbibliography[type=misc, keyword=scicomm,
+                       title={Science Communication},
+                       heading=cvsubsection]%
+    \finishbibsection{scicomm}%
+  }{}%
 }{}
 
 %-- Teaching & Service --------------------------------------------------------
