@@ -17,8 +17,18 @@ jobs:
           compiler: xelatex
           args: "-pdf -interaction=nonstopmode -halt-on-error"
 
-      - name: Upload PDF
-        uses: actions/upload-artifact@v4
+      # - name: Upload PDF
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ShabnamHakimi-CV
+      #     path: cv.pdf
+
+      - name: Release PDF
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
         with:
-          name: ShabnamHakimi-CV
-          path: cv.pdf
+          tag_name: latest
+          files: cv.pdf
+          body: "Automatically generated PDF from the latest commit."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
