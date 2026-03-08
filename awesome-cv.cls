@@ -81,30 +81,48 @@
 \defaultfontfeatures{
   Renderer=HarfBuzz,
 }
-\setmainfont{Source Sans Pro}[
-  UprightFont=*,
-  ItalicFont=* Italic,
-  BoldFont=* Bold,
-  BoldItalicFont=* Bold Italic,
-  FontFace={l}{n}{Font=* Light},
-  FontFace={l}{it}{Font=* Light Italic},
-]
-\setsansfont{Source Sans Pro}[
-  UprightFont=*,
-  ItalicFont=* Italic,
-  BoldFont=* Bold,
-  BoldItalicFont=* Bold Italic,
-  FontFace={l}{n}{Font=* Light},
-  FontFace={l}{it}{Font=* Light Italic},
-]
-\newfontfamily\roboto{Roboto}[
-  UprightFont=*,
-  ItalicFont=* Italic,
-  BoldFont=* Bold,
-  BoldItalicFont=* Bold Italic,
-  FontFace={l}{n}{Font=* Light},
-  FontFace={l}{it}{Font=* Light Italic},
-]
+
+% Set font for header
+\newfontfamily\headerfont[
+  Path=\@fontdir,
+  UprightFont=SourceSans3-Regular.ttf,
+  ItalicFont=SourceSans3-Italic.ttf,
+  BoldFont=SourceSans3-Bold.ttf,
+  BoldItalicFont=SourceSans3-BoldItalic.ttf,
+]{SourceSans3}
+
+\newfontfamily\headerfontlight[
+  Path=\@fontdir,
+  UprightFont=SourceSans3-Light.ttf,
+  ItalicFont=SourceSans3-LightItalic.ttf,
+  BoldFont=SourceSans3-SemiBold.ttf,
+  BoldItalicFont=SourceSans3-SemiBoldItalic.ttf,
+]{SourceSans3}
+
+\setmainfont[
+  Path=\@fontdir,
+  UprightFont=SourceSans3-Regular.ttf,
+  ItalicFont=SourceSans3-Italic.ttf,
+  BoldFont=SourceSans3-Bold.ttf,
+  BoldItalicFont=SourceSans3-BoldItalic.ttf,
+]{SourceSans3}
+
+\setsansfont[
+  Path=\@fontdir,
+  UprightFont=SourceSans3-Regular.ttf,
+  ItalicFont=SourceSans3-Italic.ttf,
+  BoldFont=SourceSans3-Bold.ttf,
+  BoldItalicFont=SourceSans3-BoldItalic.ttf,
+]{SourceSans3}
+
+\newfontfamily\roboto[
+  Path=\@fontdir,
+  UprightFont=Roboto-Regular.ttf,
+  ItalicFont=Roboto-Italic.ttf,
+  BoldFont=Roboto-Bold.ttf,
+  BoldItalicFont=Roboto-BoldItalic.ttf,
+]{Roboto}
+
 % Needed for the photo ID
 \RequirePackage[skins]{tcolorbox}
 % Needed to deal a paragraphs
