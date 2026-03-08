@@ -1,0 +1,143 @@
+%==============================================================================
+% GRANTS & AWARDS
+%
+% TOGGLE GUIDE (set in main.tex):
+%   \toggletrue{showAllGrants}  → show ALL entries (full CV)
+%   \togglefalse{showAllGrants} → show only selected entries
+%==============================================================================
+
+\iftoggle{showAllGrants}
+  {\cvsection{Grants \& Awards}}
+  {\cvsection{Selected Grants \& Awards}}
+
+\begin{cventries}
+
+  % ── SELECTED (always shown) ────────────────────────────────────────────────
+
+  \cventry
+    {Ruth Kirchstein National Research Service Award (NRSA)}
+    {National Institute of Mental Health, NIH}
+    {Bethesda, MD}
+    {2017 -- 2020}
+    {\begin{cvitems}
+      \item {\textit{Project}: ``Modeling the neurobehavioral basis of extrinsic and volitional motivation in ADHD''}
+      \item {\textit{Role}: PI (F32 MH114608)}
+    \end{cvitems}}
+
+  \cventry
+    {Scientific Research Network on Decision Neuroscience \& Aging (SRNDNA) Pilot Grant}
+    {National Institute of Aging, NIH}
+    {Bethesda, MD}
+    {2019 -- 2020}
+    {\begin{cvitems}
+      \item {\textit{Project}: ``Neurobehavioral correlates of volitional regulation of motivation across the lifespan''}
+      \item {\textit{Role}: Subaward PI (R24 AG054355 to G.R. Samanez-Larkin)}
+    \end{cvitems}}
+
+  \cventry
+    {SciComm Fellow}
+    {Duke Initiative for Science and Society, Duke University}
+    {Durham, NC}
+    {2016 -- 2017}
+    {}
+
+  \cventry
+    {NSF Integrative Graduate Education and Research Traineeship (IGERT) Fellow}
+    {California Institute of Technology}
+    {Pasadena, CA}
+    {2008 -- 2013}
+    {}
+
+  \cventry
+    {Intramural Research Training Award}
+    {National Institute of Mental Health, NIH}
+    {Bethesda, MD}
+    {2006 -- 2008}
+    {}
+
+  % ── FULL CV ONLY ──────────────────────────────────────────────────────────
+
+  \iftoggle{showAllGrants}{
+
+    \cventry
+      {Neurohackweek (Neurohackacademy) Fellow}
+      {University of Washington eScience Institute}
+      {Seattle, WA}
+      {2016}
+      {}
+
+    \cventry
+      {Application of Science Award Runner-Up}
+      {NeuroLeadership Institute}
+      {New York, NY}
+      {2016}
+      {}
+
+    \cventry
+      {Summer Institute in Cognitive Neuroscience Fellow}
+      {University of California, Santa Barbara}
+      {Santa Barbara, CA}
+      {2009}
+      {}
+
+    \cventry
+      {NSF/Caltech IGERT fMRI Award}
+      {California Institute of Technology}
+      {Pasadena, CA}
+      {2009}
+      {}
+
+    \cventry
+      {HealthEmotions Research Institute Symposium Scholar}
+      {University of Wisconsin Symposium on Emotion}
+      {Madison, WI}
+      {2008}
+      {}
+
+    \cventry
+      {HealthEmotions Research Institute Symposium Fellow}
+      {University of Wisconsin Symposium on Emotion}
+      {Madison, WI}
+      {2007}
+      {}
+
+    \cventry
+      {HealthEmotions Research Institute Symposium Scholar}
+      {University of Wisconsin Symposium on Emotion}
+      {Madison, WI}
+      {2006}
+      {}
+
+    \cventry
+      {Undergraduate Research Programs Conference Travel Grant}
+      {Stanford University}
+      {Stanford, CA}
+      {2006}
+      {}
+
+    \cventry
+      {Vice Provost for Undergraduate Education Summer Research Grant}
+      {Stanford University}
+      {Stanford, CA}
+      {2005}
+      {}
+
+    \cventry
+      {HealthEmotions Research Institute Symposium Scholar}
+      {University of Wisconsin Symposium on Emotion}
+      {Madison, WI}
+      {2005}
+      {}
+
+    \cventry
+      {Vice Provost for Undergraduate Education Summer Research Grant}
+      {Stanford University}
+      {Stanford, CA}
+      {2004}
+      {}
+
+    % Add additional grants/awards below this line:
+
+  }{}
+
+\end{cventries}
