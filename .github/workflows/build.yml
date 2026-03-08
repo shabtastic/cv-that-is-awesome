@@ -1,7 +1,7 @@
 name: Build Awesome-CV
 on:
   push:
-    branches: [ master, main ]
+    branches: [ main ]
 
 jobs:
   build_cv:
@@ -13,7 +13,7 @@ jobs:
       - name: Compile LaTeX
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: main.tex
+          root_file: cv.tex
           compiler: xelatex
           args: "-pdf -interaction=nonstopmode -halt-on-error"
 
@@ -21,4 +21,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ShabnamHakimi-CV
-          path: main.pdf
+          path: cv.pdf

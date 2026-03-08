@@ -4,7 +4,7 @@
 
 ```
 cv/
-├── main.tex                    # Master file — toggles live here
+├── cv.tex                    # Master file — toggles live here
 ├── awesome-cv.cls              # Awesome-CV class (download separately)
 ├── fontawesome.sty             # Required by Awesome-CV
 ├── sections/
@@ -67,10 +67,10 @@ make
 
 ### Manual build sequence:
 ```bash
-xelatex main.tex
-biber main
-xelatex main.tex
-xelatex main.tex
+xelatex cv.tex
+biber cv
+xelatex cv.tex
+xelatex cv.tex
 ```
 > ⚠️ Awesome-CV requires **XeLaTeX**, not pdflatex.
 
@@ -78,7 +78,7 @@ xelatex main.tex
 
 ## Toggle Reference
 
-Edit the toggles at the top of `main.tex`:
+Edit the toggles at the top of `cv.tex`:
 
 | Toggle | Effect |
 |---|---|
@@ -102,14 +102,14 @@ In any `.bib` file, add `keywords = {selected}` to flag an entry:
 }
 ```
 
-When `\toggletrue{selectedOnlyJournals}` is set in `main.tex`,
+When `\toggletrue{selectedOnlyJournals}` is set in `cv.tex`,
 only entries with this keyword will appear.
 
 ---
 
 ## Bolding Your Name in References
 
-Add this to `main.tex` preamble to bold "Hakimi, Shabnam" everywhere:
+Add this to `cv.tex` preamble to bold "Hakimi, Shabnam" everywhere:
 
 ```latex
 % Bold the CV author's name in all bibliography entries
@@ -173,7 +173,7 @@ bot-detection issues. For manual Scholar exports:
 
 ## Color Themes
 
-Change `\colorlet{awesome}{awesome-red}` in `main.tex` to one of:
+Change `\colorlet{awesome}{awesome-red}` in `cv.tex` to one of:
 `awesome-emerald`, `awesome-skyblue`, `awesome-red`, `awesome-pink`,
 `awesome-orange`, `awesome-nephritis`, `awesome-concrete`, `awesome-darknight`
 
