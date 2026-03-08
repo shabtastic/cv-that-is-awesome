@@ -79,10 +79,15 @@
 \newcounter{cvbibindex}   % increments with each printed entry (reset per section)
 \newcounter{cvbibtotal}   % total entries in current section (loaded from aux)
 
-% \AtEveryBibitem: increment our per-section index counter
+% cvbibindex starts at 1. \AtEveryBibitem fires AFTER the label is rendered,
+% so the label reads the current value (1, 2, 3…) and then the increment
+% advances it for the next entry.
 \AtEveryBibitem{\stepcounter{cvbibindex}}
 
-% Override the printed label to use our own counter
+% Override the printed label to use our own counter.
+% labelnumber controls the number inside brackets in the entry body.
+% We also override the list \item label via the labelnumberwidth format
+% and the blx@lbx numeric label macro.
 \DeclareFieldFormat{labelnumber}{%
   \iftoggle{showBibNumbers}{%
     \iftoggle{reverseBibNumbers}{%
@@ -94,6 +99,11 @@
     \hspace{-\labelsep}%
   }%
 }
+
+% Also patch the label used for \item[...] in the bibliography list env.
+% In biblatex's numeric style this is \printtext[labelnumberwidth]{...}
+% which calls \mkbibbrackets{\printfield{labelnumber}} — so overriding
+% labelnumber above is sufficient.
 
 % When numbers are hidden, remove the label gutter entirely
 \AtBeginDocument{%
@@ -115,7 +125,7 @@
 %   On the first compile the total is 0 (labels may be wrong); correct on
 %   subsequent compiles once \finishbibsection has written the total to .aux.
 \newcommand{\startbibsection}[1]{%
-  \setcounter{cvbibindex}{0}%
+  \setcounter{cvbibindex}{1}%
   \ifcsdef{cvbibtotal@#1}{%
     \setcounter{cvbibtotal}{\csname cvbibtotal@#1\endcsname}%
   }{%
@@ -123,9 +133,8 @@
   }%
 }
 
-% \finishbibsection{name} — call after each \printbibliography block.
-%   Writes this section's item count to cvbibcounts.tex for the next compile.
-%   We write to a dedicated side file to avoid all \@ machinery.
+% \finishbibsection stores (cvbibindex - 1) as the total, since cvbibindex
+% ends up one past the last entry after the final increment.
 \newwrite\cvbibcountsfile
 \AtBeginDocument{\immediate\openout\cvbibcountsfile=cvbibcounts.tex}
 \AtEndDocument{\immediate\closeout\cvbibcountsfile}
@@ -134,11 +143,11 @@
   \immediate\write\cvbibcountsfile{%
     \string\expandafter\string\def
     \string\csname\space cvbibtotal@#1\string\endcsname
-    {\the\value{cvbibindex}}%
+    {\number\numexpr\value{cvbibindex}-1\relax}%
   }%
 }
 
-% Load counts written by previous pass (file won't exist on very first run)
+% Load counts written by previous pass
 \AtBeginDocument{\IfFileExists{cvbibcounts.tex}{\input{cvbibcounts.tex}}{}}
 
 %------------------------------------------------------------------------------
