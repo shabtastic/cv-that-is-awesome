@@ -11,8 +11,7 @@
 \usepackage{etoolbox}
 \usepackage[backend=biber,
             style=numeric,
-            sorting=none,
-            defernumbers=true]{biblatex}
+            sorting=none]{biblatex}
 \usepackage{xstring}
 \usepackage[symbol,perpage]{footmisc}  % symbol footnotes, reset per page
 \usepackage{perpage}                   % gives us \MakePerPage for custom resets
@@ -20,21 +19,10 @@
 %------------------------------------------------------------------------------
 % FOOTNOTE SETUP
 %------------------------------------------------------------------------------
-% We use a custom counter 'cvfootnote' that resets at each \cvsection call.
-% Symbol sequence: * † ‡ § ¶ (then doubled: ** †† etc.)
-% \cvfnmark{label} — place the marker inline (e.g. in authorlist field)
-% \cvfnnote{label}{text} — define the footnote text at section open
-%
-% Because biblatex bibliography entries run in a group, we collect
-% footnote definitions before the \printbibliography call and emit them
-% after via \cvpubfootnotes.
-
 \newcounter{cvfootnote}
 
-% Reset the counter at every \cvsection
 \pretocmd{\cvsection}{\setcounter{cvfootnote}{0}}{}{}
 
-% Produce a footnote symbol from the counter value (1-indexed)
 \newcommand{\cvfnsymbol}[1]{%
   \ifcase#1\or *\or \textdagger\or \textdaggerdbl
            \or \textsection\or \textparagraph
@@ -42,17 +30,13 @@
   \fi
 }
 
-% \cvfnmark: inline marker — increments counter and places superscript symbol
 \newcommand{\cvfnmark}[1]{%
   \stepcounter{cvfootnote}%
   \edef\@cvfnval{\thecvfootnote}%
   \textsuperscript{\cvfnsymbol{\@cvfnval}}%
-  % Store the mapping label→symbol for later use by \cvfnnote
   \expandafter\xdef\csname cvfnlabel@#1\endcsname{\@cvfnval}%
 }
 
-% \cvfnnote: emit the actual footnote text (call after \printbibliography)
-% Usage: \cvfnnote{label}{text}
 \newcommand{\cvfnnote}[2]{%
   \ifcsname cvfnlabel@#1\endcsname
     \noindent\textsuperscript{\cvfnsymbol{\csname cvfnlabel@#1\endcsname}}%
@@ -60,12 +44,6 @@
   \fi
 }
 
-% Container for publication-section footnotes.
-% Usage:
-%   \begin{cvpubfootnotes}
-%     \cvfnnote{equalcontrib}{* equal contributions, shared first authorship}
-%     \cvfnnote{alphalist}{Authors listed alphabetically}
-%   \end{cvpubfootnotes}
 \newenvironment{cvpubfootnotes}{%
   \vspace{2pt}%
   \begin{footnotesize}%
@@ -74,71 +52,121 @@
   \vspace{4pt}%
 }
 
+%==============================================================================
+% BIBLIOGRAPHY NUMBERING TOGGLES & MACHINERY
+%==============================================================================
+%
+% \toggletrue{showBibNumbers}    → show [1], [2], … labels
+% \togglefalse{showBibNumbers}   → hide labels entirely
+%
+% \toggletrue{reverseBibNumbers} → N…1 (most recent = highest number)
+% \togglefalse{reverseBibNumbers}→ 1…N (forward order)
+%
+% Numbering restarts at 1 (or N) for each bibliography section.
+%
+% Implementation: we use our own per-item counter entirely independent of
+% biblatex's internal numbering. \AtEveryBibitem increments a running index;
+% we write each section's total to the .aux so the next pass can compute
+% reverse labels. No refsection environments needed.
+%==============================================================================
+\newtoggle{showBibNumbers}
+\newtoggle{reverseBibNumbers}
+
+\toggletrue{showBibNumbers}     % true = show numbers | false = hide numbers
+\togglefalse{reverseBibNumbers} % true = reverse (N…1) | false = forward (1…N)
+
+% Per-section counters
+\newcounter{cvbibindex}   % increments with each printed entry (reset per section)
+\newcounter{cvbibtotal}   % total entries in current section (loaded from aux)
+
+% \AtEveryBibitem: increment our per-section index counter
+\AtEveryBibitem{\stepcounter{cvbibindex}}
+
+% Override the printed label to use our own counter
+\DeclareFieldFormat{labelnumber}{%
+  \iftoggle{showBibNumbers}{%
+    \iftoggle{reverseBibNumbers}{%
+      \number\numexpr\value{cvbibtotal}-\value{cvbibindex}+1\relax%
+    }{%
+      \number\value{cvbibindex}%
+    }%
+  }{%
+    \hspace{-\labelsep}%
+  }%
+}
+
+% When numbers are hidden, remove the label gutter entirely
+\AtBeginDocument{%
+  \nottoggle{showBibNumbers}{%
+    \setlength{\biblabelsep}{0pt}%
+    \defbibenvironment{bibliography}
+      {\list{}
+         {\setlength{\leftmargin}{\bibhang}%
+          \setlength{\itemindent}{-\leftmargin}%
+          \setlength{\itemsep}{\bibitemsep}%
+          \setlength{\parsep}{\bibparsep}}}
+      {\endlist}
+      {\item}%
+  }{}%
+}
+
+% \startbibsection{name} — call before each \printbibliography block.
+%   Resets the index counter and loads the stored total for this section.
+%   On the first compile the total is 0 (labels may be wrong); correct on
+%   subsequent compiles once \finishbibsection has written the total to .aux.
+\newcommand{\startbibsection}[1]{%
+  \setcounter{cvbibindex}{0}%
+  \ifcsdef{cvbibtotal@#1}{%
+    \setcounter{cvbibtotal}{\csname cvbibtotal@#1\endcsname}%
+  }{%
+    \setcounter{cvbibtotal}{0}%
+  }%
+}
+
+% \finishbibsection{name} — call after each \printbibliography block.
+%   Writes this section's item count to cvbibcounts.tex for the next compile.
+%   We write to a dedicated side file to avoid all \@ machinery.
+\newwrite\cvbibcountsfile
+\AtBeginDocument{\immediate\openout\cvbibcountsfile=cvbibcounts.tex}
+\AtEndDocument{\immediate\closeout\cvbibcountsfile}
+
+\newcommand{\finishbibsection}[1]{%
+  \immediate\write\cvbibcountsfile{%
+    \string\expandafter\string\def
+    \string\csname\space cvbibtotal@#1\string\endcsname
+    {\the\value{cvbibindex}}%
+  }%
+}
+
+% Load counts written by previous pass (file won't exist on very first run)
+\AtBeginDocument{\IfFileExists{cvbibcounts.tex}{\input{cvbibcounts.tex}}{}}
+
 %------------------------------------------------------------------------------
 % EQUAL CONTRIBUTION — custom author display
 %------------------------------------------------------------------------------
-% For entries with shared first authorship, add these two fields:
-%
-%   equalcontrib = {Hakimi, Shabnam and Sinclair, A. H.},
-%   author       = {Hakimi, Shabnam and Sinclair, A. H. and ...},
-%
-% The names listed in equalcontrib will:
-%   (1) receive a * prefix in the rendered output
-%   (2) be printed FIRST in the author list, regardless of order in 'author'
-%   (3) the remaining co-authors follow in their original order
-%
-% The 'note' field should carry the prose explanation, e.g.:
-%   note = {* equal contributions, shared first authorship},
-%
-% This is handled by a custom biblatex format applied to @article and
-% @inproceedings entries. The 'author' field is never modified — it
-% always reflects the published author order.
-%------------------------------------------------------------------------------
-
-% Helper: check if a name string contains a given last name
 \newcommand*{\ifnameinequalcontrib}[3]{%
-  % #1 = last name to check, #2 = equalcontrib string, #3 = true/false code
-  % Uses xstring to search
   \IfSubStr{#2}{#1}{#3}{}%
 }
 
-% Custom author list format for equal-contribution entries
-% Reads \thefield{equalcontrib} and prefixes * to matching names,
-% hoisting them to the front of the list.
 \DeclareNameFormat{equalcontribformat}{%
   \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}
                {\namepartprefix}{\namepartsuffix}%
   \usebibmacro{name:andothers}%
 }
 
-% Patch the author printing for article + inproceedings to check equalcontrib
 \newbibmacro*{author:equalcontrib}{%
   \iffieldundef{equalcontrib}{%
-    % No equalcontrib field — print authors normally
     \printnames{author}%
   }{%
-    % equalcontrib field present — build reordered * list
-    % Step 1: print equalcontrib names with * prefix
     \begingroup
       \renewcommand*{\multinamedelim}{\addcomma\space}%
       \renewcommand*{\finalnamedelim}{\addcomma\space}%
-      % Print each name in equalcontrib with * prefix
       \def\do##1{*##1\addcomma\space}%
-      % We use the raw field value for display; biblatex will format it
       \textbf{*}\printfield{equalcontrib}%
     \endgroup
-    % Step 2: print remaining authors (those not in equalcontrib)
-    % This is approximated via the note — full reordering requires
-    % a LuaLaTeX solution; see README for advanced setup.
     \printnames{author}%
   }%
 }
-
-% Simpler, robust implementation using a display field approach:
-% In entries with equal contribution, set:
-%   authorlist = {*\textbf{Hakimi, S}, *Sinclair, AH, Stanley, M, ...}
-% This is printed verbatim in place of the formatted author list.
-% The 'author' field remains canonical for indexing.
 
 \DeclareFieldFormat{authorlist}{#1}
 
@@ -149,6 +177,7 @@
     \printfield{authorlist}%
   }%
 }
+
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
 \addbibresource{refs/conference.bib}
@@ -156,56 +185,70 @@
 \addbibresource{refs/scicomm.bib}
 \addbibresource{refs/presentations.bib}
 
+\nocite{*}  % include all entries from all .bib files
+
 %------------------------------------------------------------------------------
-% BIBLATEX CUSTOM FILTERS — patent status × selected toggle
+% BIBLATEX CUSTOM CHECKS — patent status × selected toggle
 %------------------------------------------------------------------------------
-\defbibfilter{grantedpatents}{
-  type=patent and field=status:Granted
+\defbibcheck{grantedpatents}{%
+  \ifentrytype{patent}{%
+    \iffieldequalstr{status}{Granted}{}{\skipentry}%
+  }{\skipentry}%
 }
-\defbibfilter{grantedpatentsselected}{
-  type=patent and field=status:Granted and keyword=selected
+
+\defbibcheck{grantedpatentsselected}{%
+  \ifentrytype{patent}{%
+    \iffieldequalstr{status}{Granted}{%
+      \ifkeyword{selected}{}{\skipentry}%
+    }{\skipentry}%
+  }{\skipentry}%
 }
-\defbibfilter{filedpatents}{
-  type=patent and field=status:Filed
+
+\defbibcheck{filedpatents}{%
+  \ifentrytype{patent}{%
+    \iffieldequalstr{status}{Filed}{}{\skipentry}%
+  }{\skipentry}%
 }
-\defbibfilter{filedpatentsselected}{
-  type=patent and field=status:Filed and keyword=selected
+
+\defbibcheck{filedpatentsselected}{%
+  \ifentrytype{patent}{%
+    \iffieldequalstr{status}{Filed}{%
+      \ifkeyword{selected}{}{\skipentry}%
+    }{\skipentry}%
+  }{\skipentry}%
 }
 
 %------------------------------------------------------------------------------
 % PATENT PRINT COMMAND
-% Reads \patentMode and \patentFilter to decide what to print.
-% Called once in the document body; change the \def values above to adjust.
 %------------------------------------------------------------------------------
 \newcommand{\printpatents}{%
   \ifthenelse{\equal{\patentMode}{none}}{%
     % Print nothing
   }{%
     \ifthenelse{\equal{\patentMode}{granted}}{%
-      % Granted only
       \ifthenelse{\equal{\patentFilter}{selected}}{%
-        \printbibliography[filter=grantedpatentsselected,
+        \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Patents --- Granted},
                            heading=subbibliography]%
       }{%
-        \printbibliography[filter=grantedpatents,
+        \leavevmode\printbibliography[check=grantedpatents,
                            title={Patents --- Granted},
                            heading=subbibliography]%
       }%
     }{%
       % All (granted + filed)
       \ifthenelse{\equal{\patentFilter}{selected}}{%
-        \printbibliography[filter=grantedpatentsselected,
+        \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Patents --- Granted},
                            heading=subbibliography]%
-        \printbibliography[filter=filedpatentsselected,
+        \leavevmode\printbibliography[check=filedpatentsselected,
                            title={Patents --- Filed},
                            heading=subbibliography]%
       }{%
-        \printbibliography[filter=grantedpatents,
+        \leavevmode\printbibliography[check=grantedpatents,
                            title={Patents --- Granted},
                            heading=subbibliography]%
-        \printbibliography[filter=filedpatents,
+        \leavevmode\printbibliography[check=filedpatents,
                            title={Patents --- Filed},
                            heading=subbibliography]%
       }%
@@ -214,11 +257,7 @@
 }
 
 %==============================================================================
-% TOGGLES
-%
-% SECTION VISIBILITY — show or hide entire sections
-%   \toggletrue  = include section
-%   \togglefalse = omit section entirely
+% TOGGLES — SECTION VISIBILITY
 %==============================================================================
 \newtoggle{showJournals}
 \newtoggle{showPreprints}
@@ -255,12 +294,7 @@
 \togglefalse{showFullReferences}  % false = "Available upon request"
 
 %==============================================================================
-% PUBLICATION FILTER TOGGLES
-%
-% Controls whether a bib section prints ALL entries or only those
-% with keywords={selected} in the .bib file.
-%   \toggletrue  = print ONLY selected entries
-%   \togglefalse = print ALL entries
+% TOGGLES — PUBLICATION FILTERS
 %==============================================================================
 \newtoggle{selectedOnlyJournals}
 \newtoggle{selectedOnlyConferenceProceedings}
@@ -279,7 +313,6 @@
 % \def\patentMode{granted}    → show granted patents only
 % \def\patentMode{all}        → show granted + filed patents
 %
-% Each mode further respects \patentFilter:
 % \def\patentFilter{selected} → only entries with keywords={selected}
 % \def\patentFilter{all}      → all entries regardless of keyword
 %------------------------------------------------------------------------------
@@ -287,12 +320,7 @@
 \def\patentFilter{selected}  % selected | all
 
 %==============================================================================
-% SECTION DEPTH TOGGLES
-%
-% For non-bib sections, controls whether ALL entries print or only
-% those marked as "selected" via \cventryselected / \cvhonorselected.
-%   \toggletrue  = show ALL entries (full CV)
-%   \togglefalse = show only selected entries (short/targeted CV)
+% TOGGLES — SECTION DEPTH
 %==============================================================================
 \newtoggle{showAllGrants}
 \newtoggle{showAllTalks}
@@ -304,16 +332,29 @@
 \togglefalse{showAllTeaching}
 \togglefalse{showAllService}
 
+% First-pass guard: skip all \printbibliography calls until the .bbl exists.
+% This prevents xelatex from crashing before biber has run, which would
+% produce a malformed .bcf that biber then refuses to process.
+\newif\ifbblexists
+\IfFileExists{\jobname.bbl}{\bblexiststrue}{\bblexistsfalse}
+
+% Wrap \printbibliography to be a no-op on the first pass
+\let\origprintbibliography\printbibliography
+\renewcommand{\printbibliography}[1][]{%
+  \ifbblexists\origprintbibliography[#1]\fi%
+}
+
+% Note: \leavevmode before each \printbibliography ensures LaTeX is in
+% horizontal mode, preventing \spacefactor crashes from biblatex warnings.
+
 %------------------------------------------------------------------------------
 % AWESOME-CV CONFIGURATION
 %------------------------------------------------------------------------------
 \geometry{left=1.4cm, top=.8cm, right=1.4cm, bottom=1.8cm, footskip=.5cm}
 
-\colorlet{awesome}{awesome-red}  % Options: awesome-emerald, awesome-skyblue,
-                                  % awesome-red, awesome-pink, awesome-orange,
-                                  % awesome-nephritis, awesome-concrete, awesome-darknight
-
-\setbool{acvSectionColorHighlight}{true}
+\colorlet{awesome}{black}
+\colorlet{darktext}{black}
+\setbool{acvSectionColorHighlight}{false}
 
 %------------------------------------------------------------------------------
 % PERSONAL INFO
@@ -321,18 +362,18 @@
 \name{Shabnam}{Hakimi, Ph.D.}
 \position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
 \address{Toyota Research Institute, 4440 El Camino Real, Los Altos, CA 94022}
-\email{shabnam@tri.global}
+\email{shabnamhakimi@gmail.com}
 \homepage{www.shabnamhakimi.com}
-% \github{yourgithub}       % uncomment if desired
-% \linkedin{yourlinkedin}   % uncomment if desired
-% \orcid{0000-0000-0000-0000} % uncomment with your ORCID
+% \github{yourgithub}
+% \linkedin{yourlinkedin}
+% \orcid{0000-0000-0000-0000}
 
 %------------------------------------------------------------------------------
 % DOCUMENT
 %------------------------------------------------------------------------------
 \begin{document}
 
-\makecvheader[C]   % [C] = centered, [L] = left-aligned
+\makecvheader[C]
 
 \makecvfooter
   {\today}
@@ -349,21 +390,19 @@
 \iftoggle{showGrants}{\input{sections/grants}}{}
 
 %-- Publications & Scholarship ------------------------------------------------
-% Footnote markers are placed inline in 'authorlist' fields in the .bib files
-% using \cvfnmark{label}. The matching \cvfnnote calls appear in the
-% \begin{cvpubfootnotes} block after each \printbibliography call.
-% The cvfootnote counter resets automatically at each \cvsection.
 
 \iftoggle{showJournals}{
+  \startbibsection{journals}
   \iftoggle{selectedOnlyJournals}{%
-    \printbibliography[type=article, keyword=selected,
+    \leavevmode\printbibliography[type=article, keyword=selected,
                        title={Peer-Reviewed Journal Publications (Selected)},
                        heading=subbibliography]%
   }{%
-    \printbibliography[type=article,
+    \leavevmode\printbibliography[type=article,
                        title={Peer-Reviewed Journal Publications},
                        heading=subbibliography]%
   }
+  \finishbibsection{journals}
   \begin{cvpubfootnotes}
     \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
     \cvfnnote{alphalist}{authors listed alphabetically}
@@ -371,63 +410,77 @@
 }{}
 
 \iftoggle{showPreprints}{
+  \startbibsection{preprints}
   \iftoggle{selectedOnlyPreprints}{%
-    \printbibliography[type=unpublished, keyword=selected,
+    \leavevmode\printbibliography[type=unpublished, keyword=selected,
                        title={Preprints \& Working Papers (Selected)},
                        heading=subbibliography]%
   }{%
-    \printbibliography[type=unpublished,
+    \leavevmode\printbibliography[type=unpublished,
                        title={Preprints \& Working Papers},
                        heading=subbibliography]%
   }
+  \finishbibsection{preprints}
   \begin{cvpubfootnotes}
     \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
   \end{cvpubfootnotes}
 }{}
 
 \iftoggle{showConferenceProceedings}{
+  \startbibsection{conference}
   \iftoggle{selectedOnlyConferenceProceedings}{%
-    \printbibliography[type=inproceedings, keyword=selected,
+    \leavevmode\printbibliography[type=inproceedings, keyword=selected,
                        title={Peer-Reviewed Conference Proceedings (Selected)},
                        heading=subbibliography]%
   }{%
-    \printbibliography[type=inproceedings,
+    \leavevmode\printbibliography[type=inproceedings,
                        title={Peer-Reviewed Conference Proceedings},
                        heading=subbibliography]%
   }
+  \finishbibsection{conference}
   \begin{cvpubfootnotes}
     \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
     \cvfnnote{bestpaper}{Best Paper Award recognition}
   \end{cvpubfootnotes}
 }{}
 
-\iftoggle{showPatents}{\printpatents}{}
+\iftoggle{showPatents}{%
+  \startbibsection{patents}
+  \printpatents
+  \finishbibsection{patents}
+}{}
 
 \iftoggle{showSciComm}{
-  \printbibliography[type=misc, keyword=scicomm,
+  \startbibsection{scicomm}
+  \leavevmode\printbibliography[type=misc, keyword=scicomm,
                      title={Science Communication},
                      heading=subbibliography]
+  \finishbibsection{scicomm}
 }{}
 
 \iftoggle{showBookChapters}{
-  \printbibliography[type=incollection,
+  \startbibsection{bookchapters}
+  \leavevmode\printbibliography[type=incollection,
                      title={Reviews, Book Chapters \& Commentaries},
                      heading=subbibliography]
+  \finishbibsection{bookchapters}
 }{}
 
 %-- Talks & Presentations -----------------------------------------------------
 \iftoggle{showTalks}{\input{sections/talks}}{}
 
 \iftoggle{showConferencePresentations}{
+  \startbibsection{presentations}
   \iftoggle{selectedOnlyPresentations}{%
-    \printbibliography[type=unpublished, keyword=presentation, keyword=selected,
+    \leavevmode\printbibliography[type=unpublished, keyword=presentation, keyword=selected,
                        title={Selected Conference Presentations},
                        heading=subbibliography]%
   }{%
-    \printbibliography[type=unpublished, keyword=presentation,
+    \leavevmode\printbibliography[type=unpublished, keyword=presentation,
                        title={Conference Presentations},
                        heading=subbibliography]%
   }
+  \finishbibsection{presentations}
 }{}
 
 %-- Teaching & Service --------------------------------------------------------
