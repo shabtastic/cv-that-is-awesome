@@ -1,0 +1,24 @@
+name: Build Awesome-CV
+on:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  build_cv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          compiler: xelatex
+          args: "-pdf -interaction=nonstopmode -halt-on-error"
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShabnamHakimi-CV
+          path: main.pdf
