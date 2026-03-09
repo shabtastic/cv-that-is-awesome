@@ -35,38 +35,21 @@
 \usepackage{perpage}                   % gives us \MakePerPage for custom resets
 
 %------------------------------------------------------------------------------
-% FOOTNOTE SETUP
+% PUBLICATION ANNOTATION SYMBOLS
+%
+% \cvfnmark{equalcontrib} — outputs a superscript * to mark equal-contribution
+% authors in usera fields. Always outputs *, no dynamic counter needed.
+%
+% The legend ("* equal contributions...") is printed once at the top of the
+% Publications section via \cvpublegend, not repeated per subsection.
 %------------------------------------------------------------------------------
-\newcounter{cvfootnote}
+\newcommand{\cvfnmark}[1]{\textsuperscript{*}}
 
-\pretocmd{\cvsection}{\setcounter{cvfootnote}{0}}{}{}
-
-\newcommand{\cvfnsymbol}[1]{%
-  \ifcase#1\or *\or \textdagger\or \textdaggerdbl
-           \or \textsection\or \textparagraph
-  \else ??
-  \fi
-}
-
-\newcommand{\cvfnmark}[1]{%
-  \stepcounter{cvfootnote}%
-  \edef\@cvfnval{\thecvfootnote}%
-  \textsuperscript{\cvfnsymbol{\@cvfnval}}%
-  \expandafter\xdef\csname cvfnlabel@#1\endcsname{\@cvfnval}%
-}
-
-\newcommand{\cvfnnote}[2]{%
-  \ifcsname cvfnlabel@#1\endcsname
-    \noindent\textsuperscript{\cvfnsymbol{\csname cvfnlabel@#1\endcsname}}%
-    \,{\footnotesize #2}\par\smallskip
-  \fi
-}
-
-\newenvironment{cvpubfootnotes}{%
-  \vspace{2pt}%
-  \begin{footnotesize}%
-}{%
-  \end{footnotesize}%
+% \cvpublegend: prints the symbol legend once at the top of a section.
+% Place immediately after \cvsection{Publications}.
+\newcommand{\cvpublegend}{%
+  \vspace{-2pt}%
+  {\footnotesize * equal contributions, shared first authorship}%
   \vspace{4pt}%
 }
 
@@ -171,8 +154,8 @@
 %------------------------------------------------------------------------------
 % BOLD OWN NAME IN BIBLIOGRAPHY
 %
-% Entries that go through the normal name formatter (no authorlist field)
-% will have "Hakimi" bolded automatically. Entries with an authorlist field
+% Entries that go through the normal name formatter (no usera field)
+% will have "Hakimi" bolded automatically. Entries with a usera field
 % bypass the formatter — bold is applied manually via \textbf in the .bib.
 % Change \cvownfamilyname if the CV owner's name changes.
 %------------------------------------------------------------------------------
@@ -180,7 +163,7 @@
 
 \DeclareNameFormat{boldifown}{%
   \ifstrequal{\namepartfamily}{\cvownfamilyname}{%
-    \textbf{%
+    \cvbibname{%
       \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
                                      {\namepartprefix}{\namepartsuffix}%
     }%
@@ -191,27 +174,39 @@
   \usebibmacro{name:andothers}%
 }
 
-% NOTE: entries using the `authorlist` field bypass the name formatter.
+% NOTE: entries using the `usera` field bypass the name formatter.
 % Bold your name manually there, e.g.: authorlist = {\textbf{Hakimi, S}, ...}
 
 %------------------------------------------------------------------------------
-% AUTHORLIST FIELD
+% CUSTOM AUTHOR STRING — uses built-in `usera` field
 %
-% Custom verbatim field for pre-formatted author strings with LaTeX commands
-% (\textbf, \cvfnmark, etc.). Declared verbatim so biber does not sanitise it.
-% The author macro checks for this field and uses it instead of \printnames.
+% For entries with equal-contribution authors or other non-standard author
+% formatting, set the `usera` field in the .bib file to a pre-formatted
+% LaTeX string. Biber always passes `usera` through as a literal (no parsing).
+%
+% Use \cvbibname{} (not \textbf{}) for bold names — it uses \bfseries which
+% works reliably in Awesome-CV's fontspec context. Use ~ for spaces inside
+% name initials, e.g. "Hakimi,~S" to prevent TeX from dropping the space.
+%
+% Example:
+%   usera = {\cvbibname{Hakimi,~S}\cvfnmark{equalcontrib}, Lee,~J\cvfnmark{equalcontrib}},
+%
+% When `usera` is present it replaces the normal \printnames{author} output.
+% When absent, \printnames{author} runs normally (with boldifown applied).
 %------------------------------------------------------------------------------
-% authorlist: custom verbatim field for pre-formatted author strings.
-% Declared for all common entry types so biber passes it through unmodified.
-\DeclareDatamodelFields[type=field, datatype=verbatim]{authorlist}
-\DeclareDatamodelEntryfields[article,inproceedings,unpublished,misc,patent,incollection]{authorlist}
-\DeclareFieldFormat{authorlist}{#1}
+
+% \cvbibname: bold name for usera fields and boldifown.
+% Keeps \sffamily (matching bib body font) but forces series b (Bold),
+% overriding the \fontseries{l} (Light) set by \bodyfontlight.
+\newcommand{\cvbibname}[1]{{\sffamily\fontseries{b}\selectfont #1}}
+
+\DeclareFieldFormat{usera}{#1}
 
 \renewbibmacro*{author}{%
-  \iffieldundef{authorlist}{%
+  \iffieldundef{usera}{%
     \printnames{author}%
   }{%
-    \printfield{authorlist}%
+    \printfield{usera}%
   }%
 }
 
@@ -222,22 +217,10 @@
   \DeclareNameAlias{editor}{boldifown}%
 }
 
-%------------------------------------------------------------------------------
-% NOTE FIELD SUPPRESSION
-%
-% The note field is used in some .bib entries for equal-contribution text
-% (e.g. "* equal contributions"). We suppress it from printing inline since
-% that information is handled by \cvfnmark in the authorlist field instead.
-%
-% Exception: @misc entries (Science Communication) may use note legitimately.
-% We restore note printing for @misc via a per-type field format override.
-%------------------------------------------------------------------------------
-\DeclareFieldFormat{note}{}
-\renewbibmacro*{note+pages}{%
-  \printfield{pages}%
-}
-% Restore note for @misc entries (scicomm uses it for publication details)
-\DeclareFieldFormat[misc]{note}{#1}
+% Note: the note field prints normally for all entry types.
+% Equal-contribution markers should be in the authorlist field (via \cvfnmark),
+% NOT in the note field. See journals.bib and conference.bib for examples.
+% Entries with note = {* equal contributions...} should have that note removed.
 
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
@@ -490,6 +473,7 @@
   }{%
     \cvsection{Publications}%
   }%
+  \cvpublegend%
 
   \iftoggle{showJournals}{%
     \startbibsection{journals}%
@@ -503,10 +487,6 @@
                          heading=cvsubsection]%
     }%
     \finishbibsection{journals}%
-    \begin{cvpubfootnotes}
-      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-      \cvfnnote{alphalist}{authors listed alphabetically}
-    \end{cvpubfootnotes}%
   }{}
 
   \iftoggle{showPreprints}{%
@@ -523,9 +503,6 @@
                          heading=cvsubsection]%
     }%
     \finishbibsection{preprints}%
-    \begin{cvpubfootnotes}
-      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-    \end{cvpubfootnotes}%
   }{}
 
   \iftoggle{showConferenceProceedings}{%
@@ -540,10 +517,6 @@
                          heading=cvsubsection]%
     }%
     \finishbibsection{conference}%
-    \begin{cvpubfootnotes}
-      \cvfnnote{equalcontrib}{equal contributions, shared first authorship}
-      \cvfnnote{bestpaper}{Best Paper Award recognition}
-    \end{cvpubfootnotes}%
   }{}
 
   \iftoggle{showConferencePresentations}{%
@@ -579,6 +552,7 @@
       \cvsection{Patents}%
     }%
     \startbibsection{patents}%
+    \vspace{2pt}%
     \printpatents
     \finishbibsection{patents}%
   }%
@@ -593,7 +567,7 @@
 
 \ifbool{showTalksSection}{%
   \cvsection{Talks \& Science Communication}%
-
+  \vspace{2pt}%
   % sections/talks.tex should use \cvsubsection{Invited Talks} (not \cvsection)
   % to render as a subsection under this top-level heading.
   \iftoggle{showTalks}{\input{sections/talks}}{}
