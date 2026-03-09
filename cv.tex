@@ -51,7 +51,7 @@
 \newcommand{\cvpublegend}{%
   \par\vspace{-4pt}%
   {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship}}%
-  \par\vspace{0pt}%
+  \par%
 }
 
 %==============================================================================
@@ -249,9 +249,23 @@
 
 %------------------------------------------------------------------------------
 % BIBLATEX HEADING — cvsubsection style
-% Renders bibliography section titles using \cvsubsection (Awesome-CV).
-% Usage: heading=cvsubsection  (replaces heading=subbibliography)
+%
+% \cvsubsection (cls) = \vspace{2.5mm} + \vspace{-3mm} + text = net -0.5mm.
+% The -3mm is intentional for subsections that follow content (tight tuck).
+% But when a subsection is the FIRST thing after \cvsection (no \par yet,
+% still in horizontal mode from \vhrulefill), vspaces are ignored and the
+% text flows inline: "Patents GRANTED".
+%
+% Fix: patch to add \par\noindent before the vspaces.
+% \noindent suppresses the extra \parskip that \par would otherwise add,
+% preventing the large gap above subsection headings in Publications.
+% The net vspace = 2.5mm - 3mm = -0.5mm is fine after a section rule.
 %------------------------------------------------------------------------------
+\patchcmd{\cvsubsection}%
+  {\vspace{\acvSectionContentTopSkip}}%
+  {\par\noindent\vspace{\acvSectionContentTopSkip}}%
+  {}{}
+
 \defbibheading{cvsubsection}[\bibname]{%
   \cvsubsection{#1}%
 }
@@ -434,26 +448,37 @@
 \colorlet{darktext}{black}
 \setbool{acvSectionColorHighlight}{false}
 
+% The cls loads the parskip package, which sets \parskip to ~0.5\baselineskip.
+% Awesome-CV uses explicit \vspace{} calls for all spacing, so parskip just
+% adds unwanted gaps between paragraphs (e.g. around \cvsubsection headings).
+% Override to zero globally.
+\setlength{\parskip}{0pt}
+
 % Enforce consistent vertical spacing between \cventry blocks.
-% \apptocmd adds \cventryskip after every entry including the last.
-% To avoid making the gap before the next \cvsection larger only when
-% cventries precedes it, we use a boolean flag set by \end{cventries}.
-\newlength{\cventryskip}
-\setlength{\cventryskip}{6pt}
-\apptocmd{\cventry}{\vspace{\cventryskip}}{}{}
-
-\newbool{aftercventries}
-\boolfalse{aftercventries}
-\AfterEndEnvironment{cventries}{\booltrue{aftercventries}}
-\pretocmd{\cvsection}{%
-  \ifbool{aftercventries}{\vspace{-\cventryskip}}{}%
-  \boolfalse{aftercventries}%
-}{}{}
-
+%
+% Root cause of the indent bug: \apptocmd{\cventry}{\vspace{N}} appends a
+% \vspace after the tabular. Inside \begin{center}, this leaves a vertical-mode
+% artefact that makes the NEXT \cventry's tabular shift right. Using \pretocmd
+% instead — and skipping the gap for the first entry in each block — avoids
+% any post-tabular state and keeps all entries flush-left.
+%
+% Gap value: \cventry (cls) starts with \vspace{-2mm}. To get ~4pt visible gap:
+% prepend 8pt before non-first entries → 8pt - 2mm ≈ 2.3pt net.
+\newbool{firstcventry}
+\booltrue{firstcventry}
 \AtBeginEnvironment{cventries}{%
+  \booltrue{firstcventry}%
   \setlength{\parskip}{0pt}%
-  \par\noindent%
+  \setlength{\parindent}{0pt}%
 }
+\pretocmd{\cventry}{%
+  \ifbool{firstcventry}{%
+    \boolfalse{firstcventry}%
+  }{%
+    \vspace{8pt}%
+  }%
+  \noindent%
+}{}{}
 
 %------------------------------------------------------------------------------
 % PERSONAL INFO
@@ -592,7 +617,6 @@
       \cvsection{Patents}%
     }%
     \startbibsection{patents}%
-    \vspace{10pt}%
     \printpatents
     \finishbibsection{patents}%
   }%
@@ -608,7 +632,7 @@
 \ifbool{showTalksSection}{%
   \cvsection{Talks \& Science Communication}%
   % sections/talks.tex must use \cvsubsection (not \cvsection) for the talks heading.
-  \iftoggle{showTalks}{\vspace{10pt}\input{sections/talks}}{}
+  \iftoggle{showTalks}{\input{sections/talks}}{}
 
   \iftoggle{showSciComm}{%
     \startbibsection{scicomm}%
