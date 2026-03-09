@@ -2,7 +2,6 @@ name: Build Awesome-CV
 on:
   push:
     branches: [ main ]
-
 jobs:
   build_cv:
     runs-on: ubuntu-latest
@@ -14,25 +13,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Compile LaTeX
+      - name: Compile CV
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
           compiler: xelatex
           args: "-pdf -interaction=nonstopmode -halt-on-error"
 
-      # - name: Upload PDF
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ShabnamHakimi-CV
-      #     path: cv.pdf
+      - name: Compile Resume
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: resume.tex
+          compiler: xelatex
+          args: "-pdf -interaction=nonstopmode -halt-on-error"
 
-      - name: Release PDF
+      - name: Release PDFs
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: latest
-          files: cv.pdf
-          body: "Automatically generated PDF from the latest commit."
+          files: |
+            cv.pdf
+            resume.pdf
+          body: "Automatically generated PDFs from the latest commit."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

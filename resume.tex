@@ -1,0 +1,149 @@
+%-------------------------------------------------------------------------------
+% resume.tex — 1-page industry resume
+% Uses the same awesome-cv.cls as cv.tex.
+% Compile: xelatex resume.tex && xelatex resume.tex
+%-------------------------------------------------------------------------------
+\documentclass[11pt, letterpaper]{awesome-cv}
+
+%-------------------------------------------------------------------------------
+% PAGE GEOMETRY
+%-------------------------------------------------------------------------------
+\geometry{left=1.4cm, top=.8cm, right=1.4cm, bottom=1.0cm, footskip=.5cm}
+
+%-------------------------------------------------------------------------------
+% FONTS & COLOURS  (mirror cv.tex settings)
+%-------------------------------------------------------------------------------
+\fontdir[fonts/]
+\colorlet{awesome}{awesome-darknight}
+\setbool{acvSectionColorHighlight}{true}
+
+%-------------------------------------------------------------------------------
+% PERSONAL INFORMATION
+%-------------------------------------------------------------------------------
+\name{Shabnam}{Hakimi, Ph.D.}
+\position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
+\address{Los Altos, CA}
+\mobile{+1 626-536-4642}
+\email{shabnamhakimi@gmail.com}
+\homepage{shabnamhakimi.com}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+
+\makecvheader[C]   % centred header, same as cv.tex
+
+%-------------------------------------------------------------------------------
+% EXPERIENCE
+%-------------------------------------------------------------------------------
+\cvsection{Experience}
+
+\begin{cventries}
+
+  \cventry
+    {Senior Research Scientist, Human-Centered AI}
+    {Toyota Research Institute}
+    {Los Altos, CA}
+    {Jan 2021 -- Present}
+    {
+      \begin{cvitems}
+        \item Lead research and development of novel AI/ML methods for consumer demand
+              forecasting using GAN and VAE architectures; design theory- and data-driven
+              approaches for eliciting and modeling consumer preferences at scale.
+        \item Conduct frontier human-centered AI research with LLMs, VLMs, and diffusion
+              models to develop psychological guidance methods for generative AI; design and
+              test generative AI interventions supporting human creativity and decision-making
+              flexibility.
+        \item Lead large, cross-functional, multi-site projects (5--15 people); define scope,
+              objectives, and deliverables; manage budgets; identify and mitigate risks.
+        \item Communicate research to industry and academic stakeholders; generate patentable
+              IP; publish in top-tier journals and conferences.
+      \end{cvitems}
+    }
+
+  \cventry
+    {Postdoctoral Scholar, Center for Cognitive Neuroscience}
+    {Duke University}
+    {Durham, NC}
+    {Jun 2016 -- Jan 2021}
+    {
+      \begin{cvitems}
+        \item Developed and tested computational models of behavior change in healthy and
+              clinical populations; applied ML to predict individual intervention response.
+        \item Modeled large multimodal datasets (survey, behavioral, eye-tracking, neuroimaging)
+              using hierarchical, spatial, time-series, and multivariate statistical methods.
+        \item Secured competitive federal funding; managed research teams of 4--10 people.
+      \end{cvitems}
+    }
+
+  \cventry
+    {Postdoctoral Associate, Institute of Cognitive Science}
+    {University of Colorado, Boulder}
+    {Boulder, CO}
+    {Apr 2015 -- May 2016}
+    {
+      \begin{cvitems}
+        \item Developed a novel Bayesian model of variability in neural processing of risky
+              decisions and a new incentive-personalization model for shaping self-control.
+      \end{cvitems}
+    }
+
+  \cventry
+    {Behavioral Scientist \& Director, CaféWell Behavioral Labs}
+    {Welltok, Inc.}
+    {Denver, CO}
+    {Aug 2013 -- Jan 2015}
+    {
+      \begin{cvitems}
+        \item Built ML models to quantify and predict user behavior; defined novel metrics for
+              engagement and outcomes; led redesign of data architecture for experimentation.
+        \item Applied ML to personalize user experience; translated algorithms into actionable
+              designs using human-centered design principles.
+        \item Led quantitative and qualitative UX research for mobile and web products;
+              drove product design by synthesizing user testing, analytics, and market research.
+      \end{cvitems}
+    }
+
+\end{cventries}
+
+%-------------------------------------------------------------------------------
+% EDUCATION
+%-------------------------------------------------------------------------------
+\cvsection{Education}
+
+\begin{cventries}
+
+  \cventry
+    {Ph.D., Computation and Neural Systems}
+    {California Institute of Technology}
+    {Pasadena, CA}
+    {2013}
+    {}
+
+  \cventry
+    {B.A., Psychology}
+    {Stanford University}
+    {Stanford, CA}
+    {2006}
+    {}
+
+\end{cventries}
+
+%-------------------------------------------------------------------------------
+% SKILLS
+%-------------------------------------------------------------------------------
+\cvsection{Skills}
+
+\begin{cvskills}
+  \cvskill
+    {Technical}
+    {Python, TensorFlow, R, MATLAB, bash, SQL}
+
+  \cvskill
+    {Methods}
+    {Bayesian analysis \& model comparison, forecasting \& time-series analysis,
+     causal modeling, reinforcement learning, state-space models,
+     sequential integrator models, transformer-based NLP, generative AI (LLM/VLM/diffusion)}
+\end{cvskills}
+
+%-------------------------------------------------------------------------------
+\end{document}
