@@ -477,6 +477,17 @@
 \colorlet{darktext}{black}
 \setbool{acvSectionColorHighlight}{false}
 
+% Increase inter-section breathing room (default: 3mm)
+\renewcommand{\acvSectionTopSkip}{7mm}
+
+% Fix inconsistent spacing between \cventry items.
+% The class starts each \cventry with \vspace{-2mm}, which is designed
+% to absorb the extra space added by a cvitems description block. Entries
+% without a description block end up too tight. Patching \cventry to end
+% with a consistent \vspace{1.5mm} gives uniform inter-entry spacing.
+\let\origcventry\cventry
+\renewcommand*{\cventry}[5]{\origcventry{#1}{#2}{#3}{#4}{#5}\vspace{1.5mm}}
+
 % The cls loads the parskip package, which sets \parskip to ~0.5\baselineskip.
 % Awesome-CV uses explicit \vspace{} calls for all spacing, so parskip just
 % adds unwanted gaps between paragraphs (e.g. around \cvsubsection headings).
