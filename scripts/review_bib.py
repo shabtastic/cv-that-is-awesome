@@ -51,6 +51,7 @@ def parse_entries(text: str) -> list:
     Split a .bib file into (kind, text) chunks preserving order.
     kind is "entry" for @-entries and "comment" for everything else.
     Uses brace counting to handle nested braces correctly.
+    Only matches @ signs that start a BibTeX entry (not those inside % comments).
     """
     chunks = []
     i      = 0
@@ -64,6 +65,15 @@ def parse_entries(text: str) -> list:
             if trailing:
                 chunks.append(("comment", trailing))
             break
+
+        # Check if this @ is inside a % comment line
+        # (scan back to the start of the line)
+        line_start = text.rfind("\n", 0, at) + 1
+        line_prefix = text[line_start:at].lstrip()
+        if line_prefix.startswith("%"):
+            # This @ is inside a comment — skip past it
+            i = at + 1
+            continue
 
         # Capture any comment/whitespace before the @
         pre = text[i:at].strip()
