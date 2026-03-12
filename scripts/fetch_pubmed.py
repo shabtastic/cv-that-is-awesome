@@ -38,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
+    normalize_title, load_all_titles,
 )
 
 # ---------------------------------------------------------------------------
@@ -216,7 +217,6 @@ def main():
         BIB_OUT,
         Path("refs/preprints.bib"),
         Path("refs/conference.bib"),
-        Path("refs/chapters.bib"),
         Path("refs/presentations.bib"),
         Path("refs/scicomm.bib"),
         Path("refs/patents.bib"),
@@ -226,6 +226,7 @@ def main():
     for bib in all_bib_files:
         existing_pmids |= load_existing_pmids(bib)
         existing_dois  |= load_existing_dois(bib)
+    existing_titles = load_all_titles(all_bib_files)
     manual_fp      = load_manual_fingerprints(BIB_OUT)
     rejected       = load_rejected(REJECTED_FILE)
 
@@ -278,6 +279,14 @@ def main():
         if doi and doi in existing_dois:
             skipped_exist += 1
             if show: print(f"  [skip-exist]   DOI {doi} already in a .bib file")
+            continue
+
+        # Skip if title already present in any bib file (catches entries where
+        # PubMed returns a wrong/mismatched DOI that wouldn't match on DOI alone)
+        norm_title = normalize_title(rec.get("title", ""))
+        if norm_title and norm_title in existing_titles:
+            skipped_exist += 1
+            if show: print(f"  [skip-exist]   title already in a .bib file: {rec['title'][:60]}")
             continue
 
         if pmid in name_only_pmids and pmid not in orcid_pmids:
