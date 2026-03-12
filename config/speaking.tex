@@ -1,0 +1,51 @@
+%==============================================================================
+% PRESET: Speaking / Bio
+% Talks and science communication front-and-center.
+% Selected publications only. Most service/admin sections hidden.
+%==============================================================================
+
+%------------------------------------------------------------------------------
+% SECTION VISIBILITY
+%------------------------------------------------------------------------------
+\toggletrue{showJournals}
+\togglefalse{showPreprints}
+\toggletrue{showConferenceProceedings}
+\togglefalse{showConferencePresentations}  % covered by showTalks
+\togglefalse{showBookChapters}
+\toggletrue{showPatents}
+\toggletrue{showSciComm}
+\toggletrue{showTalks}
+\togglefalse{showGrants}
+\togglefalse{showTeaching}
+\togglefalse{showService}
+\togglefalse{showReviewer}
+\togglefalse{showMentorship}
+\togglefalse{showMemberships}
+\togglefalse{showReferences}
+
+%------------------------------------------------------------------------------
+% PUBLICATION FILTERS — selected only throughout
+%------------------------------------------------------------------------------
+\toggletrue{selectedOnlyPublications}
+\toggletrue{selectedOnlyJournals}
+\togglefalse{selectedOnlyPreprints}        % preprints hidden anyway
+\toggletrue{selectedOnlyConferenceProceedings}
+\toggletrue{selectedOnlyPresentations}
+\toggletrue{selectedOnlyPatents}
+
+\def\patentMode{granted}   % none | granted | all
+\def\patentFilter{selected}
+
+%------------------------------------------------------------------------------
+% SECTION DEPTH — show all talks (that's the point)
+%------------------------------------------------------------------------------
+\togglefalse{showAllGrants}
+\toggletrue{showAllTalks}
+\togglefalse{showAllTeaching}
+\togglefalse{showAllService}
+
+%------------------------------------------------------------------------------
+% BIBLIOGRAPHY NUMBERING
+%------------------------------------------------------------------------------
+\toggletrue{showBibNumbers}
+\togglefalse{reverseBibNumbers}

@@ -1,40 +1,73 @@
-name: Build Awesome-CV
+name: Build CV
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
 jobs:
-  build_cv:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Compile CV
+      # -----------------------------------------------------------------------
+      # Build all three preset PDFs sequentially.
+      # Each make target writes cv-preset.tex then compiles cv.tex → cv.pdf
+      # then renames to the preset-specific filename.
+      # -----------------------------------------------------------------------
+
+      - name: Build cv-full.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          compiler: xelatex
-          args: "-pdf -interaction=nonstopmode -halt-on-error"
+          latexmk_use_xelatex: false
+          pre_compile: cp config/full.tex cv-preset.tex
+          post_compile: |
+            biber cv
+            xelatex cv.tex
+            xelatex cv.tex
+            mv cv.pdf cv-full.pdf
 
-      - name: Compile Resume
+      - name: Build cv-industry.pdf
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: resume.tex
-          compiler: xelatex
-          args: "-pdf -interaction=nonstopmode -halt-on-error"
+          root_file: cv.tex
+          latexmk_use_xelatex: false
+          pre_compile: cp config/industry.tex cv-preset.tex
+          post_compile: |
+            biber cv
+            xelatex cv.tex
+            xelatex cv.tex
+            mv cv.pdf cv-industry.pdf
 
-      - name: Release PDFs
-        uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
+      - name: Build cv-speaking.pdf
+        uses: xu-cheng/latex-action@v3
         with:
-          tag_name: latest
+          root_file: cv.tex
+          latexmk_use_xelatex: false
+          pre_compile: cp config/speaking.tex cv-preset.tex
+          post_compile: |
+            biber cv
+            xelatex cv.tex
+            xelatex cv.tex
+            mv cv.pdf cv-speaking.pdf
+
+      # -----------------------------------------------------------------------
+      # Create a GitHub Release and upload all three PDFs as assets.
+      # Tag is derived from the commit SHA for traceability.
+      # -----------------------------------------------------------------------
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cv-${{ github.sha }}
+          name: "CV build ${{ github.sha }}"
           files: |
-            cv.pdf
-            resume.pdf
-          body: "Automatically generated PDFs from the latest commit."
+            cv-full.pdf
+            cv-industry.pdf
+            cv-speaking.pdf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

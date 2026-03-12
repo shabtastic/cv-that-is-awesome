@@ -1,5 +1,5 @@
 %==============================================================================
-% SHABNAM HAKIMI — CURRICULUM VITAE
+% SHABNAM HAKIMI — CURRICULUM VITA
 % Built with Awesome-CV (https://github.com/posquit0/Awesome-CV)
 %==============================================================================
 
@@ -71,11 +71,7 @@
 % we write each section's total to the .aux so the next pass can compute
 % reverse labels. No refsection environments needed.
 %==============================================================================
-\newtoggle{showBibNumbers}
-\newtoggle{reverseBibNumbers}
-
-\toggletrue{showBibNumbers}     % true = show numbers | false = hide numbers
-\togglefalse{reverseBibNumbers} % true = reverse (N…1) | false = forward (1…N)
+% showBibNumbers / reverseBibNumbers are declared and set via cv-preset.tex
 
 % Per-section counters
 \newcounter{cvbibindex}   % increments with each printed entry (reset per section)
@@ -241,7 +237,6 @@
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
 \addbibresource{refs/conference.bib}
-\addbibresource{refs/chapters.bib}
 \addbibresource{refs/patents.bib}
 \addbibresource{refs/scicomm.bib}
 \addbibresource{refs/presentations.bib}
@@ -346,84 +341,57 @@
 }
 
 %==============================================================================
-% TOGGLES — SECTION VISIBILITY
+% TOGGLE DECLARATIONS
+% Values are set by the active preset file (cv-preset.tex).
+% To build a specific variant:
+%   make full       → cv-full.pdf
+%   make industry   → cv-industry.pdf
+%   make speaking   → cv-speaking.pdf
+% Or manually: cp config/full.tex cv-preset.tex && make pdf
 %==============================================================================
+
+% Section visibility
 \newtoggle{showJournals}
 \newtoggle{showPreprints}
 \newtoggle{showConferenceProceedings}
-\newtoggle{showBookChapters}
 \newtoggle{showConferencePresentations}
+\newtoggle{showBookChapters}
 \newtoggle{showPatents}
 \newtoggle{showSciComm}
 \newtoggle{showTalks}
+\newtoggle{showGrants}
 \newtoggle{showTeaching}
 \newtoggle{showService}
 \newtoggle{showReviewer}
-\newtoggle{showGrants}
 \newtoggle{showMentorship}
 \newtoggle{showMemberships}
 \newtoggle{showReferences}
 \newtoggle{showFullReferences}
 
-\toggletrue{showJournals}
-\toggletrue{showPreprints}
-\toggletrue{showConferenceProceedings}
-\toggletrue{showBookChapters}
-\toggletrue{showConferencePresentations}
-\toggletrue{showPatents}
-\toggletrue{showSciComm}
-\toggletrue{showTalks}
-\toggletrue{showTeaching}
-\toggletrue{showService}
-\toggletrue{showReviewer}
-\toggletrue{showGrants}
-\toggletrue{showMentorship}
-\toggletrue{showMemberships}
-\toggletrue{showReferences}
-\togglefalse{showFullReferences}  % false = "Available upon request"
-
-%==============================================================================
-% TOGGLES — PUBLICATION FILTERS
-%==============================================================================
-\newtoggle{selectedOnlyPublications}    % true = "Selected Publications" section title
-\newtoggle{selectedOnlyPatents}         % true = "Selected Patents" section title
+% Publication filters
+\newtoggle{selectedOnlyPublications}
+\newtoggle{selectedOnlyPatents}
 \newtoggle{selectedOnlyJournals}
-\newtoggle{selectedOnlyConferenceProceedings}
 \newtoggle{selectedOnlyPreprints}
+\newtoggle{selectedOnlyConferenceProceedings}
 \newtoggle{selectedOnlyPresentations}
 
-\togglefalse{selectedOnlyPublications}  % true = "Selected Publications" heading
-\togglefalse{selectedOnlyPatents}       % true = "Selected Patents" heading (mirrors patentFilter)
-\togglefalse{selectedOnlyJournals}
-\togglefalse{selectedOnlyConferenceProceedings}
-\togglefalse{selectedOnlyPreprints}
-\toggletrue{selectedOnlyPresentations}
-
-%------------------------------------------------------------------------------
-% PATENT DISPLAY MODE
-%
-% \def\patentMode{none}       → omit patents section entirely
-% \def\patentMode{granted}    → show granted patents only
-% \def\patentMode{all}        → show granted + filed patents
-%
-% \def\patentFilter{selected} → only entries with keywords={selected}
-% \def\patentFilter{all}      → all entries regardless of keyword
-%------------------------------------------------------------------------------
-\def\patentMode{granted}     % none | granted | all
-\def\patentFilter{selected}  % selected | all
-
-%==============================================================================
-% TOGGLES — SECTION DEPTH
-%==============================================================================
+% Section depth
 \newtoggle{showAllGrants}
 \newtoggle{showAllTalks}
 \newtoggle{showAllTeaching}
 \newtoggle{showAllService}
 
-\togglefalse{showAllGrants}
-\togglefalse{showAllTalks}
-\togglefalse{showAllTeaching}
-\togglefalse{showAllService}
+% Bibliography numbering
+\newtoggle{showBibNumbers}
+\newtoggle{reverseBibNumbers}
+
+%------------------------------------------------------------------------------
+% ACTIVE PRESET
+% cv-preset.tex is auto-generated by the Makefile (see config/).
+% Default (fallback for fresh clones): config/full.tex
+%------------------------------------------------------------------------------
+\input{cv-preset}
 
 % First-pass guard: skip all \printbibliography calls until the .bbl exists.
 % This prevents xelatex from crashing before biber has run, which would
@@ -505,7 +473,7 @@
 
 \makecvfooter
   {\today}
-  {Shabnam Hakimi ~~·~~ Curriculum Vitae}
+  {Shabnam Hakimi ~~·~~ Curriculum Vita}
   {\thepage}
 
 %------------------------------------------------------------------------------
@@ -530,8 +498,8 @@
 \iftoggle{showJournals}{\booltrue{showPublications}}{}
 \iftoggle{showPreprints}{\booltrue{showPublications}}{}
 \iftoggle{showConferenceProceedings}{\booltrue{showPublications}}{}
-\iftoggle{showBookChapters}{\booltrue{showPublications}}{}
 \iftoggle{showConferencePresentations}{\booltrue{showPublications}}{}
+\iftoggle{showBookChapters}{\booltrue{showPublications}}{}
 
 \ifbool{showPublications}{%
   \iftoggle{selectedOnlyPublications}{%
@@ -585,16 +553,6 @@
     \finishbibsection{conference}%
   }{}
 
-  \iftoggle{showBookChapters}{%
-    \startbibsection{bookchapters}%
-    \leavevmode\printbibliography[keyword=bookchapter,
-                       title={Reviews, Book Chapters \& Commentaries},
-                       heading=cvsubsection]%
-    \leavevmode\printbibliography[keyword=commentary,
-                       heading=none]%
-    \finishbibsection{bookchapters}%
-  }{}
-
   \iftoggle{showConferencePresentations}{%
     \startbibsection{presentations}%
     \iftoggle{selectedOnlyPresentations}{%
@@ -609,6 +567,13 @@
     \finishbibsection{presentations}%
   }{}
 
+  \iftoggle{showBookChapters}{%
+    \startbibsection{bookchapters}%
+    \leavevmode\printbibliography[type=incollection,
+                       title={Reviews, Book Chapters \& Commentaries},
+                       heading=cvsubsection]%
+    \finishbibsection{bookchapters}%
+  }{}
 }{}
 
 %-- Patents -------------------------------------------------------------------
