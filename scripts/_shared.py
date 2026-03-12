@@ -7,6 +7,8 @@ Shared utilities for fetch_orcid.py, fetch_pubmed.py, fetch_scholar.py.
 Provides:
   - is_manual(entry)
   - load_manual_fingerprints(bib_path)
+  - normalize_title(title)
+  - load_all_titles(bib_paths)
   - fingerprint_matches(entry, fp)
   - display_entry(bibtex, index, total, source)
   - edit_in_editor(bibtex)
@@ -94,6 +96,31 @@ def _load_manual_fingerprints_regex(bib_path: Path) -> dict:
             fp["titles"].add(title)
 
     return fp
+
+
+def normalize_title(title: str) -> str:
+    """Normalize a title for fuzzy comparison: lowercase, strip LaTeX/punctuation."""
+    title = re.sub(r"\{([^}]*)\}", r"\1", title)   # strip LaTeX braces
+    title = re.sub(r"[^a-z0-9 ]", "", title.lower())
+    return re.sub(r"\s+", " ", title).strip()
+
+
+def load_all_titles(bib_paths: list) -> set:
+    """
+    Return a set of normalized titles from all entries in the given bib files.
+    Used to detect duplicates regardless of whether DOI or PMID match.
+    """
+    titles = set()
+    title_re = re.compile(r"title\s*=\s*\{([^}]+)\}", re.IGNORECASE)
+    for path in bib_paths:
+        p = Path(path)
+        if not p.exists():
+            continue
+        for m in title_re.finditer(p.read_text(encoding="utf-8")):
+            t = normalize_title(m.group(1))
+            if t:
+                titles.add(t)
+    return titles
 
 
 def fingerprint_matches(entry: dict, fp: dict) -> bool:
@@ -364,9 +391,6 @@ def interactive_review(
             # Extract a short title for the rejection record if possible
             title_m = re.search(r"title\s*=\s*\{([^}]+)\}", bibtex, re.IGNORECASE)
             label   = title_m.group(1)[:120] if title_m else reject_key
-            note    = input("  Rejection note (optional, Enter to skip): ").strip()
-            if note:
-                label = f"{label} | {note}"
             to_reject[reject_key] = label
             print("  -> Rejected and remembered.")
 

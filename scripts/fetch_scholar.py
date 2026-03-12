@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
+    normalize_title, load_all_titles,
 )
 
 # ---------------------------------------------------------------------------
@@ -39,14 +40,6 @@ BIB_OUT           = Path("refs/journals.bib")
 REJECTED_FILE     = Path("refs/.scholar_rejected.json")
 SCRAPER_API_KEY   = ""     # optional -- set to use ScraperAPI proxy
 # ---------------------------------------------------------------------------
-
-
-def load_existing_titles(bib_path: Path) -> set:
-    if not bib_path.exists():
-        return set()
-    text   = bib_path.read_text(encoding="utf-8")
-    titles = re.findall(r"title\s*=\s*\{([^}]+)\}", text, re.IGNORECASE)
-    return {re.sub(r"\s+", " ", t).lower().strip() for t in titles}
 
 
 def fetch_full_bibtex(sc, pub: dict, delay: float = 1.5) -> tuple:
@@ -122,7 +115,16 @@ def main():
     pubs = author.get("publications", [])
     print(f"  Found {len(pubs)} publications on Scholar.")
 
-    existing_titles = load_existing_titles(BIB_OUT)
+    all_bib_files = [
+        BIB_OUT,
+        Path("refs/preprints.bib"),
+        Path("refs/conference.bib"),
+        Path("refs/presentations.bib"),
+        Path("refs/scicomm.bib"),
+        Path("refs/patents.bib"),
+        Path("refs/chapters.bib"),
+    ]
+    existing_titles = load_all_titles(all_bib_files)
     manual_fp       = load_manual_fingerprints(BIB_OUT)
     rejected        = load_rejected(REJECTED_FILE)
 
@@ -136,7 +138,7 @@ def main():
         title = pub.get("bib", {}).get("title", "")
         if not title:
             continue
-        norm_title = re.sub(r"\s+", " ", title).lower().strip()
+        norm_title = normalize_title(title)
         if norm_title in existing_titles:
             skipped_exist += 1
             if show: print(f"  [skip-exist]    {title[:70]}")
@@ -174,7 +176,7 @@ def main():
         if bibtex is None:
             fetch_failures += 1
             continue
-        norm_title = re.sub(r"\s+", " ", title).lower().strip()
+        norm_title = normalize_title(title)
         reject_key = norm_title   # use normalised title as stable key for Scholar
         candidates.append((bibtex, doi, reject_key, "Scholar"))
 

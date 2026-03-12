@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
+    normalize_title, load_all_titles,
 )
 
 # ---------------------------------------------------------------------------
@@ -135,7 +136,6 @@ def main():
         BIB_OUT,
         Path("refs/preprints.bib"),
         Path("refs/conference.bib"),
-        Path("refs/chapters.bib"),
         Path("refs/presentations.bib"),
         Path("refs/scicomm.bib"),
         Path("refs/patents.bib"),
@@ -143,6 +143,7 @@ def main():
     existing_dois = set()
     for bib in all_bib_files:
         existing_dois |= load_existing_dois(bib)
+    existing_titles = load_all_titles(all_bib_files)
     manual_fp = load_manual_fingerprints(BIB_OUT)
     rejected      = load_rejected(REJECTED_FILE)
 
@@ -162,6 +163,15 @@ def main():
             skipped_exist += 1
             if show: print(f"  [skip-exist]    DOI {doi_norm} already in {BIB_OUT}")
             continue
+
+        # Also skip if title already present (catches DOI mismatches)
+        title_m = re.search(r"title\s*=\s*\{([^}]+)\}", bibtex, re.IGNORECASE)
+        if title_m:
+            norm_title = normalize_title(title_m.group(1))
+            if norm_title and norm_title in existing_titles:
+                skipped_exist += 1
+                if show: print(f"  [skip-exist]    title already in a .bib file: {title_m.group(1)[:60]}")
+                continue
         if reject_key in rejected:
             skipped_reject += 1
             if show: print(f"  [skip-rejected] {reject_key}: {rejected[reject_key][:60]}")
