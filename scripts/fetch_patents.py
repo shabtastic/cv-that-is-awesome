@@ -262,7 +262,7 @@ def confirm_status(patent_number: str, title: str,
 
 
 def record_to_bibtex(record: dict, keywords: str = "selected",
-                     holder: str = HOLDER) -> str:
+                     holder: str = HOLDER, status: str = "Granted") -> str:
     cite_key = make_cite_key(record)
     inv_str  = " and ".join(record["inventors"]) \
                if record["inventors"] else "Hakimi, Shabnam"
@@ -273,13 +273,14 @@ def record_to_bibtex(record: dict, keywords: str = "selected",
     lines.append(f"  year     = {{{record['year']}}},")
     lines.append(f"  holder   = {{{holder}}},")
     lines.append(f"  note     = {{U.S. Patent and Trademark Office, "
-                 f"Washington, DC}},")
+                 f"Washington, DC. Status: {status}}},")
     lines.append(f"  keywords = {{{keywords}}},")
     lines.append("}")
     return "\n".join(lines)
 
 
-def make_stub(patent_number: str, holder: str = HOLDER) -> str:
+def make_stub(patent_number: str, holder: str = HOLDER,
+              status: str = "Granted") -> str:
     return (
         f"@patent{{STUB{patent_number},\n"
         f"  author   = {{Hakimi, Shabnam}},\n"
@@ -287,7 +288,8 @@ def make_stub(patent_number: str, holder: str = HOLDER) -> str:
         f"  number   = {{US~{patent_number}}},\n"
         f"  year     = {{????}},\n"
         f"  holder   = {{{holder}}},\n"
-        f"  note     = {{U.S. Patent and Trademark Office, Washington, DC}},\n"
+        f"  note     = {{U.S. Patent and Trademark Office, Washington, DC."
+        f" Status: {status}}},\n"
         f"  keywords = {{}},\n"
         f"}}"
     )
