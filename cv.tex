@@ -29,10 +29,20 @@
 \PassOptionsToPackage{style=numeric}{biblatex}   % ← change style here
 
 \usepackage[backend=biber,
-            sorting=none]{biblatex}
+            sorting=none,
+            maxbibnames=99]{biblatex}
 \usepackage{xstring}
 \usepackage[symbol,perpage]{footmisc}  % symbol footnotes, reset per page
 \usepackage{perpage}                   % gives us \MakePerPage for custom resets
+
+% Declare 'status' as a custom literal field so Biber passes it through.
+% Without this, Biber silently drops unknown fields and \iffieldequalstr
+% on 'status' always evaluates false (skipping all patent entries).
+\DeclareDataModel{
+  fields = {
+    [type=field, datatype=literal] status
+  }
+}
 
 %------------------------------------------------------------------------------
 % PUBLICATION ANNOTATION SYMBOLS
