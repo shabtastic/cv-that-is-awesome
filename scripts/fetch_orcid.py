@@ -131,8 +131,19 @@ def main():
         sys.exit(1)
 
     print(f"  Found {len(works)} works on ORCID.")
-    existing_dois = load_existing_dois(BIB_OUT)
-    manual_fp     = load_manual_fingerprints(BIB_OUT)
+    all_bib_files = [
+        BIB_OUT,
+        Path("refs/preprints.bib"),
+        Path("refs/conference.bib"),
+        Path("refs/chapters.bib"),
+        Path("refs/presentations.bib"),
+        Path("refs/scicomm.bib"),
+        Path("refs/patents.bib"),
+    ]
+    existing_dois = set()
+    for bib in all_bib_files:
+        existing_dois |= load_existing_dois(bib)
+    manual_fp = load_manual_fingerprints(BIB_OUT)
     rejected      = load_rejected(REJECTED_FILE)
 
     candidates     = []   # (bibtex, doi, reject_key, source_label)
