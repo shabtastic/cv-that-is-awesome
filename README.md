@@ -34,7 +34,8 @@ cv/
     ├── fetch_pubmed.py         # Fetch publications from PubMed
     ├── fetch_patents.py        # Fetch/discover patents from USPTO (interactive)
     ├── fetch_scholar.py        # Google Scholar fetch (optional; see note below)
-    └── add_ref.py             # Add a single reference manually (interactive)
+    ├── add_ref.py             # Add a single reference manually (interactive)
+    └── review_bib.py          # Review and edit entries in an existing .bib file
 ```
 
 ---
@@ -207,10 +208,7 @@ tags, or enter `-` to clear all non-`manual` tags.
 
 After tagging the entry is re-displayed so you can confirm before accepting.
 
-### Mentee presentations
-In `presentations.bib`, `keywords = {presentation, mentee}` marks presentations
-where the presenting author is a mentee of Hakimi's. These are filtered separately
-from Hakimi's own presentations.
+
 
 ---
 
@@ -383,6 +381,50 @@ After editing in `$EDITOR` (fallback: `nano`), you are prompted for keyword
 tags. `manual` is always included automatically. Supported target `.bib` files:
 `journals.bib`, `preprints.bib`, `conference.bib`, `presentations.bib`,
 `scicomm.bib`, `patents.bib`.
+
+---
+
+## Reviewing an Existing .bib File
+
+Use `review_bib.py` to walk through entries already in a `.bib` file and edit,
+re-tag, or delete them interactively. This is separate from the fetch pipeline —
+it operates purely on what is already on disk.
+
+### Actions
+
+| Key | Action |
+|---|---|
+| `e` | Open entry in `$EDITOR`; re-display after saving |
+| `k` | Add/edit keyword tags interactively; re-display |
+| `m` | Toggle `manual` on/off in keywords; re-display |
+| `d` | Mark for deletion (confirmed as a batch before writing) |
+| `s` | Skip — leave unchanged, move to next entry |
+| `o` | Open DOI in browser (shown only when entry has a DOI field) |
+| `q` | Stop reviewing; write all changes made so far |
+
+`e`, `k`, and `m` re-display the entry after acting so you can keep editing
+before moving on. Deletions are collected and shown as a confirmation summary
+before anything is written. Every write is preceded by a timestamped `.bak`
+backup of the original file.
+
+### Examples
+
+```bash
+# Review all entries in a bib file
+python scripts/review_bib.py refs/journals.bib
+
+# Review only entries tagged 'selected'
+python scripts/review_bib.py refs/conference.bib --filter selected
+
+# Resume after quitting at entry 12
+python scripts/review_bib.py refs/journals.bib --start 12
+
+# Preview changes without writing
+python scripts/review_bib.py refs/preprints.bib --dry-run
+```
+
+All six `.bib` files are supported: `journals.bib`, `preprints.bib`,
+`conference.bib`, `presentations.bib`, `scicomm.bib`, `patents.bib`.
 
 ---
 
