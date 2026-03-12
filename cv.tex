@@ -1,5 +1,5 @@
 %==============================================================================
-% SHABNAM HAKIMI — CURRICULUM VITA
+% SHABNAM HAKIMI — CURRICULUM VITAE
 % Built with Awesome-CV (https://github.com/posquit0/Awesome-CV)
 %==============================================================================
 
@@ -71,7 +71,11 @@
 % we write each section's total to the .aux so the next pass can compute
 % reverse labels. No refsection environments needed.
 %==============================================================================
-% showBibNumbers / reverseBibNumbers are declared and set via cv-preset.tex
+\newtoggle{showBibNumbers}
+\newtoggle{reverseBibNumbers}
+
+\toggletrue{showBibNumbers}     % true = show numbers | false = hide numbers
+\togglefalse{reverseBibNumbers} % true = reverse (N…1) | false = forward (1…N)
 
 % Per-section counters
 \newcounter{cvbibindex}   % increments with each printed entry (reset per section)
@@ -274,6 +278,14 @@
 \defbibcheck{notpresentation}{%
   \ifkeyword{presentation}{\skipentry}{}%
 }
+
+% AND filter: keyword=presentation AND keyword=selected
+% (multiple keyword= in \printbibliography is OR; this enforces AND)
+\defbibcheck{presentationselected}{%
+  \ifkeyword{presentation}{%
+    \ifkeyword{selected}{}{\skipentry}%
+  }{\skipentry}%
+}
 \defbibcheck{grantedpatents}{%
   \ifentrytype{patent}{%
     \iffieldequalstr{status}{Granted}{}{\skipentry}%
@@ -341,57 +353,84 @@
 }
 
 %==============================================================================
-% TOGGLE DECLARATIONS
-% Values are set by the active preset file (cv-preset.tex).
-% To build a specific variant:
-%   make full       → cv-full.pdf
-%   make industry   → cv-industry.pdf
-%   make speaking   → cv-speaking.pdf
-% Or manually: cp config/full.tex cv-preset.tex && make pdf
+% TOGGLES — SECTION VISIBILITY
 %==============================================================================
-
-% Section visibility
 \newtoggle{showJournals}
 \newtoggle{showPreprints}
 \newtoggle{showConferenceProceedings}
-\newtoggle{showConferencePresentations}
-\newtoggle{showBookChapters}
 \newtoggle{showPatents}
 \newtoggle{showSciComm}
+\newtoggle{showBookChapters}
 \newtoggle{showTalks}
-\newtoggle{showGrants}
+\newtoggle{showConferencePresentations}
 \newtoggle{showTeaching}
 \newtoggle{showService}
 \newtoggle{showReviewer}
+\newtoggle{showGrants}
 \newtoggle{showMentorship}
 \newtoggle{showMemberships}
 \newtoggle{showReferences}
 \newtoggle{showFullReferences}
 
-% Publication filters
-\newtoggle{selectedOnlyPublications}
-\newtoggle{selectedOnlyPatents}
+\toggletrue{showJournals}
+\toggletrue{showPreprints}
+\toggletrue{showConferenceProceedings}
+\toggletrue{showPatents}
+\toggletrue{showSciComm}
+\toggletrue{showBookChapters}
+\toggletrue{showTalks}
+\toggletrue{showConferencePresentations}
+\toggletrue{showTeaching}
+\toggletrue{showService}
+\toggletrue{showReviewer}
+\toggletrue{showGrants}
+\toggletrue{showMentorship}
+\toggletrue{showMemberships}
+\toggletrue{showReferences}
+\togglefalse{showFullReferences}  % false = "Available upon request"
+
+%==============================================================================
+% TOGGLES — PUBLICATION FILTERS
+%==============================================================================
+\newtoggle{selectedOnlyPublications}    % true = "Selected Publications" section title
+\newtoggle{selectedOnlyPatents}         % true = "Selected Patents" section title
 \newtoggle{selectedOnlyJournals}
-\newtoggle{selectedOnlyPreprints}
 \newtoggle{selectedOnlyConferenceProceedings}
+\newtoggle{selectedOnlyPreprints}
 \newtoggle{selectedOnlyPresentations}
 
-% Section depth
+\togglefalse{selectedOnlyPublications}  % true = "Selected Publications" heading
+\togglefalse{selectedOnlyPatents}       % true = "Selected Patents" heading (mirrors patentFilter)
+\togglefalse{selectedOnlyJournals}
+\togglefalse{selectedOnlyConferenceProceedings}
+\togglefalse{selectedOnlyPreprints}
+\toggletrue{selectedOnlyPresentations}
+
+%------------------------------------------------------------------------------
+% PATENT DISPLAY MODE
+%
+% \def\patentMode{none}       → omit patents section entirely
+% \def\patentMode{granted}    → show granted patents only
+% \def\patentMode{all}        → show granted + filed patents
+%
+% \def\patentFilter{selected} → only entries with keywords={selected}
+% \def\patentFilter{all}      → all entries regardless of keyword
+%------------------------------------------------------------------------------
+\def\patentMode{granted}     % none | granted | all
+\def\patentFilter{selected}  % selected | all
+
+%==============================================================================
+% TOGGLES — SECTION DEPTH
+%==============================================================================
 \newtoggle{showAllGrants}
 \newtoggle{showAllTalks}
 \newtoggle{showAllTeaching}
 \newtoggle{showAllService}
 
-% Bibliography numbering
-\newtoggle{showBibNumbers}
-\newtoggle{reverseBibNumbers}
-
-%------------------------------------------------------------------------------
-% ACTIVE PRESET
-% cv-preset.tex is auto-generated by the Makefile (see config/).
-% Default (fallback for fresh clones): config/full.tex
-%------------------------------------------------------------------------------
-\input{cv-preset}
+\togglefalse{showAllGrants}
+\togglefalse{showAllTalks}
+\togglefalse{showAllTeaching}
+\togglefalse{showAllService}
 
 % First-pass guard: skip all \printbibliography calls until the .bbl exists.
 % This prevents xelatex from crashing before biber has run, which would
@@ -473,7 +512,7 @@
 
 \makecvfooter
   {\today}
-  {Shabnam Hakimi ~~·~~ Curriculum Vita}
+  {Shabnam Hakimi ~~·~~ Curriculum Vitae}
   {\thepage}
 
 %------------------------------------------------------------------------------
@@ -500,6 +539,7 @@
 \iftoggle{showConferenceProceedings}{\booltrue{showPublications}}{}
 \iftoggle{showConferencePresentations}{\booltrue{showPublications}}{}
 \iftoggle{showBookChapters}{\booltrue{showPublications}}{}
+\iftoggle{showSciComm}{\booltrue{showPublications}}{}
 
 \ifbool{showPublications}{%
   \iftoggle{selectedOnlyPublications}{%
@@ -556,11 +596,13 @@
   \iftoggle{showConferencePresentations}{%
     \startbibsection{presentations}%
     \iftoggle{selectedOnlyPresentations}{%
-      \leavevmode\printbibliography[type=unpublished, keyword=presentation, keyword=selected,
+      % Use a bibcheck for AND logic (keyword=presentation AND keyword=selected),
+      % since multiple keyword= filters in \printbibliography are OR not AND.
+      \leavevmode\printbibliography[check=presentationselected,
                          title={Selected Conference Presentations},
                          heading=cvsubsection]%
     }{%
-      \leavevmode\printbibliography[type=unpublished, keyword=presentation,
+      \leavevmode\printbibliography[keyword=presentation,
                          title={Conference Presentations},
                          heading=cvsubsection]%
     }%
@@ -574,6 +616,15 @@
                        heading=cvsubsection]%
     \finishbibsection{bookchapters}%
   }{}
+
+  % Science Communication — always at end of Publications section
+  \iftoggle{showSciComm}{%
+    \startbibsection{scicomm}%
+    \leavevmode\printbibliography[type=misc, keyword=scicomm,
+                       title={Science Communication},
+                       heading=cvsubsection]%
+    \finishbibsection{scicomm}%
+  }{}%
 }{}
 
 %-- Patents -------------------------------------------------------------------
@@ -591,25 +642,18 @@
   }%
 }{}
 
-%-- Talks & Science Communication ---------------------------------------------
+%-- Invited Talks -------------------------------------------------------------
+% Section heading: "Invited Talks" (showAllTalks=true) or
+%                  "Selected Invited Talks" (showAllTalks=false).
+% No subheading inside — talks.tex must NOT call \cvsubsection.
 
-\newbool{showTalksSection}
-\boolfalse{showTalksSection}
-\iftoggle{showTalks}{\booltrue{showTalksSection}}{}
-\iftoggle{showSciComm}{\booltrue{showTalksSection}}{}
-
-\ifbool{showTalksSection}{%
-  \cvsection{Talks \& Science Communication}%
-  % sections/talks.tex must use \cvsubsection (not \cvsection) for the talks heading.
-  \iftoggle{showTalks}{\input{sections/talks}}{}
-
-  \iftoggle{showSciComm}{%
-    \startbibsection{scicomm}%
-    \leavevmode\printbibliography[type=misc, keyword=scicomm,
-                       title={Science Communication},
-                       heading=cvsubsection]%
-    \finishbibsection{scicomm}%
-  }{}%
+\iftoggle{showTalks}{%
+  \iftoggle{showAllTalks}{%
+    \cvsection{Invited Talks}%
+  }{%
+    \cvsection{Selected Invited Talks}%
+  }%
+  \input{sections/talks}%
 }{}
 
 %-- Teaching & Service --------------------------------------------------------
