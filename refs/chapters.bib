@@ -1,0 +1,66 @@
+%==============================================================================
+% REVIEWS, BOOK CHAPTERS, & COMMENTARIES
+%
+% Two keyword conventions control which \printbibliography filter picks up
+% each entry in cv.tex:
+%
+%   keywords = {bookchapter}  → @incollection entries (book chapters)
+%   keywords = {commentary}   → @article entries (magazine/newsletter pieces,
+%                               reviews, commentaries not in peer-reviewed journals)
+%
+% Both keywords are printed under the same "Reviews, Book Chapters &
+% Commentaries" section heading via two consecutive \printbibliography calls.
+%==============================================================================
+
+@article{Klenk2023anticipatory,
+  author    = {Klenk, M. and Hong, M. and Hakimi, Shabnam and Wu, C.},
+  title     = {Anticipatory thinking in design},
+  journal   = {{AI} Magazine},
+  year      = {2023},
+  volume    = {44},
+  number    = {2},
+  pages     = {165--172},
+  doi       = {10.1002/aaai.12101},
+  keywords  = {commentary},
+}
+
+@article{Hsiung2018curiosity,
+  author    = {Hsiung, A. and Hakimi, Shabnam and Adcock, R. A.},
+  title     = {Unpacking the different flavors of curiosity},
+  journal   = {{IEEE} {CIS} Newsletter on Cognitive and Developmental Systems},
+  year      = {2018},
+  volume    = {15},
+  number    = {1},
+  pages     = {10},
+  note      = {Spring 2018},
+  keywords  = {commentary},
+}
+
+@incollection{Tost2009mri,
+  author    = {Tost, H. and Hakimi, Shabnam and Meyer-Lindenberg, A.},
+  title     = {Magnetic resonance biomarkers in schizophrenia research},
+  booktitle = {Handbook of Neuropsychiatric Biomarkers, Endophenotypes, and Genes:
+               Promises, Advances, and Challenges},
+  editor    = {Ritsner, M. S.},
+  publisher = {Springer},
+  address   = {Dordrecht},
+  year      = {2009},
+  chapter   = {23},
+  pages     = {381--402},
+  doi       = {10.1007/978-1-4020-9831-4_6},
+  keywords  = {bookchapter},
+}
+
+@incollection{Tost2009dopamine,
+  author    = {Tost, H. and Hakimi, Shabnam and Meyer-Lindenberg, A.},
+  title     = {Dopamine dysfunction in schizophrenia: From genetic susceptibility
+               to cognitive impairment},
+  booktitle = {Dopamine Handbook},
+  editor    = {Iversen, L. and Iversen, S.},
+  publisher = {Oxford University Press},
+  year      = {2009},
+  chapter   = {10.4},
+  pages     = {558--571},
+  doi       = {10.1093/acprof:oso/9780195373035.003.0039},
+  keywords  = {bookchapter},
+}
