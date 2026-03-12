@@ -44,12 +44,13 @@ TOOL_NAME    = "cv_updater"
 ADMIN_EMAIL  = "shabnamhakimi@gmail.com"
 
 BIB_CHOICES = {
-    "1": ("refs/journals.bib",      "journals"),
-    "2": ("refs/preprints.bib",     "preprints"),
-    "3": ("refs/conference.bib",    "conference"),
-    "4": ("refs/presentations.bib", "presentations"),
-    "5": ("refs/scicomm.bib",       "scicomm"),
-    "6": ("refs/patents.bib",       "patents"),
+    "1": ("refs/journals.bib",      "journals",       "article"),
+    "2": ("refs/preprints.bib",     "preprints",      "article"),
+    "3": ("refs/conference.bib",    "conference",     "inproceedings"),
+    "4": ("refs/presentations.bib", "presentations",  "unpublished"),
+    "5": ("refs/scicomm.bib",       "scicomm",        None),
+    "6": ("refs/patents.bib",       "patents",        "patent"),
+    "7": ("refs/chapters.bib",      "chapters",       None),
 }
 # ---------------------------------------------------------------------------
 
@@ -226,6 +227,41 @@ BLANK_TEMPLATES = {
         "  keywords  = {},\n"
         "}"
     ),
+    "unpublished": (
+        "@unpublished{CiteKey,\n"
+        "  author   = {},\n"
+        "  title    = {},\n"
+        "  note     = {},\n"
+        "  year     = {????},\n"
+        "  month    = ,\n"
+        "  type     = {Talk},\n"
+        "  keywords = {presentation},\n"
+        "}"
+    ),
+    "patent": (
+        "@patent{CiteKey,\n"
+        "  author      = {},\n"
+        "  title       = {},\n"
+        "  number      = {},\n"
+        "  year        = {????},\n"
+        "  month       = ,\n"
+        "  assignee    = {Toyota Research Institute},\n"
+        "  keywords    = {},\n"
+        "}"
+    ),
+    "incollection": (
+        "@incollection{CiteKey,\n"
+        "  author    = {},\n"
+        "  title     = {},\n"
+        "  booktitle = {},\n"
+        "  editor    = {},\n"
+        "  publisher = {},\n"
+        "  year      = {????},\n"
+        "  pages     = {},\n"
+        "  doi       = {},\n"
+        "  keywords  = {bookchapter},\n"
+        "}"
+    ),
     "misc": (
         "@misc{CiteKey,\n"
         "  author   = {},\n"
@@ -241,52 +277,61 @@ BLANK_TEMPLATES = {
 TEMPLATE_MENU = {
     "1": ("article",        "journal article"),
     "2": ("inproceedings",  "conference paper"),
-    "3": ("misc",           "other / talk / preprint"),
+    "3": ("unpublished",    "presentation / talk"),
+    "4": ("incollection",   "book chapter"),
+    "5": ("patent",         "patent"),
+    "6": ("misc",           "other / preprint / scicomm"),
 }
 
 
-def choose_template() -> str:
-    """Prompt for entry type and return a blank BibTeX template string."""
+def choose_template(entry_type: str = None) -> str:
+    """Return a blank BibTeX template. If entry_type is given, use it directly."""
+    if entry_type and entry_type in BLANK_TEMPLATES:
+        return BLANK_TEMPLATES[entry_type]
     print()
     print("  Entry type:")
     for k, (_, label) in TEMPLATE_MENU.items():
         print(f"    {k}  {label}")
     while True:
         try:
-            ch = input("  Choose [1-3]: ").strip()
+            ch = input(f"  Choose [1-{len(TEMPLATE_MENU)}]: ").strip()
         except (EOFError, KeyboardInterrupt):
             sys.exit(0)
         if ch in TEMPLATE_MENU:
             etype, _ = TEMPLATE_MENU[ch]
             return BLANK_TEMPLATES[etype]
-        print("  Please enter 1, 2, or 3.")
+        print(f"  Please enter 1-{len(TEMPLATE_MENU)}.")
 
 
 # ---------------------------------------------------------------------------
 # TARGET BIB FILE SELECTION
 # ---------------------------------------------------------------------------
 
-def choose_bib_file(default: str = None) -> Path:
-    """Prompt for target .bib file and return its Path."""
+def choose_bib_file(default: str = None) -> tuple:
+    """Prompt for target .bib file. Returns (Path, entry_type_or_None)."""
     if default:
         p = Path(default)
         if not p.parent.exists():
             p.parent.mkdir(parents=True, exist_ok=True)
-        return p
+        # Try to infer entry type from the known choices
+        for path, _, entry_type in BIB_CHOICES.values():
+            if Path(path) == p:
+                return p, entry_type
+        return p, None
 
     print()
     print("  Target .bib file:")
-    for k, (path, label) in BIB_CHOICES.items():
+    for k, (path, label, _) in BIB_CHOICES.items():
         print(f"    {k}  {label:20s}  ({path})")
     while True:
         try:
-            ch = input("  Choose [1-6]: ").strip()
+            ch = input(f"  Choose [1-{len(BIB_CHOICES)}]: ").strip()
         except (EOFError, KeyboardInterrupt):
             sys.exit(0)
         if ch in BIB_CHOICES:
-            path, _ = BIB_CHOICES[ch]
-            return Path(path)
-        print("  Please enter 1-6.")
+            path, _, entry_type = BIB_CHOICES[ch]
+            return Path(path), entry_type
+        print(f"  Please enter 1-{len(BIB_CHOICES)}.")
 
 
 # ---------------------------------------------------------------------------
@@ -299,6 +344,11 @@ def looks_valid(bibtex: str) -> bool:
         re.search(r"@\w+\{\S+,", bibtex)
         and re.search(r"title\s*=\s*\{[^}]+\}", bibtex, re.IGNORECASE)
     )
+
+
+def coerce_entry_type(bibtex: str, entry_type: str) -> str:
+    """Replace the @entrytype in a BibTeX string with the given type."""
+    return re.sub(r"^@\w+", f"@{entry_type}", bibtex, count=1)
 
 
 # ---------------------------------------------------------------------------
@@ -363,19 +413,23 @@ def main():
             print("  Please enter 1, 2, or 3.")
 
     # -- Choose target bib file -----------------------------------------------
-    bib_path = choose_bib_file(args.bib)
+    bib_path, entry_type = choose_bib_file(args.bib)
 
     # -- Fetch / build initial bibtex ----------------------------------------
     if args.doi:
         print(f"\n  Looking up DOI: {args.doi} ...")
         bibtex = fetch_by_doi(args.doi)
+        if entry_type:
+            bibtex = coerce_entry_type(bibtex, entry_type)
         print("  Metadata fetched. Opening in editor...")
     elif args.pmid:
         print(f"\n  Looking up PMID: {args.pmid} ...")
         bibtex = fetch_by_pmid(args.pmid)
+        if entry_type:
+            bibtex = coerce_entry_type(bibtex, entry_type)
         print("  Metadata fetched. Opening in editor...")
     else:
-        bibtex = choose_template()
+        bibtex = choose_template(entry_type)
         print("\n  Opening blank template in editor...")
 
     # -- Edit in $EDITOR ------------------------------------------------------
