@@ -1,0 +1,52 @@
+%==============================================================================
+% PRESET: Industry / Job Application
+% All publication subsections shown, unfiltered.
+% Talks on (condensed, 6 entries). Service condensed. Reviewer on.
+% Grants, teaching, memberships hidden.
+%==============================================================================
+
+%------------------------------------------------------------------------------
+% SECTION VISIBILITY
+%------------------------------------------------------------------------------
+\toggletrue{showJournals}
+\toggletrue{showPreprints}
+\toggletrue{showConferenceProceedings}
+\togglefalse{showConferencePresentations}  % separate from invited talks
+\toggletrue{showBookChapters}
+\toggletrue{showPatents}
+\toggletrue{showSciComm}
+\toggletrue{showTalks}
+\togglefalse{showGrants}
+\togglefalse{showTeaching}
+\toggletrue{showService}
+\toggletrue{showReviewer}
+\togglefalse{showMentorship}
+\togglefalse{showMemberships}
+\togglefalse{showReferences}
+
+%------------------------------------------------------------------------------
+% PUBLICATION FILTERS — show everything, no selected-only filtering
+%------------------------------------------------------------------------------
+\togglefalse{selectedOnlyPublications}
+\togglefalse{selectedOnlyJournals}
+\togglefalse{selectedOnlyPreprints}
+\togglefalse{selectedOnlyConferenceProceedings}
+\toggletrue{selectedOnlyPresentations}     % presentations always selected-only
+\toggletrue{selectedOnlyPatents}           % patents labeled "Selected" in heading
+
+\def\patentMode{granted}   % none | granted | all
+\def\patentFilter{all}     % selected | all  (heading already says "Selected")
+
+%------------------------------------------------------------------------------
+% SECTION DEPTH
+%------------------------------------------------------------------------------
+\togglefalse{showAllGrants}
+\togglefalse{showAllTalks}      % 6 invited talks (condensed)
+\togglefalse{showAllTeaching}
+\togglefalse{showAllService}    % 7 selected service entries
+
+%------------------------------------------------------------------------------
+% BIBLIOGRAPHY NUMBERING
+%------------------------------------------------------------------------------
+\toggletrue{showBibNumbers}
+\togglefalse{reverseBibNumbers}

@@ -1,0 +1,55 @@
+%==============================================================================
+% DEFAULT PRESET (fallback for fresh clones — overwritten by Makefile targets)
+% To change: run  make full | make industry | make speaking
+%==============================================================================
+%==============================================================================
+% PRESET: Full Academic CV
+% All sections visible. No selected-only filters.
+%==============================================================================
+
+%------------------------------------------------------------------------------
+% SECTION VISIBILITY
+%------------------------------------------------------------------------------
+\toggletrue{showJournals}
+\toggletrue{showPreprints}
+\toggletrue{showConferenceProceedings}
+\toggletrue{showConferencePresentations}
+\toggletrue{showBookChapters}
+\toggletrue{showPatents}
+\toggletrue{showSciComm}
+\toggletrue{showTalks}
+\toggletrue{showGrants}
+\toggletrue{showTeaching}
+\toggletrue{showService}
+\toggletrue{showReviewer}
+\toggletrue{showMentorship}
+\toggletrue{showMemberships}
+\toggletrue{showReferences}
+\togglefalse{showFullReferences}   % false = "Available upon request"
+
+%------------------------------------------------------------------------------
+% PUBLICATION FILTERS — show everything
+%------------------------------------------------------------------------------
+\togglefalse{selectedOnlyPublications}
+\togglefalse{selectedOnlyJournals}
+\togglefalse{selectedOnlyPreprints}
+\togglefalse{selectedOnlyConferenceProceedings}
+\toggletrue{selectedOnlyPresentations}     % presentations always selected-only
+\togglefalse{selectedOnlyPatents}
+
+\def\patentMode{all}       % none | granted | all
+\def\patentFilter{all}     % selected | all
+
+%------------------------------------------------------------------------------
+% SECTION DEPTH — show all entries in expandable sections
+%------------------------------------------------------------------------------
+\toggletrue{showAllGrants}
+\toggletrue{showAllTalks}
+\toggletrue{showAllTeaching}
+\toggletrue{showAllService}
+
+%------------------------------------------------------------------------------
+% BIBLIOGRAPHY NUMBERING
+%------------------------------------------------------------------------------
+\toggletrue{showBibNumbers}
+\togglefalse{reverseBibNumbers}
