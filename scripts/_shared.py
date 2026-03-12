@@ -391,6 +391,12 @@ def interactive_review(
             # Extract a short title for the rejection record if possible
             title_m = re.search(r"title\s*=\s*\{([^}]+)\}", bibtex, re.IGNORECASE)
             label   = title_m.group(1)[:120] if title_m else reject_key
+            try:
+                note = input("  Rejection note (optional, Enter to skip): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                note = ""
+            if note:
+                label = f"{label} | {note}"
             to_reject[reject_key] = label
             print("  -> Rejected and remembered.")
 
