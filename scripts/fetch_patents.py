@@ -53,7 +53,7 @@ PEDS_BASE      = "https://ped.uspto.gov/api/queries"
 
 HEADERS = {
     "Accept": "application/json",
-    "User-Agent": "cv-updater/1.0 (shabnam@tri.global)",
+    "User-Agent": "cv-updater/1.0 (shabnamhakimi@gmail.com)",
 }
 
 # ── KNOWN PATENT NUMBERS ──────────────────────────────────────────────────────

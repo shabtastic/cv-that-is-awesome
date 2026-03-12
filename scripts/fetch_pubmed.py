@@ -5,30 +5,25 @@ fetch_pubmed.py
 Fetch publications from the PubMed E-utilities API and append new entries
 to refs/journals.bib.
 
-STRATEGY — two complementary queries are combined:
+STRATEGY
+--------
+Two complementary queries are combined:
 
-  1. ORCID query  [auid]   — exact match, works for papers published since ~2012
-                             where the journal/author linked an ORCID.
-  2. Name query   [Author] — broad match, catches older papers and any papers
-                             where ORCID metadata is missing.
+  1. ORCID query  [auid]   -- exact match, works for papers since ~2012
+                              where the journal/author linked an ORCID.
+  2. Name query   [Author] -- broad match, catches older papers and journals
+                              that do not deposit ORCID metadata.
 
-Results from both queries are unioned. Any PMID found *only* by the name query
-(i.e. not confirmed by ORCID) is passed through a name-verification step that
-checks the author list for a recognizable form of the target author's name.
-Records where a Hakimi with a clearly different first name is the matching
-author are rejected.
+Results are unioned. PMIDs found only by the name query pass through an
+automatic author-name check, then through interactive review (if enabled).
 
-CONFIG — edit the block below to match your identity:
-  ORCID_ID            — your ORCID (used for the exact query)
-  PUBMED_AUTHOR       — "LastName Initial" for the name query
-  AUTHOR_LAST         — last name to match (case-insensitive)
-  AUTHOR_FIRSTS       — accepted first names / initials (all lowercase,
-                        no punctuation). Include every form that might appear
-                        in PubMed: full first name, given initial, etc.
-  AUTHOR_MAX_INITIALS — max tokens in the first-name field; set to 1 since
-                        Shabnam has no middle name (rejects "S A", "S M", etc.)
+Rejected entries are saved to refs/.pubmed_rejected.json.
 
-Requirements: pip install requests bibtexparser
+CONFIG
+------
+Edit the CONFIG block below to match your identity.
+
+Requirements: pip install requests
 """
 
 import argparse
@@ -40,24 +35,30 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _shared import load_manual_fingerprints, fingerprint_matches  # noqa: E402
+from _shared import (  # noqa: E402
+    load_manual_fingerprints, fingerprint_matches,
+    load_rejected, save_rejected, interactive_review, review_rejected,
+)
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
-ORCID_ID            = "0000-0003-4122-6041"   # your ORCID iD
-PUBMED_AUTHOR       = "Hakimi S"              # LastName Initial for name query
-AUTHOR_LAST         = "Hakimi"               # last name to match
-AUTHOR_FIRSTS       = {"shabnam", "s"}        # accepted first-name forms
-AUTHOR_MAX_INITIALS = 1                       # no middle name → max 1 token
+# ---------------------------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------------------------
+ORCID_ID            = "0000-0003-4122-6041"
+PUBMED_AUTHOR       = "Hakimi S"
+AUTHOR_LAST         = "Hakimi"
+AUTHOR_FIRSTS       = {"shabnam", "s"}
+AUTHOR_MAX_INITIALS = 1                  # no middle name -> reject "S A", "S M"
 BIB_OUT             = Path("refs/journals.bib")
+REJECTED_FILE       = Path("refs/.pubmed_rejected.json")
 ESEARCH_URL         = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 EFETCH_URL          = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 TOOL_NAME           = "cv_updater"
-ADMIN_EMAIL         = "shabnam@tri.global"    # required by NCBI policy
-# ─────────────────────────────────────────────────────────────────────────────
+ADMIN_EMAIL         = "shabnamhakimi@gmail.com"
+# ---------------------------------------------------------------------------
 
 
-def esearch(term: str, retmax: int = 200) -> set[str]:
-    """Run a PubMed esearch query and return the set of matching PMIDs."""
+def esearch(term: str, retmax: int = 200) -> set:
+    """Run a PubMed esearch and return the set of matching PMIDs."""
     params = dict(db="pubmed", term=term, retmax=retmax,
                   retmode="json", tool=TOOL_NAME, email=ADMIN_EMAIL)
     r = requests.get(ESEARCH_URL, params=params, timeout=15)
@@ -65,7 +66,7 @@ def esearch(term: str, retmax: int = 200) -> set[str]:
     return set(r.json()["esearchresult"]["idlist"])
 
 
-def fetch_pubmed_records(pmids: list[str]) -> ET.Element:
+def fetch_pubmed_records(pmids: list) -> ET.Element:
     params = dict(db="pubmed", id=",".join(pmids),
                   retmode="xml", rettype="abstract",
                   tool=TOOL_NAME, email=ADMIN_EMAIL)
@@ -107,18 +108,13 @@ def parse_article(article: ET.Element) -> dict:
 
 def author_matches(rec: dict) -> bool:
     """
-    Return True if the article contains an author matching AUTHOR_LAST whose
-    first-name field is consistent with the target author's identity:
+    Return True if the record contains a Hakimi whose first-name field is
+    consistent with the target author.
 
-      - First name or initial must be in AUTHOR_FIRSTS
-      - The first-name field must have no more than AUTHOR_MAX_INITIALS tokens
-        (no middle name or second initial — Shabnam has none)
-
-    Examples:
-      "Hakimi, Shabnam"  → accept  (full first name matches)
-      "Hakimi, S"        → accept  (single initial, could be ours)
-      "Hakimi, Sophie"   → reject  (first name not in AUTHOR_FIRSTS)
-      "Hakimi, S A"      → reject  (second initial — different person)
+      "Hakimi, Shabnam" -> accept
+      "Hakimi, S"       -> accept (single initial)
+      "Hakimi, Sophie"  -> reject (wrong first name)
+      "Hakimi, S A"     -> reject (second initial -- different person)
     """
     last_lower = AUTHOR_LAST.lower()
     for author in rec["authors"]:
@@ -137,119 +133,181 @@ def author_matches(rec: dict) -> bool:
     return False
 
 
-def record_to_bibtex(rec: dict) -> str:
-    first_author = rec["authors"][0].split(",")[0] if rec["authors"] else "Unknown"
-    first_word   = re.sub(r"[^a-zA-Z]", "", rec["title"].split()[0]) if rec["title"] else "x"
-    cite_key     = f"{first_author}{rec['year']}{first_word}"
-    author_str   = " and ".join(rec["authors"])
+def record_to_bibtex(rec: dict, keywords: str = "") -> str:
+    authors      = rec.get("authors", [])
+    title        = rec.get("title", "")
+    first_author = authors[0].split(",")[0] if authors else "Unknown"
+    first_word   = re.sub(r"[^a-zA-Z]", "", title.split()[0]) if title else "x"
+    cite_key     = f"{first_author}{rec.get('year', '????')}{first_word}"
+    author_str   = " and ".join(authors)
 
     lines = [f"@article{{{cite_key},"]
     lines.append(f"  author   = {{{author_str}}},")
-    lines.append(f"  title    = {{{rec['title']}}},")
-    lines.append(f"  journal  = {{{rec['journal']}}},")
-    lines.append(f"  year     = {{{rec['year']}}},")
-    if rec["volume"]:  lines.append(f"  volume   = {{{rec['volume']}}},")
-    if rec["issue"]:   lines.append(f"  number   = {{{rec['issue']}}},")
-    if rec["pages"]:   lines.append(f"  pages    = {{{rec['pages']}}},")
-    if rec["doi"]:     lines.append(f"  doi      = {{{rec['doi']}}},")
-    lines.append(f"  note     = {{PMID: {rec['pmid']}}},")
-    lines.append(f"  keywords = {{}},")
+    lines.append(f"  title    = {{{title}}},")
+    lines.append(f"  journal  = {{{rec.get('journal', '')}}},")
+    lines.append(f"  year     = {{{rec.get('year', '????')}}},")
+    if rec.get("volume"): lines.append(f"  volume   = {{{rec['volume']}}},")
+    if rec.get("issue"):  lines.append(f"  number   = {{{rec['issue']}}},")
+    if rec.get("pages"):  lines.append(f"  pages    = {{{rec['pages']}}},")
+    if rec.get("doi"):    lines.append(f"  doi      = {{{rec['doi']}}},")
+    lines.append(f"  note     = {{PMID: {rec.get('pmid', '')}}},")
+    lines.append(f"  keywords = {{{keywords}}},")
     lines.append("}")
     return "\n".join(lines)
 
 
-def load_existing_pmids(bib_path: Path) -> set[str]:
-    if not bib_path.exists():\
+def load_existing_pmids(bib_path: Path) -> set:
+    if not bib_path.exists():
         return set()
-    return set(re.findall(r'PMID:\s*(\d+)', bib_path.read_text()))
+    return set(re.findall(r"PMID:\s*(\d+)", bib_path.read_text()))
 
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch publications from PubMed")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Preview new entries without writing to disk")
+    parser.add_argument("--dry-run", "-n", action="store_true",
+                        help="Preview without writing to disk")
+    parser.add_argument("--interactive", "-i", action="store_true",
+                        help="Review each entry before adding")
+    parser.add_argument("--show-skipped", action="store_true",
+                        help="List all filtered-out entries and why")
+    parser.add_argument("--review-rejected", action="store_true",
+                        help="Interactively review the rejection list")
     args = parser.parse_args()
 
-    # ── Query 1: ORCID (exact) ────────────────────────────────────────────────
+    interactive = args.interactive or (
+        not args.dry_run and sys.stdin.isatty() and sys.stdout.isatty()
+    )
+
+    if args.review_rejected:
+        unrejected, updated = review_rejected(REJECTED_FILE)
+        if unrejected and not args.dry_run:
+            save_rejected(REJECTED_FILE, updated)
+            print(f"  Removed {len(unrejected)} PMID(s) from rejection list.")
+            print("  Re-run without --review-rejected to fetch un-rejected entries.")
+        elif unrejected and args.dry_run:
+            print(f"  [dry-run] Would remove {len(unrejected)} PMID(s) from rejection list.")
+        return
+
+    # -- Query 1: ORCID -------------------------------------------------------
     print(f"Searching PubMed by ORCID: {ORCID_ID}")
     orcid_pmids = esearch(f"{ORCID_ID}[auid]")
     print(f"  [auid]   {len(orcid_pmids)} results")
 
-    # ── Query 2: Author name (broad) ──────────────────────────────────────────
+    # -- Query 2: Author name -------------------------------------------------
     print(f"Searching PubMed by name:  {PUBMED_AUTHOR}")
     name_pmids = esearch(f"{PUBMED_AUTHOR}[Author]")
-    print(f"  [Author] {len(name_pmids)} results (before name verification)")
+    print(f"  [Author] {len(name_pmids)} results (before filtering)")
 
-    # PMIDs confirmed by ORCID need no further verification.
-    # PMIDs only from the name search will be verified after fetching.
     name_only_pmids = name_pmids - orcid_pmids
     all_pmids       = orcid_pmids | name_pmids
     print(f"  Combined {len(all_pmids)} unique PMIDs "
           f"({len(orcid_pmids)} ORCID-confirmed, "
-          f"{len(name_only_pmids)} name-only pending verification)")
+          f"{len(name_only_pmids)} name-only)")
 
-    # ── Filter against existing bib and manual entries ────────────────────────
+    # -- Filter ---------------------------------------------------------------
     existing_pmids = load_existing_pmids(BIB_OUT)
     manual_fp      = load_manual_fingerprints(BIB_OUT)
-    new_pmids      = []
-    skipped_manual = 0
+    rejected       = load_rejected(REJECTED_FILE)
+
+    new_pmids       = []
+    skipped_manual  = 0
+    skipped_reject  = 0
+    skipped_exist   = 0
+    show            = args.show_skipped
 
     for p in sorted(all_pmids):
         if p in existing_pmids:
+            skipped_exist += 1
+            if show: print(f"  [skip-exist]   PMID {p} already in {BIB_OUT}")
+            continue
+        if p in rejected:
+            skipped_reject += 1
+            if show: print(f"  [skip-rejected] PMID {p}: {rejected[p][:60]}")
             continue
         stub = {"ID": "", "doi": "", "note": f"PMID: {p}", "title": ""}
         if fingerprint_matches(stub, manual_fp):
             skipped_manual += 1
+            if show: print(f"  [skip-manual]  PMID {p} matches a protected manual entry")
             continue
         new_pmids.append(p)
 
-    if skipped_manual:
-        print(f"  Skipped {skipped_manual} record(s) matching manual entries")
+    if skipped_exist:   print(f"  Skipped {skipped_exist} already-present PMID(s)")
+    if skipped_manual:  print(f"  Skipped {skipped_manual} matching manual entries")
+    if skipped_reject:  print(f"  Skipped {skipped_reject} previously rejected PMID(s)")
 
     if not new_pmids:
         print("  No new PubMed records.")
         return
 
-    # ── Fetch and verify ──────────────────────────────────────────────────────
+    # -- Fetch ----------------------------------------------------------------
     print(f"  Fetching {len(new_pmids)} new records...")
     root     = fetch_pubmed_records(new_pmids)
     articles = root.findall(".//PubmedArticle")
 
-    entries        = []
-    rejected_names = []
+    # -- Auto name-filter + build candidate list ------------------------------
+    candidates    = []   # (bibtex, doi, reject_key, source_label)
+    auto_rejected = []
 
     for article in articles:
         rec  = parse_article(article)
         pmid = rec["pmid"]
 
-        # Name-only PMIDs must pass author verification
         if pmid in name_only_pmids and pmid not in orcid_pmids:
             if not author_matches(rec):
-                rejected_names.append((pmid, rec["title"][:70]))
+                auto_rejected.append((pmid, rec["title"][:70]))
                 continue
+            source = "name-search, verified"
+        else:
+            source = "ORCID-confirmed"
 
-        entries.append(record_to_bibtex(rec))
+        bibtex = record_to_bibtex(rec)
+        candidates.append((bibtex, rec["doi"], pmid, source))
 
-    if rejected_names:
-        print(f"  Rejected {len(rejected_names)} name-search result(s) "
+    if auto_rejected:
+        print(f"  Auto-rejected {len(auto_rejected)} record(s) "
               f"(author name mismatch):")
-        for pmid, title in rejected_names:
+        for pmid, title in auto_rejected:
             print(f"    PMID {pmid}: {title}")
 
-    if not entries:
-        print("  No new entries after verification.")
+    if not candidates:
+        print("  No candidates remaining after filtering.")
         return
 
-    print(f"  {len(entries)} entries passed verification.")
-    if not args.dry_run:
-        with open(BIB_OUT, "a", encoding="utf-8") as f:
-            f.write("\n\n% --- PubMed auto-fetched ---\n")
-            f.write("\n\n".join(entries))
-        print(f"  Appended to {BIB_OUT}")
+    print(f"  {len(candidates)} candidate(s) to review.")
+
+    # -- Interactive review or auto-accept ------------------------------------
+    new_rejected = {}
+    if interactive:
+        print()
+        print("  Actions:  a=accept  e=edit  m=manual  r=reject+remember  s=skip  o=open DOI")
+        entries, new_rejected = interactive_review(candidates, REJECTED_FILE)
     else:
-        print("  [dry-run] Would append:\n")
-        for e in entries:
-            print(e, "\n")
+        entries = [bibtex for bibtex, *_ in candidates]
+
+    # -- Write ----------------------------------------------------------------
+    if not entries:
+        print("  No entries accepted.")
+    else:
+        print(f"  {len(entries)} entry/entries accepted.")
+        if not args.dry_run:
+            with open(BIB_OUT, "a", encoding="utf-8") as f:
+                f.write("\n\n% --- PubMed auto-fetched ---\n")
+                f.write("\n\n".join(entries))
+            print(f"  Appended to {BIB_OUT}")
+        else:
+            print("  [dry-run] Would append:\n")
+            for e in entries:
+                print(e, "\n")
+
+    if new_rejected and not args.dry_run:
+        existing = load_rejected(REJECTED_FILE)
+        existing.update(new_rejected)
+        save_rejected(REJECTED_FILE, existing)
+        print(f"  Saved {len(new_rejected)} rejection(s) to {REJECTED_FILE}")
+    elif new_rejected and args.dry_run:
+        print(f"  [dry-run] Would remember {len(new_rejected)} rejection(s):")
+        for pmid, title in new_rejected.items():
+            print(f"    PMID {pmid}: {title}")
 
 
 if __name__ == "__main__":
