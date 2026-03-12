@@ -14,6 +14,9 @@ from pathlib import Path
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _shared import load_manual_fingerprints, fingerprint_matches  # noqa: E402
+
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 ORCID_ID  = "0000-0003-4122-6041"   # ← replace with your ORCID iD
 BIB_OUT   = Path("refs/journals.bib")
@@ -37,7 +40,15 @@ def fetch_works(orcid_id: str) -> list[dict]:
 
 
 def work_to_bibtex(work: dict) -> str | None:
-    """Convert an ORCID work summary dict to a BibTeX @article string."""
+    """
+    Convert an ORCID work summary dict to a BibTeX @article string.
+
+    Note: the ORCID summary API does not return full author lists — only the
+    work title, year, journal, and DOI are reliably available at this level.
+    The generated entry omits the author field so it is clearly visible during
+    review. fetch_pubmed.py will fill in complete author data for the same
+    papers via PMID/DOI matching; run dedup afterward to merge them.
+    """
     title_obj = work.get("title", {}).get("title", {})
     title     = title_obj.get("value", "") if title_obj else ""
     pub_date  = work.get("publication-date") or {}
