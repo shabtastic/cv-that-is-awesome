@@ -19,44 +19,44 @@ all: full industry speaking
 
 # Individual preset targets
 full:
-  cp config/full.tex cv-preset.tex
-  $(MAKE) pdf
-  mv cv.pdf cv-full.pdf
-  @echo "→ cv-full.pdf"
+	cp config/full.tex cv-preset.tex
+	$(MAKE) pdf
+	mv cv.pdf cv-full.pdf
+	@echo "→ cv-full.pdf"
 
 industry:
-  cp config/industry.tex cv-preset.tex
-  $(MAKE) pdf
-  mv cv.pdf cv-industry.pdf
-  @echo "→ cv-industry.pdf"
+	cp config/industry.tex cv-preset.tex
+	$(MAKE) pdf
+	mv cv.pdf cv-industry.pdf
+	@echo "→ cv-industry.pdf"
 
 speaking:
-  cp config/speaking.tex cv-preset.tex
-  $(MAKE) pdf
-  mv cv.pdf cv-speaking.pdf
-  @echo "→ cv-speaking.pdf"
+	cp config/speaking.tex cv-preset.tex
+	$(MAKE) pdf
+	mv cv.pdf cv-speaking.pdf
+	@echo "→ cv-speaking.pdf"
 
 # Core LaTeX compile (used internally by preset targets)
 # cv-preset.tex must exist before calling this directly.
 cv-preset.tex:
-  @echo "No cv-preset.tex found — using default (full)."
-  cp config/full.tex cv-preset.tex
+	@echo "No cv-preset.tex found — using default (full)."
+	cp config/full.tex cv-preset.tex
 
 pdf: cv-preset.tex
-  xelatex cv.tex
-  biber cv
-  xelatex cv.tex
-  xelatex cv.tex
+	xelatex cv.tex
+	biber cv
+	xelatex cv.tex
+	xelatex cv.tex
 
 clean:
-  rm -f cv.aux cv.bbl cv.bcf cv.blg cv.log cv.out cv.run.xml cv.toc cvbibcounts.tex
-  rm -f cv-full.pdf cv-industry.pdf cv-speaking.pdf cv.pdf
+	rm -f cv.aux cv.bbl cv.bcf cv.blg cv.log cv.out cv.run.xml cv.toc cvbibcounts.tex
+	rm -f cv-full.pdf cv-industry.pdf cv-speaking.pdf cv.pdf
 
 fetch:
-  python scripts/update_refs.py
+	python scripts/update_refs.py
 
 fetch-dry:
-  python scripts/update_refs.py --dry-run
+	python scripts/update_refs.py --dry-run
 
 dedup:
-  python scripts/update_refs.py --dedup-only
+	python scripts/update_refs.py --dedup-only
