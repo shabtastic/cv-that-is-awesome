@@ -1,17 +1,16 @@
-```makefile
 # Makefile
 # --------
 
-.PHONY: all clean fetch
+.PHONY: all clean fetch fetch-dry dedup
 
 all:
-  xelatex main.tex
-  biber main
-  xelatex main.tex
-  xelatex main.tex
+  xelatex cv.tex
+  biber cv
+  xelatex cv.tex
+  xelatex cv.tex
 
 clean:
-  rm -f *.aux *.bbl *.bcf *.blg *.log *.out *.run.xml *.toc
+  rm -f cv.aux cv.bbl cv.bcf cv.blg cv.log cv.out cv.run.xml cv.toc cvbibcounts.tex
 
 fetch:
   python scripts/update_refs.py
@@ -21,4 +20,3 @@ fetch-dry:
 
 dedup:
   python scripts/update_refs.py --dedup-only
-```

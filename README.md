@@ -24,9 +24,10 @@ cv/
 │   ├── journals.bib            # @article entries (peer-reviewed journals)
 │   ├── preprints.bib           # @unpublished entries
 │   ├── conference.bib          # @inproceedings entries
-│   ├── presentations.bib       # @misc entries (selected conference presentations)
+│   ├── chapters.bib            # reviews, book chapters & commentaries; keywords={bookchapter} or {commentary}
+│   ├── presentations.bib       # @unpublished entries (conference presentations)
 │   ├── patents.bib             # @patent entries
-│   └── scicomm.bib             # @misc entries (science communication)
+│   └── scicomm.bib             # @misc entries (science communication); keywords={scicomm}
 └── scripts/
     ├── _shared.py              # Shared utilities (manual fingerprints, dedup logic)
     ├── update_refs.py          # Master orchestrator — runs all fetch scripts + dedup
@@ -85,7 +86,6 @@ ADMIN_EMAIL   = "you@example.com"   # required by NCBI policy
 ```bash
 make
 ```
-> ⚠️ The `Makefile` references `main.tex` — update it to `cv.tex` if you haven't already.
 
 ### Manual build sequence:
 ```bash
@@ -118,10 +118,9 @@ and control filtering.
 | `showJournals` | `true` | Peer-reviewed journal publications |
 | `showPreprints` | `true` | Preprints & working papers |
 | `showConferenceProceedings` | `true` | Conference proceedings |
+| `showBookChapters` | `true` | Reviews, book chapters & commentaries (`chapters.bib`) |
 | `showConferencePresentations` | `true` | Selected conference presentations |
 | `showPatents` | `true` | Patents section |
-| `showSciComm` | `true` | Science communication subsection |
-| `showBookChapters` | `true` | Book chapters (if any) |
 | `showTalks` | `true` | Invited talks subsection |
 | `showGrants` | `true` | Grants & Awards section |
 | `showTeaching` | `true` | Teaching section |
@@ -172,6 +171,30 @@ Patents use a separate `\def` rather than a toggle:
 ---
 
 ## Marking Entries
+
+### Book chapters & reviews
+Entries in `refs/chapters.bib` use one of two keywords depending on type:
+
+| Keyword | Entry type | Used for |
+|---|---|---|
+| `bookchapter` | `@incollection` | Book chapters |
+| `commentary` | `@article` | Magazine/newsletter pieces, reviews, commentaries not in peer-reviewed journals |
+
+Both keywords are printed under the same "Reviews, Book Chapters & Commentaries"
+section heading via two consecutive `\printbibliography` calls in `cv.tex` — the
+second uses `heading=none` so no duplicate heading appears:
+
+```bibtex
+@incollection{Tost2009dopamine,
+  ...
+  keywords  = {bookchapter},
+}
+
+@article{Klenk2023anticipatory,
+  ...
+  keywords  = {commentary},
+}
+```
 
 ### Selected entries
 Add `keywords = {selected}` to any `.bib` entry to include it in filtered views:
@@ -379,8 +402,8 @@ python scripts/add_ref.py --doi 10.1038/s41562-021-01234-5 --dry-run
 
 After editing in `$EDITOR` (fallback: `nano`), you are prompted for keyword
 tags. `manual` is always included automatically. Supported target `.bib` files:
-`journals.bib`, `preprints.bib`, `conference.bib`, `presentations.bib`,
-`scicomm.bib`, `patents.bib`.
+`journals.bib`, `preprints.bib`, `conference.bib`, `chapters.bib`,
+`presentations.bib`, `scicomm.bib`, `patents.bib`.
 
 ---
 
@@ -423,8 +446,8 @@ python scripts/review_bib.py refs/journals.bib --start 12
 python scripts/review_bib.py refs/preprints.bib --dry-run
 ```
 
-All six `.bib` files are supported: `journals.bib`, `preprints.bib`,
-`conference.bib`, `presentations.bib`, `scicomm.bib`, `patents.bib`.
+All seven `.bib` files are supported: `journals.bib`, `preprints.bib`,
+`conference.bib`, `chapters.bib`, `presentations.bib`, `scicomm.bib`, `patents.bib`.
 
 ---
 
