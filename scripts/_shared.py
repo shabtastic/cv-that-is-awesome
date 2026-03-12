@@ -234,11 +234,12 @@ def prompt_keywords(current: str = "") -> str:
     Prompt for comma-separated keyword tags interactively.
     "manual" is always preserved when present. Returns the full keywords string.
     Leave blank to keep current tags. Enter "-" to clear all non-manual tags.
+    Whatever you type REPLACES the current tags (manual is always kept).
     """
     existing = [k.strip() for k in current.split(",") if k.strip()]
     existing_display = ", ".join(existing) if existing else "(none)"
     print(f"  Current keywords: {existing_display}")
-    print("  Add tags (comma-separated). Leave blank to keep current. Enter - to clear.")
+    print("  New tags (comma-separated) REPLACE current. Leave blank to keep. Enter - to clear.")
     try:
         raw = input("  Tags: ").strip()
     except (EOFError, KeyboardInterrupt):
@@ -252,8 +253,9 @@ def prompt_keywords(current: str = "") -> str:
         return current
 
     new_tags = [t.strip() for t in raw.split(",") if t.strip()]
-    all_tags = set(existing) | set(new_tags)
-    return ", ".join(sorted(all_tags))
+    if has_manual and "manual" not in {t.lower() for t in new_tags}:
+        new_tags.append("manual")
+    return ", ".join(sorted(new_tags))
 
 
 def inject_keywords(bibtex: str, keywords: str) -> str:
