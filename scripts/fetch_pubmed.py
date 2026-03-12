@@ -162,6 +162,13 @@ def load_existing_pmids(bib_path: Path) -> set:
     return set(re.findall(r"PMID:\s*(\d+)", bib_path.read_text()))
 
 
+def load_existing_dois(bib_path: Path) -> set:
+    if not bib_path.exists():
+        return set()
+    text = bib_path.read_text(encoding="utf-8")
+    return {d.lower().strip() for d in re.findall(r"doi\s*=\s*\{([^}]+)\}", text, re.IGNORECASE)}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch publications from PubMed")
     parser.add_argument("--dry-run", "-n", action="store_true",
@@ -205,7 +212,20 @@ def main():
           f"{len(name_only_pmids)} name-only)")
 
     # -- Filter ---------------------------------------------------------------
-    existing_pmids = load_existing_pmids(BIB_OUT)
+    all_bib_files = [
+        BIB_OUT,
+        Path("refs/preprints.bib"),
+        Path("refs/conference.bib"),
+        Path("refs/chapters.bib"),
+        Path("refs/presentations.bib"),
+        Path("refs/scicomm.bib"),
+        Path("refs/patents.bib"),
+    ]
+    existing_pmids = set()
+    existing_dois  = set()
+    for bib in all_bib_files:
+        existing_pmids |= load_existing_pmids(bib)
+        existing_dois  |= load_existing_dois(bib)
     manual_fp      = load_manual_fingerprints(BIB_OUT)
     rejected       = load_rejected(REJECTED_FILE)
 
@@ -251,6 +271,14 @@ def main():
     for article in articles:
         rec  = parse_article(article)
         pmid = rec["pmid"]
+        doi  = rec.get("doi", "").lower().strip()
+
+        # Skip if DOI already present in any bib file (catches conference papers
+        # that live in conference.bib rather than journals.bib)
+        if doi and doi in existing_dois:
+            skipped_exist += 1
+            if show: print(f"  [skip-exist]   DOI {doi} already in a .bib file")
+            continue
 
         if pmid in name_only_pmids and pmid not in orcid_pmids:
             if not author_matches(rec):
