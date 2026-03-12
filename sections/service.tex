@@ -8,6 +8,10 @@
 % HOW TO ADD NEW ENTRIES:
 %   - Always-shown (selected):  use \cventryselected{...}
 %   - Full CV only:             wrap in \iftoggle{showAllService}{...}{}
+%
+% Entries must be kept in reverse chronological order throughout; each
+% full-CV-only entry is wrapped individually so the order is preserved
+% when showAllService is true.
 %==============================================================================
 
 % Convenience macro — "selected" entries always print regardless of toggle
@@ -17,7 +21,7 @@
 
 \begin{cventries}
 
-  % ── SELECTED (always shown) ────────────────────────────────────────────────
+  % ── 2022 ──────────────────────────────────────────────────────────────────
 
   \cventryselected
     {Co-Chair \textnormal{\textit{(elected)}}}
@@ -25,6 +29,17 @@
     {Los Altos, CA}
     {03/2022 -- 03/2024}
     {}
+
+  % ── 2021 ──────────────────────────────────────────────────────────────────
+
+  \iftoggle{showAllService}{
+    \cventry
+      {Idea Review Mentor and Pitch Coach}
+      {Project Invent}
+      {}
+      {10/2021 -- 04/2022}
+      {}
+  }{}
 
   \cventryselected
     {Postdoctoral Representative \textnormal{\textit{(nominated \& elected)}}}
@@ -70,24 +85,20 @@
     {03/2017 -- 05/2017}
     {}
 
-  % ── FULL CV ONLY ──────────────────────────────────────────────────────────
+  % ── 2012 ──────────────────────────────────────────────────────────────────
 
   \iftoggle{showAllService}{
-
-    \cventry
-      {Idea Review Mentor and Pitch Coach}
-      {Project Invent}
-      {}
-      {10/2021 -- 04/2022}
-      {}
-
     \cventry
       {Presenter}
       {Reel Science at Caltech, California Institute of Technology}
       {Pasadena, CA}
       {03/2012 -- 04/2013}
       {}
+  }{}
 
+  % ── 2006 ──────────────────────────────────────────────────────────────────
+
+  \iftoggle{showAllService}{
     \cventry
       {Clinical Volunteer}
       {Behavioral Health \& Ortho/Neuro Trauma Units, Suburban Hospital}
