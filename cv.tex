@@ -241,6 +241,7 @@
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
 \addbibresource{refs/conference.bib}
+\addbibresource{refs/chapters.bib}
 \addbibresource{refs/patents.bib}
 \addbibresource{refs/scicomm.bib}
 \addbibresource{refs/presentations.bib}
@@ -350,11 +351,11 @@
 \newtoggle{showJournals}
 \newtoggle{showPreprints}
 \newtoggle{showConferenceProceedings}
+\newtoggle{showBookChapters}
+\newtoggle{showConferencePresentations}
 \newtoggle{showPatents}
 \newtoggle{showSciComm}
-\newtoggle{showBookChapters}
 \newtoggle{showTalks}
-\newtoggle{showConferencePresentations}
 \newtoggle{showTeaching}
 \newtoggle{showService}
 \newtoggle{showReviewer}
@@ -367,11 +368,11 @@
 \toggletrue{showJournals}
 \toggletrue{showPreprints}
 \toggletrue{showConferenceProceedings}
+\toggletrue{showBookChapters}
+\toggletrue{showConferencePresentations}
 \toggletrue{showPatents}
 \toggletrue{showSciComm}
-\toggletrue{showBookChapters}
 \toggletrue{showTalks}
-\toggletrue{showConferencePresentations}
 \toggletrue{showTeaching}
 \toggletrue{showService}
 \toggletrue{showReviewer}
@@ -529,8 +530,8 @@
 \iftoggle{showJournals}{\booltrue{showPublications}}{}
 \iftoggle{showPreprints}{\booltrue{showPublications}}{}
 \iftoggle{showConferenceProceedings}{\booltrue{showPublications}}{}
-\iftoggle{showConferencePresentations}{\booltrue{showPublications}}{}
 \iftoggle{showBookChapters}{\booltrue{showPublications}}{}
+\iftoggle{showConferencePresentations}{\booltrue{showPublications}}{}
 
 \ifbool{showPublications}{%
   \iftoggle{selectedOnlyPublications}{%
@@ -584,6 +585,16 @@
     \finishbibsection{conference}%
   }{}
 
+  \iftoggle{showBookChapters}{%
+    \startbibsection{bookchapters}%
+    \leavevmode\printbibliography[keyword=bookchapter,
+                       title={Reviews, Book Chapters \& Commentaries},
+                       heading=cvsubsection]%
+    \leavevmode\printbibliography[keyword=commentary,
+                       heading=none]%
+    \finishbibsection{bookchapters}%
+  }{}
+
   \iftoggle{showConferencePresentations}{%
     \startbibsection{presentations}%
     \iftoggle{selectedOnlyPresentations}{%
@@ -598,13 +609,6 @@
     \finishbibsection{presentations}%
   }{}
 
-  \iftoggle{showBookChapters}{%
-    \startbibsection{bookchapters}%
-    \leavevmode\printbibliography[type=incollection,
-                       title={Reviews, Book Chapters \& Commentaries},
-                       heading=cvsubsection]%
-    \finishbibsection{bookchapters}%
-  }{}
 }{}
 
 %-- Patents -------------------------------------------------------------------
