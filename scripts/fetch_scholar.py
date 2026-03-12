@@ -42,6 +42,36 @@ SCRAPER_API_KEY   = ""     # optional -- set to use ScraperAPI proxy
 # ---------------------------------------------------------------------------
 
 
+def build_bibtex_from_pub(pub: dict) -> str:
+    """
+    Minimal BibTeX fallback when sc.bibtex() fails.
+    Builds an entry from the pub's bib dict directly.
+    """
+    bib        = pub.get("bib", {})
+    title      = bib.get("title", "Unknown")
+    year       = str(bib.get("pub_year", "????"))
+    journal    = bib.get("journal", bib.get("venue", ""))
+    volume     = bib.get("volume", "")
+    number     = bib.get("number", "")
+    pages      = bib.get("pages", "")
+    author     = bib.get("author", "")
+    first_word = re.sub(r"[^a-zA-Z]", "", title.split()[0]) if title else "x"
+    first_auth = author.split(" and ")[0].split(",")[0].strip() if author else "Unknown"
+    cite_key   = f"{first_auth}{year}{first_word}"
+
+    lines = [f"@article{{{cite_key},"]
+    if author:  lines.append(f"  author  = {{{author}}},")
+    lines.append(f"  title   = {{{title}}},")
+    if journal: lines.append(f"  journal = {{{journal}}},")
+    lines.append(f"  year    = {{{year}}},")
+    if volume:  lines.append(f"  volume  = {{{volume}}},")
+    if number:  lines.append(f"  number  = {{{number}}},")
+    if pages:   lines.append(f"  pages   = {{{pages}}},")
+    lines.append(f"  keywords = {{}},")
+    lines.append("}")
+    return "\n".join(lines)
+
+
 def fetch_full_bibtex(sc, pub: dict, delay: float = 1.5) -> tuple:
     """
     Fill a Scholar stub with full metadata and return (bibtex_str, doi).
@@ -50,7 +80,12 @@ def fetch_full_bibtex(sc, pub: dict, delay: float = 1.5) -> tuple:
     time.sleep(delay)
     try:
         filled = sc.fill(pub)
-        bibtex = sc.bibtex(filled)
+        try:
+            bibtex = sc.bibtex(filled)
+        except KeyError:
+            # scholarly's bibtex() fails when ENTRYTYPE is missing from the
+            # filled pub dict — build a minimal entry from available fields
+            bibtex = build_bibtex_from_pub(filled)
         doi_m  = re.search(r"doi\s*=\s*\{([^}]+)\}", bibtex, re.IGNORECASE)
         doi    = doi_m.group(1).strip() if doi_m else ""
         return bibtex, doi
@@ -125,6 +160,12 @@ def main():
         Path("refs/chapters.bib"),
     ]
     existing_titles = load_all_titles(all_bib_files)
+    existing_dois   = set()
+    doi_re          = re.compile(r"doi\s*=\s*\{([^}]+)\}", re.IGNORECASE)
+    for bib in all_bib_files:
+        p = Path(bib) if not isinstance(bib, Path) else bib
+        if p.exists():
+            existing_dois |= {m.lower().strip() for m in doi_re.findall(p.read_text(encoding="utf-8"))}
     manual_fp       = load_manual_fingerprints(BIB_OUT)
     rejected        = load_rejected(REJECTED_FILE)
 
@@ -178,6 +219,23 @@ def main():
             continue
         norm_title = normalize_title(title)
         reject_key = norm_title   # use normalised title as stable key for Scholar
+
+        # Post-fetch dedup: check DOI and full title from the filled BibTeX
+        # (Scholar stubs often lack DOIs; we only have them after sc.fill())
+        if doi and doi.lower().strip() in existing_dois:
+            skipped_exist += 1
+            if show: print(f"  [skip-exist]    DOI {doi} already in a .bib file")
+            continue
+        # Also re-check title using the title extracted from the full BibTeX,
+        # which may differ from the stub title
+        full_title_m = re.search(r"title\s*=\s*\{([^}]+)\}", bibtex, re.IGNORECASE)
+        if full_title_m:
+            full_norm = normalize_title(full_title_m.group(1))
+            if full_norm and full_norm in existing_titles:
+                skipped_exist += 1
+                if show: print(f"  [skip-exist]    full title already in a .bib file: {full_title_m.group(1)[:60]}")
+                continue
+
         candidates.append((bibtex, doi, reject_key, "Scholar"))
 
     if fetch_failures:
