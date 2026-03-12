@@ -26,6 +26,7 @@ USPTO API docs:
 """
 
 import argparse
+import os
 import re
 import shutil
 import sys
@@ -49,12 +50,25 @@ BIB_OUT        = Path("refs/patents.bib")
 BAK_OUT        = Path("refs/patents.bib.bak")
 HOLDER         = "Toyota Research Institute"
 
-PEDS_BASE      = "https://ped.uspto.gov/api/queries"
+PEDS_BASE      = "https://ped.uspto.gov/api/queries"          # RETIRED March 2025
+ODP_SEARCH_URL = "https://api.uspto.gov/patent/file-wrapper/search"
+ODP_APP_URL    = "https://api.uspto.gov/patent/file-wrapper/applications/{appnum}/application-data"
 
 HEADERS = {
     "Accept": "application/json",
     "User-Agent": "cv-updater/1.0 (shabnamhakimi@gmail.com)",
 }
+
+
+def get_api_key() -> str:
+    """Load the USPTO ODP API key from the environment."""
+    key = os.environ.get("USPTO_API_KEY", "")
+    if not key:
+        print("  [error] USPTO_API_KEY environment variable not set.")
+        print("          Get your key at https://data.uspto.gov (My ODP)")
+        print("          Then: export USPTO_API_KEY='your_key_here'")
+        sys.exit(1)
+    return key
 
 # ── KNOWN PATENT NUMBERS ──────────────────────────────────────────────────────
 # Canonical list of granted US patent numbers.
@@ -134,30 +148,25 @@ def _extract_manual_regex(bib_path: Path) -> list[str]:
 
 # ── USPTO FETCH ───────────────────────────────────────────────────────────────
 
-def fetch_patent_peds(patent_number: str) -> dict | None:
-    """Query USPTO PEDS for a single patent by number."""
-    payload = {
-        "searchText": f"patentNumber:({patent_number})",
-        "facets": "",
-        "dateRangeData": {},
-        "searchAfterKey": "",
+def fetch_patent_odp(patent_number: str, api_key: str) -> dict | None:
+    """
+    Query the USPTO Open Data Portal for a single patent by grant number.
+    Uses the search endpoint with patentNumber field.
+    """
+    params = {
+        "q": f"patentNumber:{patent_number}",
+        "hits": 1,
     }
+    headers = {**HEADERS, "X-API-KEY": api_key}
     try:
-        r = requests.post(
-            PEDS_BASE,
-            json=payload,
-            headers={**HEADERS, "Content-Type": "application/json"},
-            timeout=20,
-        )
+        r = requests.get(ODP_SEARCH_URL, params=params, headers=headers, timeout=20)
         r.raise_for_status()
-        docs = (r.json()
-                 .get("queryResults", {})
-                 .get("searchResponse", {})
-                 .get("response", {})
-                 .get("docs", []))
-        return docs[0] if docs else None
+        hits = (r.json()
+                 .get("hits", {})
+                 .get("hits", []))
+        return hits[0].get("_source", {}) if hits else None
     except Exception as e:
-        print(f"    [warn] PEDS query failed for {patent_number}: {e}")
+        print(f"    [warn] ODP query failed for {patent_number}: {e}")
         return None
 
 
@@ -178,17 +187,21 @@ def parse_patent_record(record: dict, patent_number: str) -> dict:
     """Normalize a USPTO API response into a consistent flat dict."""
     out = {"number": patent_number, "title": "", "inventors": [], "year": "????"}
 
-    for key in ("patentTitle", "inventionTitle", "title"):
+    # ODP uses inventionTitle; PEDS used patentTitle
+    for key in ("inventionTitle", "patentTitle", "title"):
         if record.get(key):
             out["title"] = record[key].strip().rstrip(".")
             break
 
-    for key in ("patentGrantDate", "grantDate", "issueDate", "patentIssueDate"):
+    # ODP uses patentIssuanceDate; PEDS used patentGrantDate
+    for key in ("patentIssuanceDate", "patentGrantDate", "grantDate",
+                "issueDate", "patentIssueDate"):
         if record.get(key):
             out["year"] = str(record[key])[:4]
             break
 
-    for key in ("inventorNameArrayText", "inventors", "inventorList"):
+    # ODP returns inventors as a list of dicts with firstName/lastName
+    for key in ("inventors", "inventorNameArrayText", "inventorList"):
         raw = record.get(key)
         if raw:
             if isinstance(raw, list):
@@ -322,20 +335,23 @@ def mode_refresh(dry_run: bool) -> None:
         print("  No manual entries found.")
 
     # Step 3 — fetch from USPTO
-    print(f"\nStep 3: Fetching {len(KNOWN_PATENT_NUMBERS)} patents from USPTO...")
+    print(f"\nStep 3: Fetching {len(KNOWN_PATENT_NUMBERS)} patents from USPTO ODP...")
+    api_key         = get_api_key()
     fetched_entries = []
     failed          = []
 
     for num in KNOWN_PATENT_NUMBERS:
         print(f"  US {num} ...", end=" ", flush=True)
-        record = fetch_patent_peds(num)
+        record = fetch_patent_odp(num, api_key)
         if record is None:
             record = fetch_patent_public_search(num)
         if record:
             normalized       = parse_patent_record(record, num)
-            suggested_holder = record.get("assigneeName",
-                               record.get("applicantName", HOLDER)) or HOLDER
-            # USPTO PEDS returns granted patents by default
+            # ODP returns assignee under assigneeEntityName or applicantName
+            suggested_holder = (record.get("assigneeEntityName") or
+                                record.get("assigneeName") or
+                                record.get("applicantName") or
+                                HOLDER)
             suggested_status = ("Filed" if not record.get("patentNumber")
                                 else "Granted")
             if not dry_run:
@@ -361,7 +377,7 @@ def mode_refresh(dry_run: bool) -> None:
             fetched_entries.append(make_stub(num, holder=holder, status=status))
             failed.append(num)
             print("✗  not found — stub written")
-        time.sleep(0.5)
+        time.sleep(0.3)
 
     # Step 4 — assemble output
     stamp  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -370,7 +386,7 @@ def mode_refresh(dry_run: bool) -> None:
         "===================\n"
         "% PATENTS — auto-generated by fetch_patents.py\n"
         f"% Last refreshed: {stamp}\n"
-        "% Source: USPTO Patent Examination Data System (PEDS)\n"
+        "% Source: USPTO Open Data Portal (ODP) — api.uspto.gov\n"
         "%\n"
         "% To add a patent manually:\n"
         "%   1. Add an @patent entry below with  keywords = {manual}\n"
@@ -412,30 +428,26 @@ def mode_refresh(dry_run: bool) -> None:
 
 
 def mode_discover(dry_run: bool) -> None:
-    """Search USPTO by inventor name for patents not in KNOWN_PATENT_NUMBERS."""
-    print(f"Searching USPTO for patents by {INVENTOR_FIRST} {INVENTOR_LAST}...")
-    payload = {
-        "searchText": (f"inventorLastName:({INVENTOR_LAST}) "
-                       f"AND inventorFirstName:({INVENTOR_FIRST})"),
-        "facets": "",
-        "dateRangeData": {},
-        "searchAfterKey": "",
+    """Search USPTO ODP by inventor name for patents not in KNOWN_PATENT_NUMBERS."""
+    print(f"Searching USPTO ODP for patents by {INVENTOR_FIRST} {INVENTOR_LAST}...")
+    api_key = get_api_key()
+    params = {
+        "q": f"inventors.lastName:{INVENTOR_LAST} AND inventors.firstName:{INVENTOR_FIRST}",
+        "hits": 50,
     }
+    headers = {**HEADERS, "X-API-KEY": api_key}
     try:
-        r = requests.post(
-            PEDS_BASE,
-            json=payload,
-            headers={**HEADERS, "Content-Type": "application/json"},
+        r = requests.get(
+            ODP_SEARCH_URL,
+            params=params,
+            headers=headers,
             timeout=20,
         )
         r.raise_for_status()
-        docs = (r.json()
-                 .get("queryResults", {})
-                 .get("searchResponse", {})
-                 .get("response", {})
-                 .get("docs", []))
+        hits = r.json().get("hits", {}).get("hits", [])
+        docs = [h.get("_source", {}) for h in hits]
     except Exception as e:
-        print(f"[error] USPTO discovery search failed: {e}")
+        print(f"[error] USPTO ODP discovery search failed: {e}")
         sys.exit(1)
 
     print(f"  Found {len(docs)} total records.")
@@ -444,11 +456,13 @@ def mode_discover(dry_run: bool) -> None:
         num = doc.get("patentNumber", "")
         if not num or num in KNOWN_PATENT_NUMBERS:
             continue
-        title = doc.get("patentTitle", "unknown title")
+        title = doc.get("inventionTitle", doc.get("patentTitle", "unknown title"))
         print(f"\n  NEW: US {num} — {title[:60]}")
         normalized       = parse_patent_record(doc, num)
-        suggested_holder = doc.get("assigneeName",
-                           doc.get("applicantName", HOLDER)) or HOLDER
+        suggested_holder = (doc.get("assigneeEntityName") or
+                            doc.get("assigneeName") or
+                            doc.get("applicantName") or
+                            HOLDER)
         suggested_status = ("Filed" if not doc.get("patentNumber")
                             else "Granted")
         if not dry_run:
