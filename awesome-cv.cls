@@ -111,7 +111,9 @@
 ]{Roboto}
 
 % Needed for the photo ID
-\RequirePackage[skins]{tcolorbox}
+% Note: [skins] omitted — triggers a spurious pgfkeys error in TeX Live 2025.
+% Safe to omit since \photo is not used in this CV.
+\RequirePackage{tcolorbox}
 % Needed to deal a paragraphs
 \RequirePackage{parskip}
 % Needed to deal hyperlink
