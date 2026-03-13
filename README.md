@@ -141,6 +141,7 @@ and control filtering.
 | `showMemberships` | `true` | Memberships section |
 | `showReferences` | `true` | References section |
 | `showFullReferences` | `false` | `true` = list referees; `false` = "Available upon request" |
+| `showFullCVNote` | `false` | `true` = closing line "Full CV available upon request." (industry/speaking presets) |
 
 ### Selected-only filtering
 
