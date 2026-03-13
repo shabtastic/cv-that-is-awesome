@@ -229,7 +229,7 @@
 % \cvbibname: bold name for usera fields and boldifown.
 % Keeps \sffamily (matching bib body font) but forces series b (Bold),
 % overriding the \fontseries{l} (Light) set by \bodyfontlight.
-\newcommand{\cvbibname}[1]{{\normalfont\bfseries #1}}
+\newcommand{\cvbibname}[1]{{\sffamily\fontseries{b}\selectfont #1}}
 
 \DeclareFieldFormat{usera}{#1}
 
@@ -246,15 +246,18 @@
 % just before bibliography output — after all style hooks — and is the reliable
 % point to set these aliases. Belt-and-suspenders: also set in preamble and AtBeginDocument.
 \DeclareNameAlias{author}{boldifown}
+\DeclareNameAlias{sortname}{boldifown}% numeric style routes through sortname
 \DeclareNameAlias{editor}{boldifown}
 \DeclareNameAlias{inventor}{boldifown}% @patent entries use inventor list
 \AtBeginDocument{%
   \DeclareNameAlias{author}{boldifown}%
+  \DeclareNameAlias{sortname}{boldifown}%
   \DeclareNameAlias{editor}{boldifown}%
   \DeclareNameAlias{inventor}{boldifown}%
 }
 \AtBeginBibliography{%
   \DeclareNameAlias{author}{boldifown}%
+  \DeclareNameAlias{sortname}{boldifown}%
   \DeclareNameAlias{editor}{boldifown}%
   \DeclareNameAlias{inventor}{boldifown}%
 }
@@ -263,45 +266,6 @@
 % Equal-contribution markers should be in the authorlist field (via \cvfnmark),
 % NOT in the note field. See journals.bib and conference.bib for examples.
 % Entries with note = {* equal contributions...} should have that note removed.
-
-% Custom @misc driver: identical to standard.bbx except \printfield{note}
-% is moved to AFTER \finentry (which appends the closing period), on its own
-% line. This puts the scicomm "Authors contributed equally..." note below the
-% citation without a stray period before it.
-\DeclareBibliographyDriver{misc}{%
-  \usebibmacro{bibindex}%
-  \usebibmacro{begentry}%
-  \usebibmacro{author/editor+others/translator+others}%
-  \setunit{\printdelim{nametitledelim}}\newblock
-  \usebibmacro{title}%
-  \newunit
-  \printlist{language}%
-  \newunit\newblock
-  \usebibmacro{byauthor}%
-  \newunit\newblock
-  \usebibmacro{byeditor+others}%
-  \newunit\newblock
-  \printfield{howpublished}%
-  \newunit\newblock
-  \printfield{type}%
-  \newunit
-  \printfield{version}%
-  \newunit\newblock
-  \usebibmacro{organization+location+date}%
-  \newunit\newblock
-  \usebibmacro{doi+eprint+url}%
-  \newunit\newblock
-  \usebibmacro{addendum+pubstate}%
-  \setunit{\bibpagerefpunct}\newblock
-  \usebibmacro{pageref}%
-  \newunit\newblock
-  \iftoggle{bbx:related}
-    {\usebibmacro{related:init}%
-     \usebibmacro{related}}
-    {}%
-  \usebibmacro{finentry}%
-  \iffieldundef{note}{}{\par\smallskip\printfield{note}}%
-}
 
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
@@ -500,9 +464,6 @@
 % Load preset overrides (must come after all \newtoggle/\def declarations).
 \input{cv-preset}
 
-% Increase vertical space before each section heading (default is 3mm).
-\renewcommand{\acvSectionTopSkip}{7mm}
-
 % First-pass guard: skip all \printbibliography calls until the .bbl exists.
 % This prevents xelatex from crashing before biber has run, which would
 % produce a malformed .bcf that biber then refuses to process.
@@ -562,7 +523,8 @@
 % cvitems (defined in awesome-cv.cls) ends with \vspace{1.0mm}, which adds
 % extra trailing space after entries with bullet items vs those without,
 % causing uneven gaps when the pretocmd adds a fixed 8pt before the next entry.
-% Redefine here to use \vspace{-1.0mm} instead, making all inter-entry gaps uniform.
+% Redefine here to use \vspace{-2.0mm} to fully cancel the 1mm trailing + partial
+% compensation, making all inter-entry gaps uniform.
 \renewenvironment{cvitems}{%
   \vspace{-4.0mm}%
   \begin{justify}%
@@ -572,7 +534,7 @@
 }{%
   \end{itemize}%
   \end{justify}%
-  \vspace{-2.0mm}% tuned to match non-bullet inter-entry gap
+  \vspace{-2.0mm}% was 1.0mm in cls; increased negation for uniform inter-entry gaps
 }
 
 %------------------------------------------------------------------------------
