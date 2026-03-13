@@ -241,12 +241,22 @@
   }%
 }
 
-% Apply boldifown alias at begin-document so it overrides biblatex's own
-% default aliases (which are set during \begin{document}).
+% standard.bbx (loaded by the numeric style) calls DeclareNameAlias{author}{default}
+% during its own load sequence, after AtBeginDocument. AtBeginBibliography fires
+% just before bibliography output — after all style hooks — and is the reliable
+% point to set these aliases. Belt-and-suspenders: also set in preamble and AtBeginDocument.
+\DeclareNameAlias{author}{boldifown}
+\DeclareNameAlias{editor}{boldifown}
+\DeclareNameAlias{inventor}{boldifown}% @patent entries use inventor list
 \AtBeginDocument{%
   \DeclareNameAlias{author}{boldifown}%
   \DeclareNameAlias{editor}{boldifown}%
-  \DeclareNameAlias{inventor}{boldifown}%  % @patent uses inventor list
+  \DeclareNameAlias{inventor}{boldifown}%
+}
+\AtBeginBibliography{%
+  \DeclareNameAlias{author}{boldifown}%
+  \DeclareNameAlias{editor}{boldifown}%
+  \DeclareNameAlias{inventor}{boldifown}%
 }
 
 % Note: the note field prints normally for all entry types.
@@ -448,7 +458,7 @@
 \togglefalse{showAllTeaching}
 \togglefalse{showAllService}
 
-% Load preset overrides — MUST come after all \newtoggle/\def declarations.
+% Load preset overrides (must come after all \newtoggle/\def declarations).
 \input{cv-preset}
 
 % First-pass guard: skip all \printbibliography calls until the .bbl exists.
@@ -474,17 +484,6 @@
 \colorlet{awesome}{black}
 \colorlet{darktext}{black}
 \setbool{acvSectionColorHighlight}{false}
-
-% Increase inter-section breathing room
-\renewcommand{\acvSectionTopSkip}{7mm}
-
-% Fix inconsistent spacing between \cventry items: the class starts each
-% \cventry with \vspace{-2mm} to absorb space from a description block.
-% Entries with empty 5th arg skip the block, ending up too tight.
-% Appending \vspace{1.5mm} after every entry gives uniform spacing.
-\let\origcventry\cventry
-\renewcommand*{\cventry}[5]{%
-  \origcventry{#1}{#2}{#3}{#4}{#5}\vspace{1.5mm}}
 
 % The cls loads the parskip package, which sets \parskip to ~0.5\baselineskip.
 % Awesome-CV uses explicit \vspace{} calls for all spacing, so parskip just
@@ -517,6 +516,22 @@
   }%
   \noindent%
 }{}{}
+
+% cvitems (defined in awesome-cv.cls) ends with \vspace{1.0mm}, which adds
+% extra trailing space after entries with bullet items vs those without,
+% causing uneven gaps when the pretocmd adds a fixed 8pt before the next entry.
+% Redefine here to use \vspace{-1.0mm} instead, making all inter-entry gaps uniform.
+\renewenvironment{cvitems}{%
+  \vspace{-4.0mm}%
+  \begin{justify}%
+  \begin{itemize}[leftmargin=2ex, nosep, noitemsep]%
+    \setlength{\parskip}{0pt}%
+    \renewcommand{\labelitemi}{\bullet}%
+}{%
+  \end{itemize}%
+  \end{justify}%
+  \vspace{-1.0mm}% was 1.0mm; negated to keep inter-entry gaps uniform
+}
 
 %------------------------------------------------------------------------------
 % PERSONAL INFO
