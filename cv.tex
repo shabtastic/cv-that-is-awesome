@@ -265,8 +265,9 @@
 % Addendum styling: new line + italic for non-patent entries (Best Paper, SciComm note).
 % For patents, addendum holds "Granted"/"Filed" — used only for filtering, not display.
 \DeclareFieldFormat[patent]{addendum}{}
-% \DeclareFieldFormat{addendum}{\newline\textit{#1}}
-\DeclareFieldFormat{addendum}{\newline\textbf{\textit{#1}}}
+\DeclareFieldFormat{addendum}{\newline\textit{#1}}
+\DeclareFieldFormat[inproceedings]{addendum}{\newline\textbf{\textit{#1}}}
+% \DeclareFieldFormat{addendum}{\newline\textbf{\textit{#1}}}
 
 \renewbibmacro*{author}{%
   \iffieldundef{usera}{%
@@ -590,6 +591,7 @@
 % last-name style (both use \headerfont\bfseries).
 \renewcommand*{\headerfirstnamestyle}[1]{{\fontsize{28pt}{1em}\headerfont\bfseries\color{text} #1}}
 \name{Shabnam}{Hakimi, Ph.D.}
+\position{} % leaving this empty to preserve space between the name and other stuff
 % \position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
 % \address{Toyota Research Institute, 4440 El Camino Real, Los Altos, CA 94022}
 \email{shabnamhakimi@gmail.com}
