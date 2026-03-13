@@ -1,0 +1,91 @@
+%==============================================================================
+% COVER LETTER — Shabnam Hakimi
+% Uses the same awesome-cv.cls and styling as cv.tex.
+%
+% Usage:
+%   xelatex coverletter.tex
+%
+% Fill in the recipient block, subject line, and letter body below.
+%==============================================================================
+
+\documentclass[11pt, a4paper]{awesome-cv}
+
+%------------------------------------------------------------------------------
+% LAYOUT & FONTS
+%------------------------------------------------------------------------------
+\geometry{left=2.0cm, top=1.5cm, right=2.0cm, bottom=2.0cm, footskip=.5cm}
+\fontdir[fonts/]
+
+%------------------------------------------------------------------------------
+% COLORS  (match cv.tex: black-and-white)
+%------------------------------------------------------------------------------
+\colorlet{awesome}{black}
+\colorlet{darktext}{black}
+\setbool{acvSectionColorHighlight}{false}
+
+%------------------------------------------------------------------------------
+% PERSONAL INFO
+%------------------------------------------------------------------------------
+\renewcommand*{\headerfirstnamestyle}[1]{{\fontsize{28pt}{1em}\headerfont\bfseries\color{text} #1}}
+\name{Shabnam}{Hakimi, Ph.D.}
+\position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
+\address{Toyota Research Institute, 4440 El Camino Real, Los Altos, CA 94022}
+\email{shabnamhakimi@gmail.com}
+\homepage{www.shabnamhakimi.com}
+
+%------------------------------------------------------------------------------
+% RECIPIENT
+% \recipient{Organization name}{Street \\ City, State ZIP}
+% \lettertitle{Re: Position Title}   ← optional subject line
+%------------------------------------------------------------------------------
+\recipient
+  {Hiring Committee}
+  {Organization Name \\ Department \\ City, State ZIP}
+
+\letterdate{\today}
+\lettertitle{Re: [Position Title]}         % comment out if not needed
+\letteropening{Dear Hiring Committee,}
+\letterclosing{Sincerely,}
+% \letterenclosure[Enclosures]{CV, Research Statement}  % optional
+
+%==============================================================================
+\begin{document}
+
+\makecvheader[C]
+
+\makecvfooter
+  {\today}
+  {Shabnam Hakimi ~~·~~ Cover Letter}
+  {}
+
+\makelettertitle
+
+%------------------------------------------------------------------------------
+% LETTER BODY
+% Use plain paragraphs or \lettersection{Heading} to add titled sections.
+%------------------------------------------------------------------------------
+\begin{cvletter}
+
+\lettersection{About Me}
+[Opening paragraph: who you are, current role, and why you are writing.
+Briefly establish your research identity and the thread connecting your
+background to this opportunity.]
+
+\lettersection{Why This Role}
+[Second paragraph: what excites you about this specific position, team,
+or organization. Be concrete — name a project, a research direction, or
+a mission that resonates with your own work.]
+
+\lettersection{What I Bring}
+[Third paragraph: two or three specific contributions or accomplishments
+that are directly relevant. Draw on publications, projects, or leadership
+experience as appropriate.]
+
+[Closing paragraph: express enthusiasm for the opportunity and next steps.
+Keep it brief.]
+
+\end{cvletter}
+
+\makeletterclosing
+
+\end{document}
