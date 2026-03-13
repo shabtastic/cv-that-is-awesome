@@ -7,7 +7,7 @@
 *.out
 *.run.xml
 *.toc
-cvbibcounts.tex
+cv-preset.tex
 
 # Compiled PDFs (built by CI; not tracked in source)
 cv-full.pdf
@@ -23,3 +23,13 @@ cv.pdf
 __pycache__/
 *.pyc
 .env
+
+# macOS
+.DS_Store
+config/.DS_Store
+fonts/.DS_Store
+refs/.DS_Store
+sections/.DS_Store
+scripts/.DS_Store
+
+
