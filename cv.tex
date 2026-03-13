@@ -185,28 +185,56 @@
 %------------------------------------------------------------------------------
 % BOLD OWN NAME IN BIBLIOGRAPHY
 %
-% Entries that go through the normal name formatter (no usera field)
-% will have "Hakimi" bolded automatically. Entries with a usera field
-% bypass the formatter — bold is applied manually via \textbf in the .bib.
+% Entries without a usera field go through the biblatex name formatter.
+% standard.bbx (used by the numeric style) calls:
+%   \DeclareNameAlias{sortname}{default}
+% during bibliography output, unconditionally overriding any sortname alias
+% we set. The only reliable fix is to redefine the 'default' name format
+% itself to do the bolding — that way standard.bbx's alias routes straight
+% into our bolding code.
+%
+% Entries with a usera field bypass the formatter entirely; bold is applied
+% manually via \cvbibname{} in the .bib file.
+%
 % Change \cvownfamilyname if the CV owner's name changes.
 %------------------------------------------------------------------------------
 \def\cvownfamilyname{Hakimi}
 
-\DeclareNameFormat{boldifown}{%
-  \ifstrequal{\namepartfamily}{\cvownfamilyname}{%
-    \cvbibname{%
+% Redefine the 'default' name format (used by all numeric-style entries via
+% the sortname alias) to bold the CV owner's name.
+\AtBeginDocument{%
+  % Redefine the 'default' name format to bold the CV owner's name.
+  % Must be in \AtBeginDocument so it fires after biblatex and numeric.bbx
+  % have finished setting their own defaults.
+  %
+  % Comparison technique: \ifstrequal does NOT expand its arguments (it
+  % compares literal token streams, not string values). \namepartfamily and
+  % \cvownfamilyname are macros, so we \edef both into plain temporaries
+  % first, then use \ifx — which compares macro replacement texts — to
+  % get a reliable string equality test.
+  \DeclareNameFormat{default}{%
+    \edef\cvboldtmpA{\namepartfamily}%
+    \edef\cvboldtmpB{\cvownfamilyname}%
+    \ifx\cvboldtmpA\cvboldtmpB
+      % Print delimiter OUTSIDE the bold wrapper, then bold just the name.
+      % name:family-given includes name:delim internally, so we call
+      % name:delim first here, then replicate the name output inside cvbibname.
+      \usebibmacro{name:delim}{\namepartfamily}%
+      \cvbibname{%
+        \mkbibnamefamily{\namepartfamily}\isdot
+        \ifdefvoid{\namepartgiveni}{}{\revsdnamepunct\bibnamedelimd\mkbibnamegiven{\namepartgiveni}\isdot}%
+      }%
+    \else
       \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
                                      {\namepartprefix}{\namepartsuffix}%
-    }%
-  }{%
-    \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
-                                   {\namepartprefix}{\namepartsuffix}%
+    \fi
+    \usebibmacro{name:andothers}%
   }%
-  \usebibmacro{name:andothers}%
 }
 
-% NOTE: entries using the `usera` field bypass the name formatter.
-% Bold your name manually there, e.g.: authorlist = {\textbf{Hakimi, S}, ...}
+% NOTE: entries using the `usera` field bypass the name formatter entirely.
+% Bold your name manually there using \cvbibname{}, e.g.:
+%   usera = {\cvbibname{Hakimi,~S}\cvfnmark{equalcontrib}, ...}
 
 %------------------------------------------------------------------------------
 % CUSTOM AUTHOR STRING — uses built-in `usera` field
@@ -223,15 +251,20 @@
 %   usera = {\cvbibname{Hakimi,~S}\cvfnmark{equalcontrib}, Lee,~J\cvfnmark{equalcontrib}},
 %
 % When `usera` is present it replaces the normal \printnames{author} output.
-% When absent, \printnames{author} runs normally (with boldifown applied).
+% When absent, \printnames{author} runs normally (with default format applied).
 %------------------------------------------------------------------------------
 
-% \cvbibname: bold name for usera fields and boldifown.
+% \cvbibname: bold name for usera fields and the default name format.
 % Keeps \sffamily (matching bib body font) but forces series b (Bold),
 % overriding the \fontseries{l} (Light) set by \bodyfontlight.
-\newcommand{\cvbibname}[1]{{\sffamily\fontseries{b}\selectfont #1}}
+\newcommand{\cvbibname}[1]{{\sffamily\bfseries #1}}
 
 \DeclareFieldFormat{usera}{#1}
+
+% Addendum styling: new line + italic for non-patent entries (Best Paper, SciComm note).
+% For patents, addendum holds "Granted"/"Filed" — used only for filtering, not display.
+\DeclareFieldFormat[patent]{addendum}{}
+\DeclareFieldFormat{addendum}{\newline\textit{#1}}
 
 \renewbibmacro*{author}{%
   \iffieldundef{usera}{%
@@ -239,27 +272,6 @@
   }{%
     \printfield{usera}%
   }%
-}
-
-% standard.bbx (loaded by the numeric style) calls DeclareNameAlias{author}{default}
-% during its own load sequence, after AtBeginDocument. AtBeginBibliography fires
-% just before bibliography output — after all style hooks — and is the reliable
-% point to set these aliases. Belt-and-suspenders: also set in preamble and AtBeginDocument.
-\DeclareNameAlias{author}{boldifown}
-\DeclareNameAlias{sortname}{boldifown}% numeric style routes through sortname
-\DeclareNameAlias{editor}{boldifown}
-\DeclareNameAlias{inventor}{boldifown}% @patent entries use inventor list
-\AtBeginDocument{%
-  \DeclareNameAlias{author}{boldifown}%
-  \DeclareNameAlias{sortname}{boldifown}%
-  \DeclareNameAlias{editor}{boldifown}%
-  \DeclareNameAlias{inventor}{boldifown}%
-}
-\AtBeginBibliography{%
-  \DeclareNameAlias{author}{boldifown}%
-  \DeclareNameAlias{sortname}{boldifown}%
-  \DeclareNameAlias{editor}{boldifown}%
-  \DeclareNameAlias{inventor}{boldifown}%
 }
 
 % Note: the note field prints normally for all entry types.
@@ -494,6 +506,9 @@
 % Override to zero globally.
 \setlength{\parskip}{0pt}
 
+% Increase inter-section breathing room (cls default: 3mm)
+\renewcommand{\acvSectionTopSkip}{7mm}
+
 % Enforce consistent vertical spacing between \cventry blocks.
 %
 % Root cause of the indent bug: \apptocmd{\cventry}{\vspace{N}} appends a
@@ -502,29 +517,53 @@
 % instead — and skipping the gap for the first entry in each block — avoids
 % any post-tabular state and keeps all entries flush-left.
 %
-% Gap value: \cventry (cls) starts with \vspace{-2mm}. To get ~4pt visible gap:
-% prepend 8pt before non-first entries → 8pt - 2mm ≈ 2.3pt net.
+% Gap value: 0pt — the natural tabular bottom-padding (~15pt) provides
+% sufficient visual separation between entries. Any positive value here adds
+% on top of that and makes gaps too large in dense sections like Teaching/Service.
 \newbool{firstcventry}
+\newbool{prevhaddesc}
 \booltrue{firstcventry}
+\boolfalse{prevhaddesc}
 \AtBeginEnvironment{cventries}{%
   \booltrue{firstcventry}%
+  \boolfalse{prevhaddesc}%
   \setlength{\parskip}{0pt}%
   \setlength{\parindent}{0pt}%
 }
+% Before each \cventry: if previous entry had a description (cvitems), add
+% 8pt extra clearance so the bullet text (which extends below the tabular's
+% measured height) does not overlap the current entry's header.
+% For plain->plain transitions, 4pt matches the original cls spacing.
 \pretocmd{\cventry}{%
   \ifbool{firstcventry}{%
     \boolfalse{firstcventry}%
   }{%
-    \vspace{8pt}%
+    \ifbool{prevhaddesc}{%
+      \vspace{6pt}%  % extra: clears cvitems overflow (was 8pt)
+    }{%
+      \vspace{4pt}%  % normal inter-entry gap
+    }%
   }%
+  \boolfalse{prevhaddesc}%
   \noindent%
 }{}{}
+% After each \cventry: record whether arg #5 was non-empty (had description).
+% We can't inspect #5 directly in apptocmd, so we patch cvitems end instead.
+\AtEndEnvironment{cvitems}{\booltrue{prevhaddesc}}
 
-% cvitems (defined in awesome-cv.cls) ends with \vspace{1.0mm}, which adds
-% extra trailing space after entries with bullet items vs those without,
-% causing uneven gaps when the pretocmd adds a fixed 8pt before the next entry.
-% Redefine here to use \vspace{-2.0mm} to fully cancel the 1mm trailing + partial
-% compensation, making all inter-entry gaps uniform.
+% cvitems: closing \vspace tuned empirically.
+%
+% The closing vspace is INSIDE the \multicolumn cell of \cventry's tabular.
+% Contrary to earlier assumption, it DOES propagate to inter-entry spacing by
+% inflating the tabular row height. A sufficiently negative value (~-10.5mm)
+% compensates for the bullet-list height and brings bullet-entries into
+% alignment with plain entries (~15pt gap).
+%
+% \iftoggle-wrapped entries add a paragraph break on exit (~13.5pt extra).
+% These are patched per-section with explicit \vspace{-13.5pt} after }{}.
+% Any \cventry with bullets followed by another entry needs \vspace{-11.8pt}
+% between them if the cvitems closing vspace is insufficient (e.g. single-item
+% lists whose tabular height floor is hit before the vspace takes effect).
 \renewenvironment{cvitems}{%
   \vspace{-4.0mm}%
   \begin{justify}%
@@ -534,7 +573,7 @@
 }{%
   \end{itemize}%
   \end{justify}%
-  \vspace{-2.0mm}% was 1.0mm in cls; increased negation for uniform inter-entry gaps
+  \vspace{-4.0mm}%
 }
 
 %------------------------------------------------------------------------------
