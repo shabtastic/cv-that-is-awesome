@@ -265,7 +265,8 @@
 % Addendum styling: new line + italic for non-patent entries (Best Paper, SciComm note).
 % For patents, addendum holds "Granted"/"Filed" — used only for filtering, not display.
 \DeclareFieldFormat[patent]{addendum}{}
-\DeclareFieldFormat{addendum}{\newline\textit{#1}}
+% \DeclareFieldFormat{addendum}{\newline\textit{#1}}
+\DeclareFieldFormat{addendum}{\newline\textbf{\textit{#1}}}
 
 \renewbibmacro*{author}{%
   \iffieldundef{usera}{%
