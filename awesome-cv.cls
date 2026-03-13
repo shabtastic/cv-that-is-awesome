@@ -95,12 +95,22 @@
   BoldItalicFont=SourceSans3-BoldItalic.ttf,
 ]{SourceSans3}
 
+% \setsansfont[
+%   Path=fonts/,
+%   UprightFont=SourceSans3-Regular.ttf,
+%   ItalicFont=SourceSans3-Italic.ttf,
+%   BoldFont=SourceSans3-Bold.ttf,
+%   BoldItalicFont=SourceSans3-BoldItalic.ttf,
+% ]{SourceSans3}
 \setsansfont[
   Path=fonts/,
   UprightFont=SourceSans3-Regular.ttf,
   ItalicFont=SourceSans3-Italic.ttf,
   BoldFont=SourceSans3-Bold.ttf,
   BoldItalicFont=SourceSans3-BoldItalic.ttf,
+  FontFace={l}{n}{SourceSans3-Light.ttf},
+  FontFace={l}{it}{SourceSans3-LightItalic.ttf},
+  FontFace={l}{sl}{SourceSans3-LightItalic.ttf},
 ]{SourceSans3}
 
 \newfontfamily\roboto[
