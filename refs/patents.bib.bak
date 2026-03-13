@@ -1,2 +1,167 @@
-% BACKUP created 2026-03-07 15:15:23 by fetch_patents.py
+% BACKUP created 2026-03-12 21:20:58 by fetch_patents.py
 
+%==============================================================================
+% PATENTS
+%
+% status field : Granted | Filed
+%   Granted = issued US patent with patent number
+%   Filed   = pending application with application number
+%
+% keywords field:
+%   selected → shown when selectedOnlyPatents toggle is true
+%   manual   → manually added; preserved across fetch_patents.py refreshes
+%
+% SELECTED + STATUS FILTERING in main.tex:
+%   \printbibliography filters on both keyword=selected AND status via
+%   a custom biblatex filter. See main.tex for details.
+%==============================================================================
+
+% ── GRANTED ───────────────────────────────────────────────────────────────────
+
+@patent{Sumner2025application,
+  author   = {Sumner, E. S. and Hakimi, Shabnam and Filipowicz, A. L. S.
+              and Carter, S. and Glazko, Y. S.},
+  title    = {Systems and methods for encouraging application exploration},
+  number   = {US~12,524,477},
+  holder   = {Toyota Research Institute},
+  year     = {2025},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Zhang2025drift,
+  author   = {Zhang, Y. and Hakimi, Shabnam and Klenk, M. E.},
+  title    = {Systems and methods for detecting and regularizing drift
+              in sequential decisions},
+  number   = {US~12,524,132},
+  holder   = {Toyota Research Institute},
+  year     = {2025},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Hong2025moodboard,
+  author   = {Hong, M. K. and Hakimi, Shabnam and Chen, Y. Y.},
+  title    = {Automated moodboard augmentation via cross-modal generative
+              association making},
+  number   = {US~12,493,401},
+  holder   = {Toyota Research Institute},
+  year     = {2025},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Shamma2025coworker,
+  author   = {Shamma, D. A. and Hogan, C. and Hakimi, Shabnam and Weng, Y.},
+  title    = {System and method for legitimate co-worker remote encounter
+              interactions},
+  number   = {US~12,425,255},
+  holder   = {Toyota Research Institute},
+  year     = {2025},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Hakimi2025statistical,
+  author   = {Hakimi, Shabnam and Wu, C. C. and Lee, M. L. and Arechiga, N.},
+  title    = {System and method for improving understanding and decision
+              making regarding statistical data},
+  number   = {US~12,400,077},
+  holder   = {Toyota Research Institute},
+  year     = {2025},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Hakimi2024websearch,
+  author   = {Hakimi, Shabnam and Wu, C. C. and Lee, M. L. and Arechiga, N.},
+  title    = {System and method for contextualizing and improving
+              understanding of web search results},
+  number   = {US~11,934,476},
+  holder   = {Toyota Research Institute},
+  year     = {2024},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Carter2024ranked,
+  author   = {Carter, S. and Filipowicz, A. and Hakimi, Shabnam and Wu, C.},
+  title    = {Ranked choice on an absolute scale},
+  number   = {US~17,393,714},
+  holder   = {Toyota Research Institute},
+  year     = {2024},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Chen2024infer,
+  author   = {Chen, Y. Y. and Hakimi, Shabnam and Lyons, K. M.
+              and Zhang, Y. and Hong, M. K. S. and Harinen, T. and Wu, C. C.},
+  title    = {System and method to infer thoughts and a process through
+              which a human generated labels for a coding scheme},
+  number   = {US~12,032,618},
+  holder   = {Toyota Research Institute},
+  year     = {2024},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Arechiga2023ar,
+  author   = {Arechiga, N. and Hakimi, Shabnam and Wu, C. C. and Lee, M. L.},
+  title    = {System and method for an augmented reality goal assistant},
+  number   = {US~11,579,684},
+  holder   = {Toyota Research Institute},
+  year     = {2023},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Arechiga2024persona,
+  author   = {Arechiga, N. and Lee, M. L. and Wu, C. C. and Hakimi, Shabnam},
+  title    = {System and method of a digital persona for empathy
+              and understanding},
+  number   = {US~12,062,121},
+  holder   = {Toyota Research Institute},
+  year     = {2024},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+@patent{Rosman2024robot,
+  author   = {Rosman, G. and Brooks, D. J. and Stent, S. A. and Chen, T.
+              and Sumner, E. S. and Hakimi, Shabnam and Gopinath, D. E.},
+  title    = {Systems and methods for learning and managing robot
+              user interfaces},
+  number   = {US~12,084,080},
+  holder   = {Toyota Research Institute},
+  year     = {2024},
+  status   = {Granted},
+  note     = {U.S. Patent and Trademark Office, Washington, DC},
+  keywords = {selected},
+}
+
+% ── FILED (add pending applications below) ───────────────────────────────────
+% Use application number in the 'number' field for filed patents.
+% Example:
+%
+% @patent{AuthorYYYYkeyword,
+%   author   = {Last, First and ...},
+%   title    = {Title of invention},
+%   number   = {US App.~XX/XXX,XXX},
+%   holder   = {Toyota Research Institute},
+%   year     = {2025},           % year of filing
+%   status   = {Filed},
+%   note     = {U.S. Patent Application, Patent and Trademark Office,
+%               Washington, DC},
+%   keywords = {selected},
+% }

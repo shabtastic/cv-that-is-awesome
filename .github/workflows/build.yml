@@ -1,64 +1,53 @@
 name: Build CV
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # -----------------------------------------------------------------------
-      # Build all three preset PDFs sequentially.
-      # Each make target writes cv-preset.tex then compiles cv.tex → cv.pdf
-      # then renames to the preset-specific filename.
-      # -----------------------------------------------------------------------
 
       - name: Build cv-full.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: false
-          pre_compile: cp config/full.tex cv-preset.tex
-          post_compile: |
+          latexmk_use_xelatex: true
+          pre_compile: |
+            cp config/full.tex cv-preset.tex
+            xelatex -interaction=nonstopmode cv.tex
             biber cv
-            xelatex cv.tex
-            xelatex cv.tex
-            mv cv.pdf cv-full.pdf
+            xelatex -interaction=nonstopmode cv.tex
+            xelatex -interaction=nonstopmode cv.tex
+          post_compile: mv cv.pdf cv-full.pdf
 
       - name: Build cv-industry.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: false
-          pre_compile: cp config/industry.tex cv-preset.tex
-          post_compile: |
+          latexmk_use_xelatex: true
+          pre_compile: |
+            cp config/industry.tex cv-preset.tex
+            xelatex -interaction=nonstopmode cv.tex
             biber cv
-            xelatex cv.tex
-            xelatex cv.tex
-            mv cv.pdf cv-industry.pdf
+            xelatex -interaction=nonstopmode cv.tex
+            xelatex -interaction=nonstopmode cv.tex
+          post_compile: mv cv.pdf cv-industry.pdf
 
       - name: Build cv-speaking.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: false
-          pre_compile: cp config/speaking.tex cv-preset.tex
-          post_compile: |
+          latexmk_use_xelatex: true
+          pre_compile: |
+            cp config/speaking.tex cv-preset.tex
+            xelatex -interaction=nonstopmode cv.tex
             biber cv
-            xelatex cv.tex
-            xelatex cv.tex
-            mv cv.pdf cv-speaking.pdf
-
-      # -----------------------------------------------------------------------
-      # Create a GitHub Release and upload all three PDFs as assets.
-      # Tag is derived from the commit SHA for traceability.
-      # -----------------------------------------------------------------------
+            xelatex -interaction=nonstopmode cv.tex
+            xelatex -interaction=nonstopmode cv.tex
+          post_compile: mv cv.pdf cv-speaking.pdf
 
       - name: Release
         uses: softprops/action-gh-release@v2
