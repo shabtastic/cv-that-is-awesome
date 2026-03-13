@@ -229,7 +229,7 @@
 % \cvbibname: bold name for usera fields and boldifown.
 % Keeps \sffamily (matching bib body font) but forces series b (Bold),
 % overriding the \fontseries{l} (Light) set by \bodyfontlight.
-\newcommand{\cvbibname}[1]{{\bfseries #1}}
+\newcommand{\cvbibname}[1]{{\normalfont\bfseries #1}}
 
 \DeclareFieldFormat{usera}{#1}
 
@@ -572,7 +572,7 @@
 }{%
   \end{itemize}%
   \end{justify}%
-  \vspace{-1.0mm}% was 1.0mm; negated to keep inter-entry gaps uniform
+  \vspace{-2.0mm}% tuned to match non-bullet inter-entry gap
 }
 
 %------------------------------------------------------------------------------
