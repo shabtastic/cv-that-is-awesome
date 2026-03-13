@@ -35,6 +35,8 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 try:
     import bibtexparser
@@ -159,7 +161,7 @@ def fetch_patent_odp(patent_number: str, api_key: str) -> dict | None:
     }
     headers = {**HEADERS, "X-API-KEY": api_key}
     try:
-        r = requests.get(ODP_SEARCH_URL, params=params, headers=headers, timeout=20)
+        r = requests.get(ODP_SEARCH_URL, params=params, headers=headers, timeout=20, verify=False)
         r.raise_for_status()
         hits = (r.json()
                  .get("hits", {})
@@ -442,6 +444,7 @@ def mode_discover(dry_run: bool) -> None:
             params=params,
             headers=headers,
             timeout=20,
+            verify=False,
         )
         r.raise_for_status()
         hits = r.json().get("hits", {}).get("hits", [])
