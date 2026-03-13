@@ -413,6 +413,7 @@
 \newtoggle{showMemberships}
 \newtoggle{showReferences}
 \newtoggle{showFullReferences}
+\newtoggle{showFullCVNote}         % true = closing "Full CV available upon request."
 
 \toggletrue{showJournals}
 \toggletrue{showPreprints}
@@ -430,6 +431,7 @@
 \toggletrue{showMemberships}
 \toggletrue{showReferences}
 \togglefalse{showFullReferences}  % false = "Available upon request"
+\togglefalse{showFullCVNote}      % true = closing "Full CV available upon request." (industry/speaking presets)
 
 %==============================================================================
 % TOGGLES — PUBLICATION FILTERS
@@ -752,5 +754,12 @@
 \iftoggle{showTeaching}{\input{sections/teaching}}{}
 \iftoggle{showService}{\input{sections/service}}{}
 \iftoggle{showReviewer}{\input{sections/reviewer}}{}
+
+\iftoggle{showFullCVNote}{%
+  \vspace{8mm}%
+  \begin{center}
+    \textit{Full CV available upon request.}
+  \end{center}%
+}{}
 
 \end{document}
