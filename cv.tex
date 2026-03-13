@@ -265,8 +265,9 @@
 % Entries with note = {* equal contributions...} should have that note removed.
 
 % Custom @misc driver: identical to standard.bbx except \printfield{note}
-% is moved to AFTER doi/url, on its own line. This puts the scicomm
-% "Authors contributed equally..." note below the citation, not inline.
+% is moved to AFTER \finentry (which appends the closing period), on its own
+% line. This puts the scicomm "Authors contributed equally..." note below the
+% citation without a stray period before it.
 \DeclareBibliographyDriver{misc}{%
   \usebibmacro{bibindex}%
   \usebibmacro{begentry}%
@@ -298,8 +299,9 @@
     {\usebibmacro{related:init}%
      \usebibmacro{related}}
     {}%
+  \usebibmacro{finentry}%
   \iffieldundef{note}{}{\par\smallskip\printfield{note}}%
-  \usebibmacro{finentry}}
+}
 
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
