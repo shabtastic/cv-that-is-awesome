@@ -55,6 +55,7 @@
 \RequirePackage[quiet]{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
 \RequirePackage{unicode-math}
+\RequirePackage{fontawesome5}
 \providecommand{\faEnvelope}{}\providecommand{\faHome}{}\providecommand{\faMapMarker}{}\providecommand{\faGithub}{}\providecommand{\faLinkedinSquare}{}\providecommand{\faOrcid}{}\providecommand{\faHouseChimney}{}\providecommand{\faSquareGithub}{}\providecommand{\faLinkedin}{}\providecommand{\faMobile}{}\providecommand{\faSquareWhatsapp}{}\providecommand{\faCakeCandles}{}\providecommand{\faGitlab}{}\providecommand{\faBitbucket}{}\providecommand{\faStackOverflow}{}\providecommand{\faGraduationCap}{}\providecommand{\faHackerrank}{}\providecommand{\faKaggle}{}\providecommand{\faMastodon}{}\providecommand{\faMedium}{}\providecommand{\faReddit}{}\providecommand{\faResearchgate}{}\providecommand{\faSkype}{}\providecommand{\faSquareXing}{}\providecommand{\faTelegram}{}\providecommand{\faTwitter}{}\providecommand{\faXTwitter}{}
 \RequirePackage{accsupp}
 \defaultfontfeatures{
