@@ -264,6 +264,43 @@
 % NOT in the note field. See journals.bib and conference.bib for examples.
 % Entries with note = {* equal contributions...} should have that note removed.
 
+% Custom @misc driver: identical to standard.bbx except \printfield{note}
+% is moved to AFTER doi/url, on its own line. This puts the scicomm
+% "Authors contributed equally..." note below the citation, not inline.
+\DeclareBibliographyDriver{misc}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \usebibmacro{author/editor+others/translator+others}%
+  \setunit{\printdelim{nametitledelim}}\newblock
+  \usebibmacro{title}%
+  \newunit
+  \printlist{language}%
+  \newunit\newblock
+  \usebibmacro{byauthor}%
+  \newunit\newblock
+  \usebibmacro{byeditor+others}%
+  \newunit\newblock
+  \printfield{howpublished}%
+  \newunit\newblock
+  \printfield{type}%
+  \newunit
+  \printfield{version}%
+  \newunit\newblock
+  \usebibmacro{organization+location+date}%
+  \newunit\newblock
+  \usebibmacro{doi+eprint+url}%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \setunit{\bibpagerefpunct}\newblock
+  \usebibmacro{pageref}%
+  \newunit\newblock
+  \iftoggle{bbx:related}
+    {\usebibmacro{related:init}%
+     \usebibmacro{related}}
+    {}%
+  \iffieldundef{note}{}{\par\smallskip\printfield{note}}%
+  \usebibmacro{finentry}}
+
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
 \addbibresource{refs/conference.bib}
