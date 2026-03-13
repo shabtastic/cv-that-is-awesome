@@ -229,7 +229,7 @@
 % \cvbibname: bold name for usera fields and boldifown.
 % Keeps \sffamily (matching bib body font) but forces series b (Bold),
 % overriding the \fontseries{l} (Light) set by \bodyfontlight.
-\newcommand{\cvbibname}[1]{{\sffamily\fontseries{b}\selectfont #1}}
+\newcommand{\cvbibname}[1]{{\bfseries #1}}
 
 \DeclareFieldFormat{usera}{#1}
 
@@ -499,6 +499,9 @@
 
 % Load preset overrides (must come after all \newtoggle/\def declarations).
 \input{cv-preset}
+
+% Increase vertical space before each section heading (default is 3mm).
+\renewcommand{\acvSectionTopSkip}{7mm}
 
 % First-pass guard: skip all \printbibliography calls until the .bbl exists.
 % This prevents xelatex from crashing before biber has run, which would
