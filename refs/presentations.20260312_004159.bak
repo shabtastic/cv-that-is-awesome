@@ -1,0 +1,554 @@
+%==============================================================================
+% CONFERENCE PRESENTATIONS
+%
+% Entry type : @unpublished
+% type field : Talk | Poster | Symposium | Invited Talk
+%              (used for formatting and optional filtering)
+%
+% SELECTED TOGGLE: controlled via \toggletrue/false{selectedOnlyPresentations}
+% in main.tex. To mark an entry as "selected", add:
+%   keywords = {presentation, selected},
+% Entries with only keywords = {presentation} are hidden when toggle is true.
+%
+%   keywords = {presentation, selected},
+%
+% CITE KEY CONVENTION: LastnameYYYYkeyword (first/presenting author, year,
+%   one content word from title)
+%==============================================================================
+
+@unpublished{Deng2025brain,
+  author   = {Deng, W. N. and Srirangarajan, T. and Klenk, M.
+              and Wu, C. and Knutson, B. and Hakimi, Shabnam},
+  title    = {The brain leads while behavior lags: Neural activity forecasts
+              market demand for vehicles while elicited preferences reflect
+              past demand},
+  note     = {Annual Meeting of the Society for Neuroeconomics,
+              Boston, MA},
+  year     = {2025},
+  month    = oct,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2025affective,
+  author   = {Hakimi, Shabnam and Ong, D. and Gendron, M. and Kimani, E.},
+  title    = {Interrogating the opportunities and risks of using generative
+              {AI} for understanding and supporting affective processes},
+  note     = {Annual Meeting of the Society for Affective Science,
+              Portland, OR},
+  year     = {2025},
+  month    = apr,
+  type     = {Symposium},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2018vta,
+  author   = {Hakimi, Shabnam and MacInnes, J. J. and Dickerson, K. C.
+              and Adcock, R. A.},
+  title    = {Encoded temporal representations predicting {VTA}
+              neurofeedback-mediated learning to self-regulate motivation},
+  note     = {Annual Meeting of the Society for Neuroeconomics,
+              Philadelphia, PA},
+  year     = {2018},
+  month    = oct,
+  type     = {Talk},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2018ccn,
+  author   = {Hakimi, Shabnam and MacInnes, J. J. and Dickerson, K. C.
+              and Adcock, R. A.},
+  title    = {Temporal structure of learning to regulate ventral tegmental
+              area using real-time neurofeedback},
+  note     = {Conference on Cognitive Computational Neuroscience,
+              Philadelphia, PA},
+  year     = {2018},
+  month    = sep,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2017rldm,
+  author   = {Hakimi, Shabnam},
+  title    = {Neural correlates of cognitive control as a function of
+              emergent automaticity},
+  note     = {Multidisciplinary Conference on Reinforcement Learning and
+              Decision Making, Ann Arbor, MI},
+  year     = {2017},
+  month    = jul,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2016risk,
+  author   = {Hakimi, Shabnam and Clithero, J. A. and Mullette-Gillman, O. A.
+              and Smith, D. V. and McLaurin, R. E. and Taren, A.
+              and Venkatraman, V. and Huettel, S. A. and Carter, R. M.},
+  title    = {Decomposing risk representation in parietal cortex},
+  note     = {Annual Meeting of the Society for Neuroeconomics,
+              Berlin, Germany},
+  year     = {2016},
+  month    = aug,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2016incentive,
+  author   = {Hakimi, Shabnam and Ward, A. F. and Sukumar, S.
+              and Elliott-Williams, C. and Mozer, M. C.},
+  title    = {Optimizing incentive design for intertemporal choice},
+  note     = {Annual Meeting of the Society for Neuroeconomics,
+              Berlin, Germany},
+  year     = {2016},
+  month    = aug,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Jung2016autism,
+  author   = {Jung, H. and Mosner, M. G. and McLaurin, R. E.
+              and Hakimi, Shabnam and Parelman, J. M. and Kinard, J.
+              and Chakraborty, P. and Dichter, G. S. and Carter, R. M.},
+  title    = {Testing for co-opted higher-order social cognition in autism},
+  note     = {Annual Convention of the Rocky Mountain Psychological
+              Association, Denver, CO},
+  year     = {2016},
+  month    = apr,
+  type     = {Talk},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Muzekari2020bandit,
+  author   = {Muzekari, B. S. and Hakimi, Shabnam and Eom, K. H.
+              and Shrestha, S. and Ng, S. and Rivera-Cancel, A. M.
+              and Thorp, J. N. and Erwin, S. R. and Wright, R. N.
+              and Zucker, N. L. and Adcock, R. A.},
+  title    = {Dynamic feedback valuation impacts learning in a probabilistic
+              two-armed bandit task},
+  note     = {Annual Meeting of the Cognitive Neuroscience Society, Virtual},
+  year     = {2020},
+  month    = may,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Eom2020perfectionism,
+  author   = {Eom, K. H. and Rivera-Cancel, A. M. and Hakimi, Shabnam
+              and Muzekari, B. S. and Zucker, N. L. and Adcock, R. A.},
+  title    = {Mapping the Individual Experience of Perfectionism to
+              Clinical Measures},
+  note     = {Annual Meeting of the Society of Biological Psychiatry,
+              Virtual},
+  year     = {2020},
+  month    = may,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Erwin2019perfectionism,
+  author   = {Erwin, S. R. and Ng, S. and Hakimi, Shabnam
+              and Shrestha, S. and Eom, K. H. and Muzekari, B. S.
+              and Silberstein, K. and Wright, R. and Adcock, R. A.
+              and Zucker, N. L.},
+  title    = {Harnessing perfectionism: The role of emotion regulation
+              and reward experience},
+  note     = {66th Annual Meeting of the American Academy of Child and
+              Adolescent Psychiatry, Chicago, IL},
+  year     = {2019},
+  month    = oct,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}
+
+@unpublished{Hakimi2011discounting,
+  author   = {Hakimi, Shabnam and Hare, T. A. and Rangel, A.},
+  title    = {Variations in discount rates are associated with differences
+              in the ability to imagine future rewards},
+  note     = {Annual Meeting of the Society for Neuroeconomics,
+              Evanston, IL},
+  year     = {2011},
+  month    = oct,
+  type     = {Poster},
+  keywords = {presentation, selected},
+}%==============================================================================
+% NEW (NON-SELECTED) PRESENTATIONS — appended from July 2023 full CV
+% keywords = {presentation} only (no 'selected')
+%==============================================================================
+
+@unpublished{Dickerson2021adhd,
+  author   = {Dickerson, K. C. and Poh, J.-H. and Hakimi, Shabnam and Wright, R. and Eom, K. and Muzekari, B. and Kollins, S. and Adcock, R. A.},
+  title    = {Cognitive neurostimulation of dopaminergic midbrain via {fMRI} neurofeedback training increases willingness to exert effort in {ADHD}},
+  year     = {2021},
+  month    = {December},
+  note     = {Presented at the Annual Meeting of the American College of Neuropsychopharmacology, Virtual.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2020snbf,
+  author   = {Hakimi, Shabnam and Muzekari, B. S. and Eom, K. H. and Shrestha, S. and Wang, C. and Ng, S. and Rivera-Cancel, A. M. and Thorp, J. N. and Erwin, S. R. and Wright, R. N. and Zucker, N. L. and Adcock, R. A.},
+  title    = {Dynamic changes in feedback valuation explain learning in a probabilistic two-armed bandit task},
+  year     = {2020},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Virtual.},
+  keywords = {presentation},
+}
+
+@unpublished{Sinclair2020snvirus,
+  author   = {Sinclair, A. and Hakimi, Shabnam and Stanley, M. and Samanez-Larkin, G. R.},
+  title    = {Perceived versus actual virus transmission risk during the {COVID}-19 pandemic},
+  year     = {2020},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Virtual.},
+  keywords = {presentation},
+}
+
+@unpublished{Choi2020covid,
+  author   = {Choi, Y. and Wright, R. N. and Hakimi, Shabnam and Hsiung, A. and Sinclair, A. and Adcock, R. A.},
+  title    = {Dissecting the relationship in information-seeking behaviors between clinically diagnosed anxiety and depression patients during the {COVID}-19 pandemic},
+  year     = {2020},
+  month    = {August},
+  note     = {Presented at the Duke Summer Neuroscience Program Poster Session, Virtual.},
+  keywords = {presentation},
+}
+
+@unpublished{Sinclair2020memory,
+  author   = {Sinclair, A. and Hakimi, Shabnam and Adcock, R. A. and Barense, M. D.},
+  title    = {Effective connectivity among cortico-hippocampal regions predicts memory for naturalistic episodes},
+  year     = {2020},
+  month    = {August},
+  note     = {Presented at the 2020 Context and Episodic Memory Symposium, Virtual.},
+  keywords = {presentation},
+}
+
+@unpublished{Castrellon2019guilt,
+  author   = {Castrellon, J. J. and Skene, J. H. P. and Yin, L. and Hakimi, Shabnam and Parelman, J. and Law, J. R. and Skene, J. A. G. and Ball, D. and Malekpour, A. and Pearson, J. M. and Carter, R. M.},
+  title    = {Language and recall regions of the brain track evidence of guilt in mock criminal scenarios},
+  year     = {2019},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Dublin, Ireland.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2019smokies,
+  author   = {Hakimi, Shabnam and MacInnes, J. J. and Dickerson, K. C. and McDonald, K. and Adcock, R. A.},
+  title    = {Encoded temporal representations predict {VTA} neurofeedback-mediated learning to self-regulate motivation},
+  year     = {2019},
+  month    = {April},
+  note     = {Presented at the 2019 Smokies Cognition and Neuroscience Symposium, Asheville, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2019dibs,
+  author   = {Hakimi, Shabnam and MacInnes, J. J. and Dickerson, K. C. and McDonald, K. and Adcock, R. A.},
+  title    = {Encoded temporal representations predict {VTA} neurofeedback-mediated learning to self-regulate motivation},
+  year     = {2019},
+  month    = {February},
+  note     = {Presented at the 2019 {DIBS} Distinguished Lecture \& Symposium, Durham, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Hsiung2019dibs,
+  author   = {Hsiung, A. and Hakimi, Shabnam and Adcock, R. A. and Pearson, J. M. and Huettel, S. A.},
+  title    = {Characterizing information sampling tendencies},
+  year     = {2019},
+  month    = {February},
+  note     = {Presented at the 2019 {DIBS} Distinguished Lecture \& Symposium, Durham, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Thorp2018sfn,
+  author   = {Thorp, J. N. and Hakimi, Shabnam and Dickerson, K. C. and MacInnes, J. J. and Adcock, R. A.},
+  title    = {Mesolimbic connectivity during neurofeedback training predicts learning to volitionally activate the ventral tegmental area},
+  year     = {2018},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hsiung2018sn,
+  author   = {Hsiung, A. and Hakimi, Shabnam and Adcock, R. A. and Pearson, J. M. and Huettel, S. A.},
+  title    = {The effects of evidence accumulation on incidental memory},
+  year     = {2018},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Philadelphia, PA.},
+  keywords = {presentation},
+}
+
+@unpublished{Thorp2018triangle,
+  author   = {Thorp, J. N. and Hakimi, Shabnam and Dickerson, K. C. and MacInnes, J. J. and Adcock, R. A.},
+  title    = {Mesolimbic connectivity during neurofeedback training predicts learning to volitionally activate the ventral tegmental area},
+  year     = {2018},
+  month    = {May},
+  note     = {Presented at the 4th Annual Meeting of the Triangle Chapter of the Society for Neuroscience, Cary, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Dickerson2018ctsa,
+  author   = {Dickerson, K. C. and Biswas, S. and Thorp, J. N. and Shrestha, S. and Hakimi, Shabnam and Adcock, R. A.},
+  title    = {Neurofeedback of the dopamine system using {EEG} and {fMRI}},
+  year     = {2018},
+  month    = {May},
+  note     = {Presented at the Duke {CTSA} Symposium, Durham, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Chandrashekharan2018duke,
+  author   = {Chandrashekharan, S. V. and Hakimi, Shabnam and Thorp, J. N. and Shrestha, S. and Dickerson, K. C. and Adcock, R. A.},
+  title    = {The effects of labeling volitional motivation during real-time {EEG} neurofeedback},
+  year     = {2018},
+  month    = {April},
+  note     = {Presented at the Duke Undergraduate Neuroscience Graduation with Distinction Poster Session, Durham, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2017rtfmri,
+  author   = {Hakimi, Shabnam and MacInnes, J. J. and Dickerson, K. C. and Adcock, R. A.},
+  title    = {Modeling learning from real-time {fMRI} neurofeedback},
+  year     = {2017},
+  month    = {November},
+  note     = {Presented at the Third International Meeting on Real-Time Functional Imaging and Neurofeedback, Nara, Japan.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2017sn,
+  author   = {Hakimi, Shabnam},
+  title    = {Neural correlates of cognitive control as a function of emergent automaticity},
+  year     = {2017},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Toronto, Canada.},
+  keywords = {presentation},
+}
+
+@unpublished{Biswas2017duke,
+  author   = {Biswas, S. and Hakimi, Shabnam and Kollins, S. and Adcock, R. A. and Dickerson, K. C.},
+  title    = {Evaluating real-time {fMRI} neurofeedback as an {ADHD} treatment},
+  year     = {2017},
+  month    = {July},
+  note     = {Presented at the Duke Psychology Vertical Integration Program Poster Session, Durham, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Mozer2017rldm,
+  author   = {Mozer, M. C. and Sukumar, S. and Elliott-Williams, C. and Hakimi, Shabnam and Ward, A. F.},
+  title    = {Overcoming temptation: Incentive design for intertemporal choice},
+  year     = {2017},
+  month    = {June},
+  note     = {Presented at the 3rd Multidisciplinary Meeting on Reinforcement Learning and Decision Making, Ann Arbor, MI.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2017triangle,
+  author   = {Hakimi, Shabnam and Clithero, J. A. and Mullette-Gillman, O. A. and Smith, D. V. and McLaurin, R. E. and Taren, A. and Venkatraman, V. and Huettel, S. A. and Carter, R. M.},
+  title    = {Decomposing risk representation in parietal cortex},
+  year     = {2017},
+  month    = {April},
+  note     = {Presented at the 3rd Annual Meeting of the Triangle Chapter of the Society for Neuroscience, Cary, NC.},
+  keywords = {presentation},
+}
+
+@unpublished{Carter2016sfn,
+  author   = {Carter, R. M. and Hakimi, Shabnam and Parelman, J. M. and Law, J. R. and Skene, J. A. G. and Vidmar, N. and Beskind, D. H. and Pearson, J. M. and Skene, J. H. P.},
+  title    = {Theory of mind regions of the brain track evidence of guilt in mock criminal scenarios},
+  year     = {2016},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Parelman2015sn,
+  author   = {Parelman, J. M. and Foster, J. M. and Fairley, K. and Hakimi, Shabnam and Jones, M. and Carter, R. M.},
+  title    = {Social balloon analog risk task: Competitive and cooperative rule effects on decision making},
+  year     = {2015},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroeconomics, Miami, FL.},
+  keywords = {presentation},
+}
+
+@unpublished{Israelsen2015ics,
+  author   = {Israelsen, B. and Ward, A. F. and Smith, I. and Sukumar, S. and Hakimi, Shabnam and Lynch, J. and Mozer, M.},
+  title    = {Overcoming temptation: Theory and practice},
+  year     = {2015},
+  month    = {April},
+  note     = {Presented at the Institute of Cognitive Science Colloquium, Boulder, CO.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2011nyas,
+  author   = {Hakimi, Shabnam and Hare, T. A. and Rangel, A.},
+  title    = {Variations in discount rates are associated with differences in the ability to imagine future rewards},
+  year     = {2011},
+  month    = {March},
+  note     = {Presented at the {NYAS} Meeting on Critical Contributions of the Orbitofrontal Cortex to Behavior, New York, NY.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2011igert,
+  author   = {Hakimi, Shabnam and Hare, T. A. and Rangel, A.},
+  title    = {Variations in discount rates are associated with differences in the ability to imagine future rewards},
+  year     = {2011},
+  month    = {May},
+  note     = {Presented at the 2011 {NSF} {IGERT} Poster Competition.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2011cns,
+  author   = {Hakimi, Shabnam and Hare, T. A. and Rangel, A.},
+  title    = {Variations in discount rates are associated with differences in the ability to imagine future rewards},
+  year     = {2011},
+  month    = {April},
+  note     = {Presented at the Annual Meeting of the Cognitive Neuroscience Society, San Francisco, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Zink2010sfn,
+  author   = {Zink, C. F. and Kempf, L. K. and Hakimi, Shabnam and Stein, J. S. and Meyer-Lindenberg, A.},
+  title    = {Vasopressin effects on the neural correlates of social recognition},
+  year     = {2010},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Tost2010ohbm,
+  author   = {Tost, H. and Braus, D. F. and Hakimi, Shabnam and Hohn, F. and Ruf, M. and Meyer-Lindenberg, A.},
+  title    = {Acute {D2} receptor blockade induces rapid, reversible remodeling in human cortical-striatal circuits},
+  year     = {2010},
+  month    = {June},
+  note     = {Presented at the Annual Meeting of the Organization for Human Brain Mapping, Barcelona, Spain.},
+  keywords = {presentation},
+}
+
+@unpublished{Tost2009acnp,
+  author   = {Tost, H. and Braus, D. F. and Hakimi, Shabnam and Hohn, F. and Meyer-Lindenberg, A.},
+  title    = {A rapid, reversible neuroplasticity mechanism in humans reflects acute extrapyramidal side effects},
+  year     = {2009},
+  month    = {December},
+  note     = {Presented at the Annual Meeting of the American College of Neuropsychopharmacology, Hollywood, FL.},
+  keywords = {presentation},
+}
+
+@unpublished{Zink2009sfn,
+  author   = {Zink, C. F. and Kempf, L. K. and Stein, J. S. and Hakimi, Shabnam and Meyer-Lindenberg, A.},
+  title    = {Effects of vasopressin on {mPFC}-amygdala circuitry during fearful face processing in humans},
+  year     = {2009},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, Chicago, IL.},
+  keywords = {presentation},
+}
+
+@unpublished{Zink2009ohbm,
+  author   = {Zink, C. F. and Kempf, L. K. and Hakimi, Shabnam and Rainey, C. A. and Stein, J. S. and Meyer-Lindenberg, A.},
+  title    = {Effects of vasopressin on {mPFC}-amygdala circuitry during fearful face processing in humans},
+  year     = {2009},
+  month    = {June},
+  note     = {Presented at the Annual Meeting of the Organization for Human Brain Mapping, San Francisco, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Jansma2008sobp,
+  author   = {Jansma, J. M. and Hakimi, Shabnam and Tong, Y. and Zink, C. F. and Meyer-Lindenberg, A.},
+  title    = {Trial by trial interaction effects in visual cortex and amygdala: Application of an {fMRI} method sensitive for non-linear effects},
+  year     = {2008},
+  month    = {May},
+  note     = {Presented at the Annual Meeting of the Society of Biological Psychiatry, Washington, DC.},
+  keywords = {presentation},
+}
+
+@unpublished{Jansma2007sfn,
+  author   = {Jansma, M. and Hakimi, Shabnam and Fukunaga, M. and Duyn, J. and Meyer-Lindenberg, A.},
+  title    = {An {fMRI} study of trial-by-trial interaction effects in fusiform gyrus and amygdala},
+  year     = {2007},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2007sfnpten,
+  author   = {Hakimi, Shabnam and Kempf, L. P. and Kolachana, B. and Verchinski, B. A. and Tong, Y. and Mattay, V. S. and Weinberger, D. R. and Meyer-Lindenberg, A.},
+  title    = {{fMRI} investigation of the impact of genetic variation in {Pten} on the neural correlates of face emotion processing},
+  year     = {2007},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Zink2007sfn,
+  author   = {Zink, C. F. and Tong, Y. and Chen, Q. and Hakimi, Shabnam and Rainey, C. and Stein, J. and Laumann, T. and Kempf, L. and Meyer-Lindenberg, A.},
+  title    = {A comparison of the neural representation of social and non-social hierarchies in humans},
+  year     = {2007},
+  month    = {November},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, San Diego, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2007ohbm,
+  author   = {Hakimi, Shabnam and Kempf, L. P. and Kolachana, B. and Stein, J. L. and Verchinski, B. A. and Mattay, V. S. and Weinberger, D. R. and Meyer-Lindenberg, A.},
+  title    = {Voxel-based morphometry investigation of the impact of genetic variation in {Pten}},
+  year     = {2007},
+  month    = {June},
+  note     = {Presented at the Annual Meeting of the Organization for Human Brain Mapping, Chicago, IL.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2007irta,
+  author   = {Hakimi, Shabnam and Kempf, L. P. and Kolachana, B. and Stein, J. L. and Verchinski, B. A. and Mattay, V. S. and Weinberger, D. R. and Meyer-Lindenberg, A.},
+  title    = {Voxel-based morphometry investigation of the impact of genetic variation in {Pten}},
+  year     = {2007},
+  month    = {May},
+  note     = {Presented at the Postbaccalaureate {IRTA} Research Festival, Bethesda, MD.},
+  keywords = {presentation},
+}
+
+@unpublished{Rainey2006sfn,
+  author   = {Rainey, C. A. and Zink, C. F. and Draper, C. K. and Chen, Q. and Stein, J. L. and Kempf, L. and Tong, Y. and Swaddle, J. P. and Hakimi, Shabnam and Laumann, T. and Meyer-Lindenberg, A.},
+  title    = {Neural processing of facial cues of gonadal steroid status in humans},
+  year     = {2006},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, Atlanta, GA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2006sfnphobia,
+  author   = {Hakimi, Shabnam and Goldin, P. R. and Gross, J. J.},
+  title    = {{fMRI} investigation of extraversion and self-referential processing in social phobia},
+  year     = {2006},
+  month    = {October},
+  note     = {Presented at the Annual Meeting of the Society for Neuroscience, Atlanta, GA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2006sobp,
+  author   = {Hakimi, Shabnam and Goldin, P. R. and Ramel, W. E. and Gross, J. J.},
+  title    = {Neural mechanisms of emotion regulation in social anxiety disorder},
+  year     = {2006},
+  month    = {May},
+  note     = {Presented at the Annual Meeting of the Society of Biological Psychiatry, Toronto, Canada.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2006cns,
+  author   = {Hakimi, Shabnam and Goldin, P. R. and Gross, J. J.},
+  title    = {{MRI} investigation of positive self-referential processing in social anxiety disorder},
+  year     = {2006},
+  month    = {April},
+  note     = {Presented at the Annual Meeting of the Cognitive Neuroscience Society, San Francisco, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Hakimi2006spsp,
+  author   = {Hakimi, Shabnam and Goldin, P. R. and Gross, J. J.},
+  title    = {{fMRI} investigation of neuroticism and self-referential processing},
+  year     = {2006},
+  month    = {January},
+  note     = {Presented at the Annual Meeting of the Society for Personality and Social Psychology, Palm Springs, CA.},
+  keywords = {presentation},
+}
+
+@unpublished{Goldin2005cns,
+  author   = {Goldin, P. R. and Anderson, B. A. and Hakimi, Shabnam and Hutcherson, C. A. C. and Gross, J. J.},
+  title    = {Temporal dynamics of emotion responses: Affective chronometry of neural, autonomic and subjective emotion experience in response to sad and amusing films},
+  year     = {2005},
+  month    = {April},
+  note     = {Presented at the Annual Meeting of the Cognitive Neuroscience Society, New York, NY.},
+  keywords = {presentation},
+}
