@@ -53,8 +53,8 @@ BAK_OUT        = Path("refs/patents.bib.bak")
 HOLDER         = "Toyota Research Institute"
 
 PEDS_BASE      = "https://ped.uspto.gov/api/queries"          # RETIRED March 2025
-ODP_SEARCH_URL = "https://api.uspto.gov/patent/file-wrapper/search"
-ODP_APP_URL    = "https://api.uspto.gov/patent/file-wrapper/applications/{appnum}/application-data"
+ODP_SEARCH_URL = "https://api.uspto.gov/api/v1/patent/applications/search"
+ODP_APP_URL    = "https://api.uspto.gov/api/v1/patent/applications/{appnum}/meta-data"
 
 HEADERS = {
     "Accept": "application/json",
@@ -110,15 +110,12 @@ def backup_bib(src: Path, dst: Path) -> None:
 def extract_manual_entries(bib_path: Path) -> list[str]:
     """
     Parse patents.bib and return raw BibTeX strings for any entry whose
-    keywords field contains 'manual'. Works with or without bibtexparser.
+    keywords field contains 'manual'.
+    Always uses regex — bibtexparser v1 silently drops @patent entries.
     """
     if not bib_path.exists():
         return []
-
-    if HAS_BIBTEX:
-        return _extract_manual_bibtexparser(bib_path)
-    else:
-        return _extract_manual_regex(bib_path)
+    return _extract_manual_regex(bib_path)
 
 
 def _extract_manual_bibtexparser(bib_path: Path) -> list[str]:
@@ -153,20 +150,25 @@ def _extract_manual_regex(bib_path: Path) -> list[str]:
 def fetch_patent_odp(patent_number: str, api_key: str) -> dict | None:
     """
     Query the USPTO Open Data Portal for a single patent by grant number.
-    Uses the search endpoint with patentNumber field.
+    Uses POST /api/v1/patent/applications/search with patentNumber field.
+    Returns the applicationMetaData sub-dict from the first hit.
     """
-    params = {
-        "q": f"patentNumber:{patent_number}",
-        "hits": 1,
+    payload = {
+        "q": f"applicationMetaData.patentNumber:{patent_number}",
+        "pagination": {"offset": 0, "limit": 1},
     }
-    headers = {**HEADERS, "X-API-KEY": api_key}
+    headers = {**HEADERS, "Content-Type": "application/json", "x-api-key": api_key}
     try:
-        r = requests.get(ODP_SEARCH_URL, params=params, headers=headers, timeout=20, verify=False)
+        r = requests.post(ODP_SEARCH_URL, json=payload, headers=headers,
+                          timeout=20, verify=False)
         r.raise_for_status()
-        hits = (r.json()
-                 .get("hits", {})
-                 .get("hits", []))
-        return hits[0].get("_source", {}) if hits else None
+        results = r.json()
+        bag = (results.get("patentFileWrapperDataBag") or
+               results.get("results") or [])
+        if not bag:
+            return None
+        first = bag[0]
+        return first.get("applicationMetaData", first)
     except Exception as e:
         print(f"    [warn] ODP query failed for {patent_number}: {e}")
         return None
@@ -433,22 +435,25 @@ def mode_discover(dry_run: bool) -> None:
     """Search USPTO ODP by inventor name for patents not in KNOWN_PATENT_NUMBERS."""
     print(f"Searching USPTO ODP for patents by {INVENTOR_FIRST} {INVENTOR_LAST}...")
     api_key = get_api_key()
-    params = {
-        "q": f"inventors.lastName:{INVENTOR_LAST} AND inventors.firstName:{INVENTOR_FIRST}",
-        "hits": 50,
+    # Search by inventor last name, filter to granted patents only (status "Patented Case")
+    payload = {
+        "q": f"applicationMetaData.inventorBag:{INVENTOR_LAST}",
+        "pagination": {"offset": 0, "limit": 50},
     }
-    headers = {**HEADERS, "X-API-KEY": api_key}
+    headers = {**HEADERS, "Content-Type": "application/json", "x-api-key": api_key}
     try:
-        r = requests.get(
+        r = requests.post(
             ODP_SEARCH_URL,
-            params=params,
+            json=payload,
             headers=headers,
             timeout=20,
             verify=False,
         )
         r.raise_for_status()
-        hits = r.json().get("hits", {}).get("hits", [])
-        docs = [h.get("_source", {}) for h in hits]
+        results = r.json()
+        bag = (results.get("patentFileWrapperDataBag") or
+               results.get("results") or [])
+        docs = [h.get("applicationMetaData", h) for h in bag]
     except Exception as e:
         print(f"[error] USPTO ODP discovery search failed: {e}")
         sys.exit(1)
@@ -456,18 +461,23 @@ def mode_discover(dry_run: bool) -> None:
     print(f"  Found {len(docs)} total records.")
     new_entries = []
     for doc in docs:
-        num = doc.get("patentNumber", "")
-        if not num or num in KNOWN_PATENT_NUMBERS:
+        patent_num = doc.get("patentNumber", "")
+        app_num    = doc.get("applicationNumberText", "")
+        # Use patent number for granted, application number for filed
+        num    = patent_num or app_num
+        status_hint = "Granted" if patent_num else "Filed"
+        if not num:
+            continue
+        if num in KNOWN_PATENT_NUMBERS:
             continue
         title = doc.get("inventionTitle", doc.get("patentTitle", "unknown title"))
-        print(f"\n  NEW: US {num} — {title[:60]}")
+        print(f"\n  NEW [{status_hint}]: {num} — {title[:60]}")
         normalized       = parse_patent_record(doc, num)
         suggested_holder = (doc.get("assigneeEntityName") or
                             doc.get("assigneeName") or
                             doc.get("applicantName") or
                             HOLDER)
-        suggested_status = ("Filed" if not doc.get("patentNumber")
-                            else "Granted")
+        suggested_status = status_hint
         if not dry_run:
             holder = confirm_holder(num, title, suggested=suggested_holder)
             status = confirm_status(num, title, suggested=suggested_status)
