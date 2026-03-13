@@ -4,15 +4,15 @@
 
 \newcommand{\cventryselected}[5]{\cventry{#1}{#2}{#3}{#4}{#5}}
 
-\cvsection{Professional Service \& Outreach}
+\iftoggle{selectedOnlyService}{\cvsection{Selected Professional Service \& Outreach}}{\cvsection{Professional Service \& Outreach}}
 
 \begin{cventries}
 
   % ── 2022 ──────────────────────────────────────────────────────────────────
 
   \cventryselected
-    {Co-Chair, Women \& Allies Employee Resource Group (WAERG) \textnormal{\textit{(elected)}}}
-    {Toyota Research Institute}
+    {Co-Chair \textnormal{\textit{(elected)}}}
+    {Women \& Allies Employee Resource Group (WAERG), Toyota Research Institute}
     {Los Altos, CA}
     {03/2022 -- 03/2024}
     {}
@@ -21,7 +21,7 @@
 
   \iftoggle{showAllService}{
     \cventry
-      {Idea Review Mentor \& Pitch Coach}
+      {Idea Review Mentor and Pitch Coach}
       {Project Invent}
       {}
       {10/2021 -- 04/2022}
@@ -30,31 +30,31 @@
   }{}
 
   \cventryselected
-    {Postdoctoral Representative, Center for Cognitive Neuroscience \textnormal{\textit{(nominated \& elected)}}}
-    {Duke University}
+    {Postdoctoral Representative \textnormal{\textit{(nominated \& elected)}}}
+    {Center for Cognitive Neuroscience, Duke University}
     {Durham, NC}
     {08/2019 -- 01/2021}
     {}
 
   \cventryselected
     {Co-Founder \& Leadership Committee Member}
-    {Duke Inclusion and Power Dynamics in Academia Series}
+    {Inclusion and Power Dynamics in Academia Series, Duke University}
     {Durham, NC}
     {11/2017 -- 01/2021}
     {\begin{cvitems}
-      \item {Co-I: Duke Faculty Advancement Seed Grants (2018--2020)}
+      \item {Collaborator, Duke Faculty Advancement Seed Grants (2018--2020)}
     \end{cvitems}}
 
   \cventryselected
     {Co-Founder \& Leadership Committee Member}
-    {SPEAK: Scientists Promoting Equity and Knowledge}
+    {SPEAK: Scientists Promoting Equity and Knowledge, Duke University}
     {Durham, NC}
     {06/2016 -- 01/2021}
     {}
 
   \cventryselected
-    {Journal Club Panel Member, \textit{PNAS} Front Matter}
-    {National Academy of Sciences}
+    {Journal Club Panel Member}
+    {\textit{PNAS} Front Matter, National Academy of Sciences}
     {Washington, DC}
     {06/2018 -- 08/2020}
     {}
@@ -67,8 +67,8 @@
     {}
 
   \cventryselected
-    {Guest Instructor \& Curriculum Designer, Course: \textit{Decision Making}}
-    {Carolina Friends School}
+    {Guest Instructor \& Curriculum Designer}
+    {Carolina Friends School --- upper school course: \textit{Decision Making}}
     {Durham, NC}
     {03/2017 -- 05/2017}
     {}
@@ -77,8 +77,8 @@
 
   \iftoggle{showAllService}{
     \cventry
-      {Presenter, Reel Science at Caltech}
-      {California Institute of Technology}
+      {Presenter}
+      {Reel Science at Caltech, California Institute of Technology}
       {Pasadena, CA}
       {03/2012 -- 04/2013}
       {}
@@ -89,8 +89,8 @@
 
   \iftoggle{showAllService}{
     \cventry
-      {Clinical Volunteer, Behavioral Health \& Ortho/Neuro Trauma Units}
-      {Suburban Hospital}
+      {Clinical Volunteer}
+      {Behavioral Health \& Ortho/Neuro Trauma Units, Suburban Hospital}
       {Bethesda, MD}
       {10/2006 -- 07/2007}
       {}
