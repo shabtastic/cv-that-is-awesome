@@ -9,6 +9,7 @@ cv/
 ├── cv.tex                      # Master file — all toggles and preamble patches live here
 ├── resume.tex                  # Shorter resume variant
 ├── awesome-cv.cls              # Awesome-CV class file
+├── awesome-cv-resume.cls       # Awesome-CV class file tailored to one-page resume
 ├── fonts/                      # SourceSans3 and Roboto TTF files (required by cls)
 ├── sections/
 │   ├── education.tex
