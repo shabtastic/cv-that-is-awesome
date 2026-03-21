@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -13,8 +15,8 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: true
           pre_compile: |
+            rm -f cvbibcounts.tex cv.aux cv.bbl cv.bcf
             cp config/full.tex cv-preset.tex
             xelatex -interaction=nonstopmode cv.tex || true
             biber cv
@@ -25,8 +27,8 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: true
           pre_compile: |
+            rm -f cvbibcounts.tex cv.aux cv.bbl cv.bcf
             cp config/industry.tex cv-preset.tex
             xelatex -interaction=nonstopmode cv.tex || true
             biber cv
@@ -37,8 +39,8 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
-          latexmk_use_xelatex: true
           pre_compile: |
+            rm -f cvbibcounts.tex cv.aux cv.bbl cv.bcf
             cp config/speaking.tex cv-preset.tex
             xelatex -interaction=nonstopmode cv.tex || true
             biber cv
