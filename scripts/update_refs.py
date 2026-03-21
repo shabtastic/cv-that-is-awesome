@@ -57,6 +57,7 @@ BIB_FILES = {
     "journals":      Path("refs/journals.bib"),
     "preprints":     Path("refs/preprints.bib"),
     "conference":    Path("refs/conference.bib"),
+    "chapters":      Path("refs/chapters.bib"),
     "presentations": Path("refs/presentations.bib"),
     "scicomm":       Path("refs/scicomm.bib"),
 }

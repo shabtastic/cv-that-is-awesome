@@ -11,6 +11,10 @@ cv/
 ├── awesome-cv.cls              # Awesome-CV class file
 ├── awesome-cv-resume.cls       # Awesome-CV class file tailored to one-page resume
 ├── fonts/                      # SourceSans3 and Roboto TTF files (required by cls)
+├── config/
+│   ├── full.tex                # Preset: complete academic CV
+│   ├── industry.tex            # Preset: selected pubs, lean
+│   └── speaking.tex            # Preset: talks + selected pubs
 ├── sections/
 │   ├── education.tex
 │   ├── experience.tex
@@ -25,6 +29,7 @@ cv/
 │   ├── journals.bib            # @article entries (peer-reviewed journals)
 │   ├── preprints.bib           # @unpublished entries
 │   ├── conference.bib          # @inproceedings entries
+│   ├── chapters.bib            # @incollection and @article commentary entries
 │   ├── presentations.bib       # @misc entries (selected conference presentations)
 │   ├── patents.bib             # @patent entries
 │   └── scicomm.bib             # @misc entries (science communication)
@@ -96,7 +101,6 @@ ADMIN_EMAIL   = "you@example.com"   # required by NCBI policy
 ```bash
 make
 ```
-> ⚠️ The `Makefile` references `main.tex` — update it to `cv.tex` if you haven't already.
 
 ### Manual build sequence:
 ```bash
