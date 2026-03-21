@@ -217,6 +217,7 @@ def main():
         BIB_OUT,
         Path("refs/preprints.bib"),
         Path("refs/conference.bib"),
+        Path("refs/chapters.bib"),
         Path("refs/presentations.bib"),
         Path("refs/scicomm.bib"),
         Path("refs/patents.bib"),
