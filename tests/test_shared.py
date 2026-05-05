@@ -31,7 +31,9 @@ from _shared import (  # noqa: E402
     fingerprint_matches,
     inject_keywords,
     load_all_titles,
+    load_existing_dois,
     load_rejected,
+    normalize_doi,
     normalize_title,
     save_rejected,
     write_atomic,
@@ -308,6 +310,46 @@ class TestRejected:
 # ---------------------------------------------------------------------------
 # inject_keywords
 # ---------------------------------------------------------------------------
+
+class TestNormalizeDoi:
+    @pytest.mark.parametrize("raw, expected", [
+        ("10.1234/abc", "10.1234/abc"),
+        ("10.1234/ABC", "10.1234/abc"),
+        ("  10.1234/abc  ", "10.1234/abc"),
+        ("https://doi.org/10.1234/abc", "10.1234/abc"),
+        ("http://doi.org/10.1234/abc", "10.1234/abc"),
+        ("https://dx.doi.org/10.1234/abc", "10.1234/abc"),
+        ("doi.org/10.1234/abc", "10.1234/abc"),
+        ("doi:10.1234/abc", "10.1234/abc"),
+        ("DOI:10.1234/ABC", "10.1234/abc"),
+        ("", ""),
+        ("   ", ""),
+        (None, ""),
+    ])
+    def test_cases(self, raw, expected):
+        assert normalize_doi(raw) == expected
+
+    def test_load_existing_dois_deduplicates_across_forms(self, tmp_path):
+        # A .bib with mixed URL-prefix and bare DOIs should dedup identically.
+        bib = tmp_path / "mixed.bib"
+        bib.write_text(textwrap.dedent("""
+            @article{a, doi = {10.1/abc}, title={T1}}
+            @article{b, doi = {https://doi.org/10.2/def}, title={T2}}
+            @article{c, doi = {DOI:10.3/GHI}, title={T3}}
+        """))
+        dois = load_existing_dois(bib)
+        assert dois == {"10.1/abc", "10.2/def", "10.3/ghi"}
+
+    def test_load_existing_dois_handles_list(self, tmp_path):
+        a = tmp_path / "a.bib"
+        b = tmp_path / "b.bib"
+        a.write_text("@article{x, doi={10.1/a}}")
+        b.write_text("@article{y, doi={10.2/b}}")
+        assert load_existing_dois([a, b]) == {"10.1/a", "10.2/b"}
+
+    def test_load_existing_dois_missing_file(self, tmp_path):
+        assert load_existing_dois(tmp_path / "nope.bib") == set()
+
 
 class TestInjectKeywords:
     def test_replaces_existing(self):

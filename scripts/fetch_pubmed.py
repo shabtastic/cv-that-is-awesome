@@ -38,7 +38,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
-    normalize_title, load_all_titles, append_atomic,
+    normalize_title, load_all_titles, load_existing_dois, normalize_doi,
+    append_atomic,
 )
 
 # ---------------------------------------------------------------------------
@@ -163,13 +164,6 @@ def load_existing_pmids(bib_path: Path) -> set:
     return set(re.findall(r"PMID:\s*(\d+)", bib_path.read_text()))
 
 
-def load_existing_dois(bib_path: Path) -> set:
-    if not bib_path.exists():
-        return set()
-    text = bib_path.read_text(encoding="utf-8")
-    return {d.lower().strip() for d in re.findall(r"doi\s*=\s*\{([^}]+)\}", text, re.IGNORECASE)}
-
-
 def main():
     parser = argparse.ArgumentParser(description="Fetch publications from PubMed")
     parser.add_argument("--dry-run", "-n", action="store_true",
@@ -222,10 +216,9 @@ def main():
         Path("refs/patents.bib"),
     ]
     existing_pmids = set()
-    existing_dois  = set()
     for bib in all_bib_files:
         existing_pmids |= load_existing_pmids(bib)
-        existing_dois  |= load_existing_dois(bib)
+    existing_dois = load_existing_dois(all_bib_files)
     existing_titles = load_all_titles(all_bib_files)
     manual_fp      = load_manual_fingerprints(BIB_OUT)
     rejected       = load_rejected(REJECTED_FILE)
@@ -272,7 +265,7 @@ def main():
     for article in articles:
         rec  = parse_article(article)
         pmid = rec["pmid"]
-        doi  = rec.get("doi", "").lower().strip()
+        doi  = normalize_doi(rec.get("doi", ""))
 
         # Skip if DOI already present in any bib file (catches conference papers
         # that live in conference.bib rather than journals.bib)

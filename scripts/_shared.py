@@ -205,6 +205,50 @@ def normalize_title(title: str) -> str:
     return re.sub(r"\s+", " ", title).strip().lower()
 
 
+def normalize_doi(doi: str) -> str:
+    """
+    Canonical DOI form for comparison. Strips common URL prefixes, the
+    optional "doi:" prefix, surrounding whitespace, and lowercases.
+    Returns "" if the input has no recognizable DOI.
+
+    All dedup paths MUST compare DOIs using this form or they will miss
+    matches where one side stores "https://doi.org/10.1/x" and the other
+    stores bare "10.1/x".
+    """
+    s = (doi or "").strip().lower()
+    if not s:
+        return ""
+    # Strip common prefixes
+    for prefix in ("https://doi.org/", "http://doi.org/",
+                   "https://dx.doi.org/", "http://dx.doi.org/",
+                   "doi.org/", "doi:"):
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+            break
+    return s.strip()
+
+
+def load_existing_dois(bib_paths) -> set:
+    """
+    Return the set of normalized DOIs in the given .bib file(s).
+    Accepts a single Path or an iterable of Paths.
+    """
+    if isinstance(bib_paths, (str, Path)):
+        bib_paths = [bib_paths]
+    dois = set()
+    for path in bib_paths:
+        p = Path(path)
+        if not p.exists():
+            continue
+        text = p.read_text(encoding="utf-8")
+        for entry in re.split(r"\n(?=@)", text):
+            raw = _extract_braced_field(entry, "doi")
+            n   = normalize_doi(raw)
+            if n:
+                dois.add(n)
+    return dois
+
+
 def load_all_titles(bib_paths: list) -> set:
     """
     Return a set of normalized titles from all entries in the given bib files.
