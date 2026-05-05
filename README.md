@@ -59,9 +59,10 @@ and Roboto from [Google Fonts](https://fonts.google.com/specimen/Roboto).
 
 ### 3. Install Python dependencies
 ```bash
-pip install bibtexparser requests
-pip install scholarly        # optional — for Google Scholar fetching
+make setup                    # installs requests, bibtexparser, pytest
+pip install scholarly         # optional — for Google Scholar fetching
 ```
+`make check-deps` verifies the required deps are importable before a run.
 
 ### 4. Configure scripts
 Edit the `CONFIG` block at the top of each fetch script:

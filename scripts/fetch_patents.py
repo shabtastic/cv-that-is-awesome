@@ -25,6 +25,11 @@ USPTO API docs:
     https://developer.uspto.gov/api-catalog/patentcenteropen
 """
 
+# `from __future__ import annotations` lets us use PEP 604 syntax
+# ("dict | None") on Python 3.9, where without it the annotation is
+# evaluated at definition time and raises TypeError.
+from __future__ import annotations
+
 import argparse
 import os
 import re

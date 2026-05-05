@@ -19,6 +19,10 @@ make clean       # removes *.aux/*.bbl/*.bcf/etc. AND all built PDFs
 make fetch       # runs scripts/update_refs.py (ORCID+PubMed+Scholar)
 make fetch-dry   # dry run
 make dedup       # scripts/update_refs.py --dedup-only
+make setup       # pip install requirements-dev.txt (requests, bibtexparser, pytest)
+make check-deps  # verify Python deps are importable
+make test        # pytest tests/
+make validate    # scripts/validate_bib.py (static bib linter)
 ```
 
 `make pdf` runs the core compile (`xelatex → biber → xelatex → xelatex`) against whatever `cv-preset.tex` currently holds. **XeLaTeX is required** — pdflatex/lualatex will break fontspec + Awesome-CV.
