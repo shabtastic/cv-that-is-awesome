@@ -51,7 +51,9 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _shared import is_manual, load_manual_fingerprints, fingerprint_matches  # noqa: E402
+from _shared import (  # noqa: E402
+    is_manual, load_manual_fingerprints, fingerprint_matches, write_atomic,
+)
 
 BIB_FILES = {
     "journals":      Path("refs/journals.bib"),
@@ -148,8 +150,7 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
         db.entries    = unique
         writer        = BibTexWriter()
         writer.indent = "  "
-        with open(bib_path, "w", encoding="utf-8") as f:
-            f.write(writer.write(db))
+        write_atomic(bib_path, writer.write(db))
         print(f"  [dedup]  Removed {removed} duplicate(s) from {bib_path}")
     elif removed and dry_run:
         print(f"  [dry-run] Would remove {removed} duplicate(s) from {bib_path}")

@@ -25,8 +25,54 @@ import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import webbrowser
 from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# ATOMIC WRITES
+# ---------------------------------------------------------------------------
+#
+# Every script that mutates a .bib or .json file routes its final write
+# through write_atomic(). The pattern: write to a temp file in the SAME
+# directory (so os.replace is atomic on POSIX), fsync, then rename.
+#
+# Without this, an interrupted fetch (Ctrl+C, crash, power loss mid-write)
+# can leave a .bib file with a half-written entry or a rejection JSON
+# truncated to zero bytes -- silent data loss that is easy to miss until
+# the next compile or fetch run.
+#
+# append_atomic() is the append-mode equivalent: read-modify-write, still
+# atomic at the rename step. It's slightly more expensive than a plain
+# append but the files involved are small (a few hundred KB max).
+
+def write_atomic(path: Path, text: str, encoding: str = "utf-8") -> None:
+    """Atomically replace `path` with `text`. Parent dir must exist."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # delete=False so we control the rename; dir=path.parent so the rename
+    # stays within one filesystem (cross-device rename is not atomic).
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent)
+    )
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding=encoding) as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def append_atomic(path: Path, text: str, encoding: str = "utf-8") -> None:
+    """Atomically append `text` to `path` (create if missing)."""
+    path = Path(path)
+    existing = path.read_text(encoding=encoding) if path.exists() else ""
+    write_atomic(path, existing + text, encoding=encoding)
 
 
 # ---------------------------------------------------------------------------
@@ -66,11 +112,39 @@ def load_manual_fingerprints(bib_path: Path) -> dict:
                                entry.get("note", ""), re.IGNORECASE)
         if pmid_match:
             fp["pmids"].add(pmid_match.group(1))
-        title = re.sub(r"\s+", " ", entry.get("title", "")).lower().strip()
+        title = normalize_title(entry.get("title", ""))
         if title:
             fp["titles"].add(title)
 
     return fp
+
+
+def _extract_braced_field(entry: str, field: str) -> str:
+    """
+    Return the raw content of ``field = {...}`` from a BibTeX entry with
+    proper brace-balancing. Returns "" if not found. A plain
+    ``[^}]+`` regex truncates at the first ``}`` and silently mangles
+    titles like ``{{AI}-driven learning}`` into ``{AI``.
+    """
+    m = re.search(rf"\b{field}\s*=\s*\{{", entry, re.IGNORECASE)
+    if not m:
+        return ""
+    i     = m.end()
+    depth = 1
+    out   = []
+    while i < len(entry) and depth > 0:
+        c = entry[i]
+        if c == "{":
+            depth += 1
+            out.append(c)
+        elif c == "}":
+            depth -= 1
+            if depth > 0:
+                out.append(c)
+        else:
+            out.append(c)
+        i += 1
+    return "".join(out)
 
 
 def _load_manual_fingerprints_regex(bib_path: Path) -> dict:
@@ -80,46 +154,78 @@ def _load_manual_fingerprints_regex(bib_path: Path) -> dict:
     entries = re.split(r"\n(?=@)", text)
 
     for entry in entries:
-        kw = re.search(r"keywords\s*=\s*\{([^}]*)\}", entry, re.IGNORECASE)
-        if not kw or "manual" not in kw.group(1).lower():
+        kw_raw = _extract_braced_field(entry, "keywords")
+        if "manual" not in kw_raw.lower():
             continue
         key_m   = re.search(r"@\w+\{(\S+),", entry)
-        doi_m   = re.search(r"doi\s*=\s*\{([^}]+)\}", entry, re.IGNORECASE)
+        doi_raw = _extract_braced_field(entry, "doi").strip()
         pmid_m  = re.search(r"PMID:\s*(\d+)", entry, re.IGNORECASE)
-        title_m = re.search(r"title\s*=\s*\{([^}]+)\}", entry, re.IGNORECASE)
+        title_raw = _extract_braced_field(entry, "title")
 
         if key_m:   fp["keys"].add(key_m.group(1).lower())
-        if doi_m:   fp["dois"].add(doi_m.group(1).lower().strip())
+        if doi_raw: fp["dois"].add(doi_raw.lower())
         if pmid_m:  fp["pmids"].add(pmid_m.group(1))
-        if title_m:
-            title = re.sub(r"\s+", " ", title_m.group(1)).lower().strip()
-            fp["titles"].add(title)
+        if title_raw:
+            title = normalize_title(title_raw)
+            if title:
+                fp["titles"].add(title)
 
     return fp
 
 
 def normalize_title(title: str) -> str:
-    """Normalize a title for fuzzy comparison: lowercase, strip LaTeX/punctuation."""
-    title = re.sub(r"\{([^}]*)\}", r"\1", title)   # strip LaTeX braces
-    title = re.sub(r"[^a-z0-9 ]", "", title.lower())
-    return re.sub(r"\s+", " ", title).strip()
+    """
+    Canonical title fingerprint used for dedup across all code paths.
+    Every site that compares titles for duplicate detection MUST route
+    through this function so the two sides of the comparison agree.
+
+    Steps:
+      1. Strip LaTeX commands like \\emph{...} (keep the braced arg).
+      2. Strip LaTeX braces (including nested, e.g. {{AI}}).
+      3. Unicode-normalize (NFKD) and drop combining marks so
+         "résumé" == "resume".
+      4. Replace punctuation with spaces (not empty) so
+         "Learning—Pt.1" != "learningpt1" -- it becomes
+         "learning pt 1", which still matches "Learning Pt 1".
+      5. Lowercase, collapse whitespace.
+    """
+    # Strip LaTeX commands like \emph{foo} -> foo, \textbf{bar} -> bar
+    title = re.sub(r"\\[a-zA-Z]+\s*\{([^{}]*)\}", r"\1", title)
+    # Strip remaining LaTeX braces (multiple passes handle nesting)
+    for _ in range(4):
+        new = re.sub(r"\{([^{}]*)\}", r"\1", title)
+        if new == title:
+            break
+        title = new
+    # Drop accents: NFKD decomposes "é" -> "e" + combining mark; filter marks
+    title = unicodedata.normalize("NFKD", title)
+    title = "".join(c for c in title if not unicodedata.combining(c))
+    # Punctuation -> space (preserves word boundaries)
+    title = re.sub(r"[^a-zA-Z0-9]+", " ", title)
+    return re.sub(r"\s+", " ", title).strip().lower()
 
 
 def load_all_titles(bib_paths: list) -> set:
     """
     Return a set of normalized titles from all entries in the given bib files.
     Used to detect duplicates regardless of whether DOI or PMID match.
+
+    Uses the same brace-balanced extractor as the manual-fingerprint path
+    so that e.g. ``{{AI}-driven learning}`` normalizes identically here and
+    there.
     """
     titles = set()
-    title_re = re.compile(r"title\s*=\s*\{([^}]+)\}", re.IGNORECASE)
     for path in bib_paths:
         p = Path(path)
         if not p.exists():
             continue
-        for m in title_re.finditer(p.read_text(encoding="utf-8")):
-            t = normalize_title(m.group(1))
-            if t:
-                titles.add(t)
+        text = p.read_text(encoding="utf-8")
+        for entry in re.split(r"\n(?=@)", text):
+            raw = _extract_braced_field(entry, "title")
+            if raw:
+                t = normalize_title(raw)
+                if t:
+                    titles.add(t)
     return titles
 
 
@@ -137,7 +243,7 @@ def fingerprint_matches(entry: dict, fp: dict) -> bool:
                            entry.get("note", ""), re.IGNORECASE)
     if pmid_match and pmid_match.group(1) in fp["pmids"]:
         return True
-    title = re.sub(r"\s+", " ", entry.get("title", "")).lower().strip()
+    title = normalize_title(entry.get("title", ""))
     if title and title in fp["titles"]:
         return True
     return False
@@ -148,21 +254,58 @@ def fingerprint_matches(entry: dict, fp: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 def load_rejected(path: Path) -> dict:
-    """Load persistent rejection list {key: title} from a JSON file."""
+    """
+    Load persistent rejection list {key: title} from a JSON file.
+
+    If the file exists but is unparseable, move it aside to
+    ``<name>.corrupt.<timestamp>`` and loudly warn on stderr rather than
+    silently returning {}. Silent failure here means every prior
+    rejection reappears on the next fetch run, which is exactly the
+    failure mode that produced this function in the first place.
+    """
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
+        from datetime import datetime
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        bak   = path.with_suffix(path.suffix + f".corrupt.{stamp}")
+        try:
+            path.rename(bak)
+        except OSError:
+            bak = None
+        print(
+            f"\n  [error] Rejection list {path} is unreadable: {exc}",
+            file=sys.stderr,
+        )
+        if bak:
+            print(
+                f"          Moved to {bak}; starting with an empty list.\n"
+                f"          Restore manually if the old list is recoverable.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "          Could not move it aside; starting empty.",
+                file=sys.stderr,
+            )
         return {}
+    if not isinstance(data, dict):
+        print(
+            f"\n  [error] Rejection list {path} is not a JSON object "
+            f"(got {type(data).__name__}); ignoring.",
+            file=sys.stderr,
+        )
+        return {}
+    return data
 
 
 def save_rejected(path: Path, rejected: dict) -> None:
-    """Save rejection list to JSON, creating parent dirs if needed."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    """Save rejection list to JSON atomically."""
+    write_atomic(
+        path,
         json.dumps(rejected, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 

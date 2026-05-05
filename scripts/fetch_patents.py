@@ -38,6 +38,9 @@ import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _shared import write_atomic, append_atomic  # noqa: E402
+
 try:
     import bibtexparser
     from bibtexparser.bwriter import BibTexWriter
@@ -101,7 +104,7 @@ def backup_bib(src: Path, dst: Path) -> None:
     stamp   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     content = src.read_text(encoding="utf-8")
     header  = f"% BACKUP created {stamp} by fetch_patents.py\n\n"
-    dst.write_text(header + content, encoding="utf-8")
+    write_atomic(dst, header + content)
     print(f"  Backed up existing file → {dst}")
 
 
@@ -419,7 +422,7 @@ def mode_refresh(dry_run: bool) -> None:
     output = "\n".join(sections) + "\n"
 
     if not dry_run:
-        BIB_OUT.write_text(output, encoding="utf-8")
+        write_atomic(BIB_OUT, output)
         print(f"\nStep 4: Wrote {len(fetched_entries)} USPTO entries "
               f"+ {len(manual_entries)} manual entries → {BIB_OUT}")
     else:
@@ -505,8 +508,7 @@ def mode_discover(dry_run: bool) -> None:
 
     if not dry_run:
         backup_bib(BIB_OUT, BAK_OUT)
-        with open(BIB_OUT, "a", encoding="utf-8") as f:
-            f.write(note + "\n\n".join(new_entries))
+        append_atomic(BIB_OUT, note + "\n\n".join(new_entries))
         print(f"\nAppended {len(new_entries)} new entry/entries to {BIB_OUT}")
         print("⚠  Review, then move verified numbers to KNOWN_PATENT_NUMBERS.")
     else:

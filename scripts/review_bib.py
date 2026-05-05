@@ -40,6 +40,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     display_entry, edit_in_editor, prompt_keywords, inject_keywords,
+    write_atomic,
 )
 
 # ---------------------------------------------------------------------------
@@ -117,7 +118,7 @@ def write_bib(path: Path, chunks: list, dry_run: bool = False) -> None:
     bak_path = path.with_suffix(f".{stamp}.bak")
     shutil.copy2(path, bak_path)
     print(f"  [backup] {path.name} -> {bak_path.name}")
-    path.write_text(content, encoding="utf-8")
+    write_atomic(path, content)
     print(f"  [written] {path}")
 
 

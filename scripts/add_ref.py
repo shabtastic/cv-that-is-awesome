@@ -33,7 +33,9 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _shared import edit_in_editor, prompt_keywords, inject_keywords  # noqa: E402
+from _shared import (  # noqa: E402
+    edit_in_editor, prompt_keywords, inject_keywords, append_atomic,
+)
 
 # ---------------------------------------------------------------------------
 # CONFIG
@@ -481,9 +483,7 @@ def main():
     except (EOFError, KeyboardInterrupt):
         ch = "n"
     if ch in ("", "y", "yes"):
-        bib_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(bib_path, "a", encoding="utf-8") as f:
-            f.write(f"\n\n% --- manually added ---\n{bibtex}\n")
+        append_atomic(bib_path, f"\n\n% --- manually added ---\n{bibtex}\n")
         print(f"  Written to {bib_path}")
     else:
         print("  Aborted.")
