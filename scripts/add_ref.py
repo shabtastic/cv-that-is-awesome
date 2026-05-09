@@ -33,7 +33,11 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _shared import edit_in_editor, prompt_keywords, inject_keywords  # noqa: E402
+from _shared import (  # noqa: E402
+    edit_in_editor, prompt_keywords, inject_keywords, append_atomic,
+    normalize_doi, normalize_title, load_existing_dois, load_all_titles,
+    _extract_braced_field,
+)
 
 # ---------------------------------------------------------------------------
 # CONFIG
@@ -45,12 +49,12 @@ ADMIN_EMAIL  = "shabnamhakimi@gmail.com"
 
 BIB_CHOICES = {
     "1": ("refs/journals.bib",      "journals",       "article"),
-    "2": ("refs/preprints.bib",     "preprints",      "article"),
+    "2": ("refs/preprints.bib",     "preprints",      "preprint"),
     "3": ("refs/conference.bib",    "conference",     "inproceedings"),
     "4": ("refs/presentations.bib", "presentations",  "unpublished"),
     "5": ("refs/scicomm.bib",       "scicomm",        None),
     "6": ("refs/patents.bib",       "patents",        "patent"),
-    "7": ("refs/chapters.bib",      "chapters",       None),
+    "7": ("refs/chapters.bib",      "chapters",       "incollection"),
 }
 # ---------------------------------------------------------------------------
 
@@ -238,6 +242,16 @@ BLANK_TEMPLATES = {
         "  keywords = {presentation},\n"
         "}"
     ),
+    "preprint": (
+        "@unpublished{CiteKey,\n"
+        "  author    = {},\n"
+        "  title     = {},\n"
+        "  note      = {Under review. \\url{}},\n"
+        "  doi       = {},\n"
+        "  year      = {????},\n"
+        "  keywords  = {},\n"
+        "}"
+    ),
     "patent": (
         "@patent{CiteKey,\n"
         "  author      = {},\n"
@@ -277,10 +291,11 @@ BLANK_TEMPLATES = {
 TEMPLATE_MENU = {
     "1": ("article",        "journal article"),
     "2": ("inproceedings",  "conference paper"),
-    "3": ("unpublished",    "presentation / talk"),
-    "4": ("incollection",   "book chapter"),
-    "5": ("patent",         "patent"),
-    "6": ("misc",           "other / preprint / scicomm"),
+    "3": ("preprint",       "preprint / working paper"),
+    "4": ("unpublished",    "presentation / talk"),
+    "5": ("incollection",   "book chapter"),
+    "6": ("patent",         "patent"),
+    "7": ("misc",           "other / scicomm"),
 }
 
 
@@ -338,6 +353,34 @@ def choose_bib_file(default: str = None) -> tuple:
 # VALIDATION
 # ---------------------------------------------------------------------------
 
+REFS_DIR = Path("refs")
+
+
+def check_duplicates(bibtex: str) -> list[str]:
+    """Check if the entry's DOI or title already exists in any bib file.
+    Returns a list of warning strings (empty if no duplicates)."""
+    warnings = []
+    bib_files = sorted(p for p in REFS_DIR.glob("*.bib") if ".bak" not in p.name)
+
+    # Check DOI
+    doi_raw = _extract_braced_field(bibtex, "doi").strip()
+    doi = normalize_doi(doi_raw)
+    if doi:
+        existing_dois = load_existing_dois(bib_files)
+        if doi in existing_dois:
+            warnings.append(f"DOI '{doi}' already exists in refs/")
+
+    # Check title
+    title_raw = _extract_braced_field(bibtex, "title").strip()
+    title = normalize_title(title_raw) if title_raw else ""
+    if title:
+        existing_titles = load_all_titles(bib_files)
+        if title in existing_titles:
+            warnings.append(f"Title already exists in refs/: '{title_raw[:60]}'")
+
+    return warnings
+
+
 def looks_valid(bibtex: str) -> bool:
     """Basic sanity check: has an entry type, cite key, and title."""
     return bool(
@@ -348,7 +391,9 @@ def looks_valid(bibtex: str) -> bool:
 
 def coerce_entry_type(bibtex: str, entry_type: str) -> str:
     """Replace the @entrytype in a BibTeX string with the given type."""
-    return re.sub(r"^@\w+", f"@{entry_type}", bibtex, count=1)
+    # "preprint" is an internal alias — the actual BibTeX type is @unpublished
+    bib_type = "unpublished" if entry_type == "preprint" else entry_type
+    return re.sub(r"^@\w+", f"@{bib_type}", bibtex, count=1)
 
 
 # ---------------------------------------------------------------------------
@@ -462,6 +507,21 @@ def main():
     kw   = ", ".join(sorted(tags))
     bibtex = inject_keywords(bibtex, kw)
 
+    # -- Duplicate check ------------------------------------------------------
+    dupes = check_duplicates(bibtex)
+    if dupes:
+        print()
+        print("  ⚠  Possible duplicate(s) detected:")
+        for w in dupes:
+            print(f"     • {w}")
+        try:
+            ch = input("  Continue anyway? [y/N]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ch = "n"
+        if ch != "y":
+            print("  Aborted.")
+            return
+
     # -- Preview and confirm --------------------------------------------------
     print()
     print("  Final entry:")
@@ -481,9 +541,7 @@ def main():
     except (EOFError, KeyboardInterrupt):
         ch = "n"
     if ch in ("", "y", "yes"):
-        bib_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(bib_path, "a", encoding="utf-8") as f:
-            f.write(f"\n\n% --- manually added ---\n{bibtex}\n")
+        append_atomic(bib_path, f"\n\n% --- manually added ---\n{bibtex}\n")
         print(f"  Written to {bib_path}")
     else:
         print("  Aborted.")
