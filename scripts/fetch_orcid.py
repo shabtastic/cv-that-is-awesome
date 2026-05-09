@@ -26,7 +26,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
-    normalize_title, load_all_titles,
+    normalize_title, load_all_titles, load_existing_dois, normalize_doi,
+    append_atomic,
 )
 
 # ---------------------------------------------------------------------------
@@ -91,13 +92,6 @@ def work_to_bibtex(work: dict) -> tuple:
     return "\n".join(lines), doi
 
 
-def load_existing_dois(bib_path: Path) -> set:
-    if not bib_path.exists():
-        return set()
-    text = bib_path.read_text(encoding="utf-8")
-    return set(re.findall(r"doi\s*=\s*\{([^}]+)\}", text, re.IGNORECASE))
-
-
 def main():
     parser = argparse.ArgumentParser(description="Fetch publications from ORCID")
     parser.add_argument("--dry-run", "-n", action="store_true",
@@ -136,14 +130,11 @@ def main():
         BIB_OUT,
         Path("refs/preprints.bib"),
         Path("refs/conference.bib"),
-        Path("refs/chapters.bib"),
         Path("refs/presentations.bib"),
         Path("refs/scicomm.bib"),
         Path("refs/patents.bib"),
     ]
-    existing_dois = set()
-    for bib in all_bib_files:
-        existing_dois |= load_existing_dois(bib)
+    existing_dois = load_existing_dois(all_bib_files)
     existing_titles = load_all_titles(all_bib_files)
     manual_fp = load_manual_fingerprints(BIB_OUT)
     rejected      = load_rejected(REJECTED_FILE)
@@ -158,9 +149,9 @@ def main():
         bibtex, doi = work_to_bibtex(w)
         if bibtex is None:
             continue
-        doi_norm = doi.lower().strip() if doi else ""
+        doi_norm = normalize_doi(doi)
         reject_key = doi_norm or re.search(r"@\w+\{(\S+),", bibtex).group(1)
-        if doi_norm and doi_norm in {d.lower() for d in existing_dois}:
+        if doi_norm and doi_norm in existing_dois:
             skipped_exist += 1
             if show: print(f"  [skip-exist]    DOI {doi_norm} already in {BIB_OUT}")
             continue
@@ -207,9 +198,10 @@ def main():
     else:
         print(f"  {len(entries)} entry/entries accepted.")
         if not args.dry_run:
-            with open(BIB_OUT, "a", encoding="utf-8") as f:
-                f.write("\n\n% --- ORCID auto-fetched ---\n")
-                f.write("\n\n".join(entries))
+            append_atomic(
+                BIB_OUT,
+                "\n\n% --- ORCID auto-fetched ---\n" + "\n\n".join(entries),
+            )
             print(f"  Appended to {BIB_OUT}")
         else:
             print("  [dry-run] Would append:\n")

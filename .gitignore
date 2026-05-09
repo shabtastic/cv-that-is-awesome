@@ -24,6 +24,7 @@ cv.pdf
 __pycache__/
 *.pyc
 .env
+.pytest_cache/
 
 # macOS
 .DS_Store
@@ -34,4 +35,3 @@ sections/.DS_Store
 scripts/.DS_Store
 
 
-*.pdf
