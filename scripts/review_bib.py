@@ -40,6 +40,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     display_entry, edit_in_editor, prompt_keywords, inject_keywords,
+    write_atomic, append_atomic,
 )
 
 # ---------------------------------------------------------------------------
@@ -117,7 +118,7 @@ def write_bib(path: Path, chunks: list, dry_run: bool = False) -> None:
     bak_path = path.with_suffix(f".{stamp}.bak")
     shutil.copy2(path, bak_path)
     print(f"  [backup] {path.name} -> {bak_path.name}")
-    path.write_text(content, encoding="utf-8")
+    write_atomic(path, content)
     print(f"  [written] {path}")
 
 
@@ -160,15 +161,108 @@ def toggle_manual(bibtex: str) -> tuple:
 
 
 # ---------------------------------------------------------------------------
+# PROMOTE / MOVE
+# ---------------------------------------------------------------------------
+
+PROMOTE_TARGETS = {
+    "1": ("refs/journals.bib",      "journals",       "article"),
+    "2": ("refs/preprints.bib",     "preprints",      "unpublished"),
+    "3": ("refs/conference.bib",    "conference",      "inproceedings"),
+    "4": ("refs/presentations.bib", "presentations",   "unpublished"),
+    "5": ("refs/chapters.bib",      "chapters",        "incollection"),
+    "6": ("refs/scicomm.bib",       "scicomm",         "misc"),
+    "7": ("refs/patents.bib",       "patents",         "patent"),
+}
+
+
+def promote_entry(bibtex: str, source_path: Path) -> tuple:
+    """
+    Interactively move an entry to a different bib file.
+
+    Returns (new_bibtex, target_path) on success, or (None, None) if cancelled.
+    The caller is responsible for marking the entry as deleted in the source.
+    """
+    print()
+    print("  Move entry to:")
+    for k, (path, label, _) in PROMOTE_TARGETS.items():
+        marker = " (current)" if Path(path) == source_path else ""
+        print(f"    {k}  {label:20s}  ({path}){marker}")
+    try:
+        ch = input(f"  Choose [1-{len(PROMOTE_TARGETS)}], or Enter to cancel: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        return None, None
+    if ch not in PROMOTE_TARGETS:
+        print("  Cancelled.")
+        return None, None
+
+    target_path_str, target_label, target_type = PROMOTE_TARGETS[ch]
+    target_path = Path(target_path_str)
+
+    if target_path == source_path:
+        print("  Already in that file — cancelled.")
+        return None, None
+
+    # Coerce entry type
+    new_bibtex = re.sub(r"^@\w+", f"@{target_type}", bibtex, count=1)
+
+    # Offer to fetch updated metadata by DOI
+    doi_m = re.search(r"doi\s*=\s*\{([^}]+)\}", new_bibtex, re.IGNORECASE)
+    doi = doi_m.group(1).strip() if doi_m else ""
+    try:
+        fetch_ch = input(f"  Fetch updated metadata by DOI? "
+                         f"{'[Y/n]' if doi else '(no DOI — enter one or Enter to skip): '}").strip()
+    except (EOFError, KeyboardInterrupt):
+        fetch_ch = "n"
+
+    if fetch_ch.lower() not in ("n", "no", ""):
+        doi = fetch_ch  # user typed a DOI
+    if fetch_ch.lower() not in ("n", "no") and doi:
+        try:
+            # Import add_ref's fetcher
+            from add_ref import fetch_by_doi, coerce_entry_type
+            print(f"  Fetching metadata for DOI: {doi} ...")
+            fetched = fetch_by_doi(doi)
+            fetched = coerce_entry_type(fetched, target_type)
+            print("  Fetched. Opening in editor for review...")
+            new_bibtex = edit_in_editor(fetched)
+        except Exception as e:
+            print(f"  [warn] Fetch failed ({e}), using original entry.")
+
+    # Always open in editor for final review
+    if fetch_ch.lower() in ("n", "no", ""):
+        print(f"  Opening in editor (entry type changed to @{target_type})...")
+        new_bibtex = edit_in_editor(new_bibtex)
+
+    if not new_bibtex.strip():
+        print("  Empty entry — cancelled.")
+        return None, None
+
+    print(f"\n  Will move to: {target_path}")
+    print("  " + "-" * 60)
+    for line in new_bibtex.splitlines():
+        print("  " + line)
+    print("  " + "-" * 60)
+    try:
+        confirm = input("  Confirm move? [Y/n]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        confirm = "n"
+    if confirm not in ("", "y", "yes"):
+        print("  Cancelled.")
+        return None, None
+
+    return new_bibtex, target_path
+
+
+# ---------------------------------------------------------------------------
 # PROMPT
 # ---------------------------------------------------------------------------
 
 def prompt_review_action(has_doi: bool) -> str:
     """
     Prompt for a review action on an existing bib entry. Returns one of:
-      edit  keyword  manual  delete  skip  open  quit
+      edit  keyword  manual  delete  promote  skip  open  quit
     """
-    line = "  [e]dit  [k]eywords  [m]anual toggle  [d]elete  [s]kip"
+    line = "  [e]dit  [k]eywords  [m]anual toggle  [p]romote  [d]elete  [s]kip"
     if has_doi:
         line += "  [o]pen DOI"
     line += "  [q]uit : "
@@ -183,11 +277,12 @@ def prompt_review_action(has_doi: bool) -> str:
         if ch in ("e", "edit"):               return "edit"
         if ch in ("k", "keywords", "keyword"): return "keyword"
         if ch in ("m", "manual"):             return "manual"
+        if ch in ("p", "promote"):            return "promote"
         if ch in ("d", "delete"):             return "delete"
         if ch in ("s", "skip", ""):           return "skip"
         if ch in ("o", "open") and has_doi:   return "open"
         if ch in ("q", "quit"):               return "quit"
-        valid = "e/k/m/d/s" + ("/o" if has_doi else "") + "/q"
+        valid = "e/k/m/d/p/s" + ("/o" if has_doi else "") + "/q"
         print(f"  Please enter one of: {valid}")
 
 
@@ -197,6 +292,7 @@ def prompt_review_action(has_doi: bool) -> str:
 
 def review_entries(
     chunks: list,
+    source_path: Path,
     filter_kw: str = None,
     start: int = 1,
 ) -> tuple:
@@ -204,15 +300,18 @@ def review_entries(
     Walk through entry chunks interactively.
 
     Args:
-        chunks:    list of ("entry"|"comment", text) from parse_entries()
-        filter_kw: if set, only show entries containing this keyword
-        start:     1-indexed entry number to start from
+        chunks:      list of ("entry"|"comment", text) from parse_entries()
+        source_path: Path to the bib file being reviewed (for promote)
+        filter_kw:   if set, only show entries containing this keyword
+        start:       1-indexed entry number to start from
 
     Returns:
-        (updated_chunks, changed, deleted_keys)
+        (updated_chunks, changed, deleted_keys, promoted)
+        where promoted is a list of (new_bibtex, target_path) tuples
     """
     import webbrowser
 
+    promoted = []
     entries_only = [(i, text) for i, (kind, text) in enumerate(chunks) if kind == "entry"]
 
     if filter_kw:
@@ -222,7 +321,7 @@ def review_entries(
 
     if not entries_only:
         print("  No entries to review.")
-        return chunks, 0, []
+        return chunks, 0, [], []
 
     # Apply --start offset
     if start > 1:
@@ -248,7 +347,6 @@ def review_entries(
             action = prompt_review_action(has_doi)
 
             if action == "open":
-                import webbrowser
                 url = f"https://doi.org/{doi}"
                 print(f"  Opening {url} ...")
                 webbrowser.open(url)
@@ -283,6 +381,17 @@ def review_entries(
                 print(f"  -> 'manual' {result}.")
                 continue  # re-display so user sees updated keywords
 
+            if action == "promote":
+                new_bibtex, target_path = promote_entry(bibtex, source_path)
+                if new_bibtex and target_path:
+                    promoted.append((new_bibtex, target_path))
+                    chunks[chunk_idx] = ("deleted", bibtex)
+                    deleted_keys.append(key)
+                    changed += 1
+                    print(f"  -> Will move {key} to {target_path}")
+                    break  # advance
+                continue  # cancelled — re-display
+
             if action == "delete":
                 try:
                     confirm = input(f"  Delete '{key}'? This cannot be undone. [y/N]: ").strip().lower()
@@ -303,10 +412,10 @@ def review_entries(
             if action == "quit":
                 print(f"\n  Stopped at entry {seq}/{total}. "
                       f"{changed} change(s) so far.")
-                return chunks, changed, deleted_keys
+                return chunks, changed, deleted_keys, promoted
 
     print(f"\n  Review complete. {changed} change(s) made.")
-    return chunks, changed, deleted_keys
+    return chunks, changed, deleted_keys, promoted
 
 
 # ---------------------------------------------------------------------------
@@ -354,12 +463,14 @@ def main():
         print("  mode: dry-run (no changes will be written)")
     print("=" * 72)
     print()
-    print("  Actions:  [e]dit  [k]eywords  [m]anual toggle  [d]elete  [s]kip  [q]uit")
+    print("  Actions:  [e]dit  [k]eywords  [m]anual toggle  [p]romote/move")
+    print("            [d]elete  [s]kip  [q]uit")
     if any(re.search(r"doi\s*=", t, re.IGNORECASE) for _, t in chunks if _ == "entry"):
         print("            [o]pen DOI  (shown when entry has a DOI field)")
 
-    chunks, changed, deleted_keys = review_entries(
+    chunks, changed, deleted_keys, promoted = review_entries(
         chunks,
+        source_path=bib_path,
         filter_kw=args.filter_kw,
         start=args.start,
     )
@@ -368,30 +479,39 @@ def main():
         print("\n  No changes — nothing to write.")
         return
 
-    # Deletion summary
+    # Summary
+    if promoted:
+        print(f"\n  Entries to move ({len(promoted)}):")
+        for new_bib, target in promoted:
+            key_m = re.search(r"@\w+\{(\S+),", new_bib)
+            key = key_m.group(1) if key_m else "?"
+            print(f"    {key} → {target}")
     if deleted_keys:
-        print(f"\n  Entries marked for deletion ({len(deleted_keys)}):")
-        for k in deleted_keys:
-            print(f"    - {k}")
-        if not args.dry_run:
-            try:
-                confirm = input("\n  Write changes (including deletions) to disk? [Y/n]: ").strip().lower()
-            except (EOFError, KeyboardInterrupt):
-                confirm = "n"
-            if confirm not in ("", "y", "yes"):
-                print("  Aborted — no changes written.")
-                return
-    else:
-        if not args.dry_run:
-            try:
-                confirm = input(f"\n  Write {changed} change(s) to {bib_path}? [Y/n]: ").strip().lower()
-            except (EOFError, KeyboardInterrupt):
-                confirm = "n"
-            if confirm not in ("", "y", "yes"):
-                print("  Aborted — no changes written.")
-                return
+        pure_deletes = [k for k in deleted_keys
+                        if not any(k in nb for nb, _ in promoted)]
+        if pure_deletes:
+            print(f"\n  Entries marked for deletion ({len(pure_deletes)}):")
+            for k in pure_deletes:
+                print(f"    - {k}")
+
+    if not args.dry_run:
+        try:
+            confirm = input(f"\n  Write {changed} change(s) to disk? [Y/n]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            confirm = "n"
+        if confirm not in ("", "y", "yes"):
+            print("  Aborted — no changes written.")
+            return
 
     write_bib(bib_path, chunks, dry_run=args.dry_run)
+
+    # Write promoted entries to their target files
+    for new_bib, target in promoted:
+        if args.dry_run:
+            print(f"  [dry-run] Would append to {target}")
+        else:
+            append_atomic(target, f"\n{new_bib}\n")
+            print(f"  [written] Appended to {target}")
 
 
 if __name__ == "__main__":

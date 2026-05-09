@@ -1,9 +1,9 @@
 %-------------------------------------------------------------------------------
 % resume.tex — 1-page industry resume
-% Uses awesome-cv-resume.cls as cv.tex.
+% Uses the same awesome-cv.cls as cv.tex.
 % Compile: xelatex resume.tex && xelatex resume.tex
 %-------------------------------------------------------------------------------
-\documentclass[11pt, letterpaper]{awesome-cv-resume}
+\documentclass[11pt, letterpaper]{awesome-cv}
 
 %-------------------------------------------------------------------------------
 % PAGE GEOMETRY
@@ -17,15 +17,12 @@
 \colorlet{awesome}{awesome-darknight}
 \setbool{acvSectionColorHighlight}{true}
 
-% Make first name bold (overrides the light-weight default in awesome-cv.cls)
-\renewcommand*{\headerfirstnamestyle}[1]{{\fontsize{32pt}{1em}\headerfont\bfseries\color{text} #1}}
-
 %-------------------------------------------------------------------------------
 % PERSONAL INFORMATION
 %-------------------------------------------------------------------------------
 \name{Shabnam}{Hakimi, Ph.D.}
-% \position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
-% \address{San Franisco, CA}
+\position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
+\address{Los Altos, CA}
 \mobile{+1 626-536-4642}
 \email{shabnamhakimi@gmail.com}
 \homepage{shabnamhakimi.com}
@@ -38,7 +35,6 @@
 %-------------------------------------------------------------------------------
 % EXPERIENCE
 %-------------------------------------------------------------------------------
-\vspace{2mm}
 \cvsection{Experience}
 
 \begin{cventries}
@@ -50,11 +46,17 @@
     {Jan 2021 -- Present}
     {
       \begin{cvitems}
-        \item Lead research and development of novel AI and machine learning methods for consumer demand forecasting, employing GAN   and VAE architectures. Demonstrate improved forecasting accuracy for innovative products under high uncertainty, impacting \$MM business decision making.
-        \item Leverage theory- and data-driven approaches to design new methods for consumer preference elicitation and test at scale; model behavioral and physiological preference data jointly with text responses to develop new, transformer-based natural language processing methods for analyzing sparse consumer language.  
-        \item Conduct frontier human-centered AI research using LLM, VLM, and diffusion models to develop psychological guidance methods for generative AI. Architect human-aligned AI intervention generation system driven by pscyhology and neuroscience. Test causal impact of generative AI interventions on human creativiy and decision making.
-        \item Lead large, multi-site projects with cross-functional teams comprising 5-15 people. Define project scope, objectives, and deliverables; manage budgets and maintain alignment with business goals to ensure project success; proactively identify risks and develop mitigation strategies. 
-        \item Communicate research results to diverse industry and academic stakeholders. Generate patentable IP; publish scientific articles in top-tier journals and conferences. \textit{Ad hoc} reviewer for scientific journals.
+        \item Lead research and development of novel AI/ML methods for consumer demand
+              forecasting using GAN and VAE architectures; design theory- and data-driven
+              approaches for eliciting and modeling consumer preferences at scale.
+        \item Conduct frontier human-centered AI research with LLMs, VLMs, and diffusion
+              models to develop psychological guidance methods for generative AI; design and
+              test generative AI interventions supporting human creativity and decision-making
+              flexibility.
+        \item Lead large, cross-functional, multi-site projects (5--15 people); define scope,
+              objectives, and deliverables; manage budgets; identify and mitigate risks.
+        \item Communicate research to industry and academic stakeholders; generate patentable
+              IP; publish in top-tier journals and conferences.
       \end{cvitems}
     }
 
@@ -65,8 +67,10 @@
     {Jun 2016 -- Jan 2021}
     {
       \begin{cvitems}
-        \item Developed and tested multidisciplinary, computational models of behavior change; applied machine learning to predict individual intervention response.
-        \item Leveraged hierarchical, spatial, time series, and multivariate statistical analyses to model large datasets containing survey, behavioral, eye-tracking, and brain imaging data.
+        \item Developed and tested computational models of behavior change in healthy and
+              clinical populations; applied ML to predict individual intervention response.
+        \item Modeled large multimodal datasets (survey, behavioral, eye-tracking, neuroimaging)
+              using hierarchical, spatial, time-series, and multivariate statistical methods.
         \item Secured competitive federal funding; managed research teams of 4--10 people.
       \end{cvitems}
     }
@@ -78,8 +82,8 @@
     {Apr 2015 -- May 2016}
     {
       \begin{cvitems}
-        \item Developed novel Bayesian approach for modeling variability in the brain’s processing of risky decisions. 
-        \item Developed new incentive personalization model for shaping self-control in individual decision making.
+        \item Developed a novel Bayesian model of variability in neural processing of risky
+              decisions and a new incentive-personalization model for shaping self-control.
       \end{cvitems}
     }
 
@@ -90,9 +94,10 @@
     {Aug 2013 -- Jan 2015}
     {
       \begin{cvitems}
-        \item Built computational models to quantify and predict user behavior; defined novel metrics for
+        \item Built ML models to quantify and predict user behavior; defined novel metrics for
               engagement and outcomes; led redesign of data architecture for experimentation.
-        \item Applied machine learning to user experience and optimize outcomes for individual users; translated algorithms into actionable designs using human-centered design principles.
+        \item Applied ML to personalize user experience; translated algorithms into actionable
+              designs using human-centered design principles.
         \item Led quantitative and qualitative UX research for mobile and web products;
               drove product design by synthesizing user testing, analytics, and market research.
       \end{cvitems}
@@ -103,14 +108,13 @@
 %-------------------------------------------------------------------------------
 % EDUCATION
 %-------------------------------------------------------------------------------
-\vspace{2mm}
 \cvsection{Education}
 
 \begin{cventries}
 
   \cventry
     {Ph.D., Computation and Neural Systems}
-    {California Institute of Technology (Caltech)}
+    {California Institute of Technology}
     {Pasadena, CA}
     {2013}
     {}
@@ -127,7 +131,6 @@
 %-------------------------------------------------------------------------------
 % SKILLS
 %-------------------------------------------------------------------------------
-\vspace{2mm}
 \cvsection{Skills}
 
 \begin{cvskills}
@@ -137,7 +140,9 @@
 
   \cvskill
     {Methods}
-    {Bayesian analysis and model comparison, forecasting and time series analysis, causal inference, reinforcement learning, state space models, sequential integrator models}
+    {Bayesian analysis \& model comparison, forecasting \& time-series analysis,
+     causal modeling, reinforcement learning, state-space models,
+     sequential integrator models, transformer-based NLP, generative AI (LLM/VLM/diffusion)}
 \end{cvskills}
 
 %-------------------------------------------------------------------------------

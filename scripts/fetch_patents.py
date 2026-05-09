@@ -5,12 +5,16 @@ fetch_patents.py
 Fetch patent data from the USPTO Patent Center API by exact patent number
 and write authoritative entries to refs/patents.bib.
 
-Two modes:
-  --mode refresh   Re-fetch all known patent numbers from USPTO, preserve any
-                   manually-added entries (keyword=manual), back up the old
-                   file first, then write a clean merged patents.bib. (default)
-  --mode discover  Search USPTO by inventor name for NEW patents not yet in
-                   the known list, and append them as stubs for review.
+Three modes:
+  --mode refresh      Re-fetch all known patent numbers from USPTO, preserve any
+                      manually-added entries (keyword=manual), back up the old
+                      file first, then write a clean merged patents.bib. (default)
+  --mode discover     Search USPTO by inventor name for NEW patents not yet in
+                      the known list, and append them as stubs for review.
+  --mode check-status Scan patents.bib for Filed entries, query USPTO by
+                      application number, and update any that have been granted
+                      (status, number, note) in-place. Also adds newly granted
+                      numbers to KNOWN_PATENT_NUMBERS.
 
 Manual entry protection:
   Any @patent entry in patents.bib with  keywords = {manual}  (or any value
@@ -25,6 +29,11 @@ USPTO API docs:
     https://developer.uspto.gov/api-catalog/patentcenteropen
 """
 
+# `from __future__ import annotations` lets us use PEP 604 syntax
+# ("dict | None") on Python 3.9, where without it the annotation is
+# evaluated at definition time and raises TypeError.
+from __future__ import annotations
+
 import argparse
 import os
 import re
@@ -37,6 +46,9 @@ from pathlib import Path
 import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _shared import write_atomic, append_atomic  # noqa: E402
 
 try:
     import bibtexparser
@@ -79,11 +91,14 @@ def get_api_key() -> str:
 KNOWN_PATENT_NUMBERS = [
     "12524477",   # Sumner et al. 2025 — application exploration
     "12524132",   # Zhang et al. 2025 — drift detection
+    "12541651",   # Chen et al. 2026 — psychological complexity
     "12493401",   # Hong et al. 2025 — moodboard augmentation
     "12425255",   # Shamma et al. 2025 — co-worker remote encounter
     "12400077",   # Hakimi et al. 2025 — statistical data understanding
+    "12210808",   # Lee et al. 2025 — simulated humans
+    "12613892",   # Hong et al. 2025 — stylistic preferences
     "11934476",   # Hakimi et al. 2024 — web search contextualization
-    "17393714",   # Carter et al. — ranked choice (⚠ verify: may be app no.)
+    "11868600",   # Carter et al. 2024 — ranked choice
     "12032618",   # Chen et al. 2024 — infer thoughts/coding scheme
     "11579684",   # Arechiga et al. 2023 — AR goal assistant
     "12062121",   # Arechiga et al. 2024 — digital persona
@@ -101,7 +116,7 @@ def backup_bib(src: Path, dst: Path) -> None:
     stamp   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     content = src.read_text(encoding="utf-8")
     header  = f"% BACKUP created {stamp} by fetch_patents.py\n\n"
-    dst.write_text(header + content, encoding="utf-8")
+    write_atomic(dst, header + content)
     print(f"  Backed up existing file → {dst}")
 
 
@@ -419,7 +434,7 @@ def mode_refresh(dry_run: bool) -> None:
     output = "\n".join(sections) + "\n"
 
     if not dry_run:
-        BIB_OUT.write_text(output, encoding="utf-8")
+        write_atomic(BIB_OUT, output)
         print(f"\nStep 4: Wrote {len(fetched_entries)} USPTO entries "
               f"+ {len(manual_entries)} manual entries → {BIB_OUT}")
     else:
@@ -505,14 +520,175 @@ def mode_discover(dry_run: bool) -> None:
 
     if not dry_run:
         backup_bib(BIB_OUT, BAK_OUT)
-        with open(BIB_OUT, "a", encoding="utf-8") as f:
-            f.write(note + "\n\n".join(new_entries))
+        append_atomic(BIB_OUT, note + "\n\n".join(new_entries))
         print(f"\nAppended {len(new_entries)} new entry/entries to {BIB_OUT}")
         print("⚠  Review, then move verified numbers to KNOWN_PATENT_NUMBERS.")
     else:
         print("\n[dry-run] Would append:")
         for e in new_entries:
             print(e, "\n")
+
+
+# ── CHECK-STATUS MODE ────────────────────────────────────────────────────
+
+def _parse_app_number(number_field: str) -> str | None:
+    """Extract bare application number from 'US App.~18/976,524' format."""
+    m = re.search(r'(\d{2})/?([\d,]+)', number_field)
+    if not m:
+        return None
+    return m.group(1) + m.group(2).replace(",", "")
+
+
+def fetch_app_status_odp(app_number: str, api_key: str) -> dict | None:
+    """
+    Query USPTO ODP by application number to check if a patent has been granted.
+    Returns the applicationMetaData dict if found, None otherwise.
+    """
+    payload = {
+        "q": f"applicationNumberText:{app_number}",
+        "pagination": {"offset": 0, "limit": 1},
+    }
+    headers = {**HEADERS, "Content-Type": "application/json", "x-api-key": api_key}
+    try:
+        r = requests.post(ODP_SEARCH_URL, json=payload, headers=headers,
+                          timeout=20, verify=False)
+        r.raise_for_status()
+        results = r.json()
+        bag = (results.get("patentFileWrapperDataBag") or
+               results.get("results") or [])
+        if not bag:
+            return None
+        first = bag[0]
+        return first.get("applicationMetaData", first)
+    except Exception as e:
+        print(f"    [warn] ODP query failed for app {app_number}: {e}")
+        return None
+
+
+def _extract_filed_entries(bib_path: Path) -> list[dict]:
+    """
+    Parse patents.bib and return info for each Filed entry:
+    {cite_key, app_number, number_field, line_start, raw_text}
+    """
+    text = bib_path.read_text(encoding="utf-8")
+    entries = re.split(r'\n(?=@patent\{)', text)
+    filed = []
+    offset = 0
+    for entry in entries:
+        if not entry.strip().startswith("@patent{"):
+            offset += entry.count("\n") + 1
+            continue
+        status_m = re.search(r'status\s*=\s*\{([^}]*)\}', entry, re.IGNORECASE)
+        if status_m and status_m.group(1).strip().lower() == "filed":
+            key_m = re.search(r'@patent\{(\S+),', entry)
+            num_m = re.search(r'number\s*=\s*\{([^}]*)\}', entry, re.IGNORECASE)
+            if key_m and num_m:
+                app_num = _parse_app_number(num_m.group(1))
+                if app_num:
+                    filed.append({
+                        "cite_key": key_m.group(1),
+                        "app_number": app_num,
+                        "number_field": num_m.group(1),
+                        "raw_text": entry,
+                    })
+        offset += entry.count("\n") + 1
+    return filed
+
+
+def _update_entry_to_granted(raw: str, patent_number: str) -> str:
+    """Rewrite a Filed entry's status, number, and note to Granted."""
+    # Format patent number with commas: 12613892 -> 12,613,892
+    num = patent_number
+    if num.isdigit() and len(num) > 3:
+        parts = []
+        while len(num) > 3:
+            parts.append(num[-3:])
+            num = num[:-3]
+        parts.append(num)
+        formatted = ",".join(reversed(parts))
+    else:
+        formatted = patent_number
+
+    updated = raw
+    # Update number field
+    updated = re.sub(
+        r'(number\s*=\s*\{)[^}]*(})',
+        rf'\g<1>US~{formatted}\2',
+        updated,
+    )
+    # Update status field
+    updated = re.sub(
+        r'(status\s*=\s*\{)[^}]*(})',
+        r'\g<1>Granted\2',
+        updated,
+    )
+    # Update note field — collapse to single line
+    updated = re.sub(
+        r'note\s*=\s*\{[^}]*\}',
+        'note     = {U.S. Patent and Trademark Office, Washington, DC}',
+        updated,
+    )
+    return updated
+
+
+def mode_check_status(dry_run: bool) -> None:
+    """
+    Scan patents.bib for Filed entries, query USPTO by application number,
+    and update any that have been granted in-place.
+    """
+    if not BIB_OUT.exists():
+        print(f"  {BIB_OUT} not found.")
+        return
+
+    filed = _extract_filed_entries(BIB_OUT)
+    if not filed:
+        print("  No Filed entries found in patents.bib.")
+        return
+
+    print(f"  Found {len(filed)} Filed patent(s). Checking USPTO...\n")
+    api_key = get_api_key()
+    updates = []
+
+    for entry in filed:
+        print(f"  {entry['cite_key']} (app {entry['app_number']}) ...", end=" ", flush=True)
+        record = fetch_app_status_odp(entry["app_number"], api_key)
+        if record and record.get("patentNumber"):
+            patent_num = str(record["patentNumber"])
+            print(f"GRANTED as US {patent_num}")
+            updates.append((entry, patent_num))
+        else:
+            print("still pending")
+        time.sleep(0.3)
+
+    if not updates:
+        print("\n  No status changes found.")
+        return
+
+    print(f"\n  {len(updates)} patent(s) newly granted:")
+    for entry, patent_num in updates:
+        print(f"    {entry['cite_key']}: app {entry['app_number']} → US {patent_num}")
+
+    if dry_run:
+        print("\n  [dry-run] No changes written.")
+        return
+
+    # Apply updates in-place
+    backup_bib(BIB_OUT, BAK_OUT)
+    content = BIB_OUT.read_text(encoding="utf-8")
+    new_known = []
+    for entry, patent_num in updates:
+        updated = _update_entry_to_granted(entry["raw_text"], patent_num)
+        content = content.replace(entry["raw_text"], updated)
+        new_known.append(patent_num)
+
+    write_atomic(BIB_OUT, content)
+    print(f"\n  Updated {len(updates)} entry/entries in {BIB_OUT}")
+
+    # Remind to add to KNOWN_PATENT_NUMBERS
+    if new_known:
+        print("\n  Add to KNOWN_PATENT_NUMBERS in fetch_patents.py:")
+        for num in new_known:
+            print(f'    "{num}",')
 
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
@@ -529,15 +705,18 @@ def main():
         ),
     )
     parser.add_argument(
-        "--mode", choices=["refresh", "discover"], default="refresh",
+        "--mode", choices=["refresh", "discover", "check-status"],
+        default="refresh",
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     if args.mode == "refresh":
         mode_refresh(args.dry_run)
-    else:
+    elif args.mode == "discover":
         mode_discover(args.dry_run)
+    elif args.mode == "check-status":
+        mode_check_status(args.dry_run)
 
 
 if __name__ == "__main__":

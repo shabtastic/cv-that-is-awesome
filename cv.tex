@@ -1,5 +1,5 @@
 %==============================================================================
-% SHABNAM HAKIMI — CURRICULUM VITA
+% SHABNAM HAKIMI — CURRICULUM VITAE
 % Built with Awesome-CV (https://github.com/posquit0/Awesome-CV)
 %==============================================================================
 
@@ -266,8 +266,6 @@
 % For patents, addendum holds "Granted"/"Filed" — used only for filtering, not display.
 \DeclareFieldFormat[patent]{addendum}{}
 \DeclareFieldFormat{addendum}{\newline\textit{#1}}
-\DeclareFieldFormat[inproceedings]{addendum}{\newline\textbf{\textit{#1}}}
-% \DeclareFieldFormat{addendum}{\newline\textbf{\textit{#1}}}
 
 \renewbibmacro*{author}{%
   \iffieldundef{usera}{%
@@ -285,6 +283,7 @@
 \addbibresource{refs/journals.bib}
 \addbibresource{refs/preprints.bib}
 \addbibresource{refs/conference.bib}
+\addbibresource{refs/chapters.bib}
 \addbibresource{refs/patents.bib}
 \addbibresource{refs/scicomm.bib}
 \addbibresource{refs/presentations.bib}
@@ -322,6 +321,16 @@
 \defbibcheck{notpresentation}{%
   \ifkeyword{presentation}{\skipentry}{}%
 }
+
+% Exclude entries tagged keyword=commentary from the journals section --
+% they render under "Reviews, Book Chapters & Commentaries" instead.
+\defbibcheck{notcommentary}{%
+  \ifkeyword{commentary}{\skipentry}{}%
+}
+
+% Empty heading used when a \printbibliography continues under an existing
+% section heading (e.g. commentary articles under Book Chapters).
+\defbibheading{none}{}
 
 % AND filter: keyword=presentation AND keyword=selected
 % (multiple keyword= in \printbibliography is OR; this enforces AND)
@@ -591,14 +600,13 @@
 % last-name style (both use \headerfont\bfseries).
 \renewcommand*{\headerfirstnamestyle}[1]{{\fontsize{28pt}{1em}\headerfont\bfseries\color{text} #1}}
 \name{Shabnam}{Hakimi, Ph.D.}
-% \position{Behavioral Science | Computational Neuroscience | Human-Centered AI}
-% \position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
-% \address{Toyota Research Institute, 4440 El Camino Real, Los Altos, CA 94022}
+\position{Senior Research Scientist{\enskip\cdotp\enskip}Human-Centered AI}
+\address{Toyota Research Institute, 4440 El Camino Real, Los Altos, CA 94022}
 \email{shabnamhakimi@gmail.com}
 \homepage{www.shabnamhakimi.com}
-\github{shabtastic}
-\linkedin{shabnam-hakimi-phd}
-\orcid{0000-0003-4122-6041}
+% \github{yourgithub}
+% \linkedin{yourlinkedin}
+% \orcid{0000-0000-0000-0000}
 
 %------------------------------------------------------------------------------
 % DOCUMENT
@@ -609,7 +617,7 @@
 
 \makecvfooter
   {\today}
-  {Shabnam Hakimi ~~·~~ Curriculum Vita}
+  {Shabnam Hakimi ~~·~~ Curriculum Vitae}
   {\thepage}
 
 %------------------------------------------------------------------------------
@@ -650,10 +658,12 @@
     \startbibsection{journals}%
     \iftoggle{selectedOnlyJournals}{%
       \leavevmode\printbibliography[type=article, keyword=selected,
+                         check=notcommentary,
                          title={Peer-Reviewed Journal Publications (Selected)},
                          heading=cvsubsection]%
     }{%
       \leavevmode\printbibliography[type=article,
+                         check=notcommentary,
                          title={Peer-Reviewed Journal Publications},
                          heading=cvsubsection]%
     }%
@@ -711,6 +721,11 @@
     \leavevmode\printbibliography[type=incollection,
                        title={Reviews, Book Chapters \& Commentaries},
                        heading=cvsubsection]%
+    % Commentary articles (e.g. AI Magazine, newsletters) live in
+    % refs/chapters.bib tagged keywords={commentary}. Print them here under
+    % the same heading, continuing the numbering from the incollection block.
+    \leavevmode\printbibliography[type=article, keyword=commentary,
+                       heading=none]%
     \finishbibsection{bookchapters}%
   }{}
 
