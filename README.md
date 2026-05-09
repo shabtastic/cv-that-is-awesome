@@ -9,12 +9,7 @@ cv/
 ├── cv.tex                      # Master file — all toggles and preamble patches live here
 ├── resume.tex                  # Shorter resume variant
 ├── awesome-cv.cls              # Awesome-CV class file
-├── awesome-cv-resume.cls       # Awesome-CV class file tailored to one-page resume
 ├── fonts/                      # SourceSans3 and Roboto TTF files (required by cls)
-├── config/
-│   ├── full.tex                # Preset: complete academic CV
-│   ├── industry.tex            # Preset: selected pubs, lean
-│   └── speaking.tex            # Preset: talks + selected pubs
 ├── sections/
 │   ├── education.tex
 │   ├── experience.tex
@@ -29,7 +24,6 @@ cv/
 │   ├── journals.bib            # @article entries (peer-reviewed journals)
 │   ├── preprints.bib           # @unpublished entries
 │   ├── conference.bib          # @inproceedings entries
-│   ├── chapters.bib            # @incollection and @article commentary entries
 │   ├── presentations.bib       # @misc entries (selected conference presentations)
 │   ├── patents.bib             # @patent entries
 │   └── scicomm.bib             # @misc entries (science communication)
@@ -65,9 +59,10 @@ and Roboto from [Google Fonts](https://fonts.google.com/specimen/Roboto).
 
 ### 3. Install Python dependencies
 ```bash
-pip install bibtexparser requests
-pip install scholarly        # optional — for Google Scholar fetching
+make setup                    # installs requests, bibtexparser, pytest
+pip install scholarly         # optional — for Google Scholar fetching
 ```
+`make check-deps` verifies the required deps are importable before a run.
 
 ### 4. Configure scripts
 Edit the `CONFIG` block at the top of each fetch script:
@@ -101,6 +96,7 @@ ADMIN_EMAIL   = "you@example.com"   # required by NCBI policy
 ```bash
 make
 ```
+> ⚠️ The `Makefile` references `main.tex` — update it to `cv.tex` if you haven't already.
 
 ### Manual build sequence:
 ```bash
