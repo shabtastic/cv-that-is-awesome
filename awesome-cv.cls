@@ -55,7 +55,6 @@
 \RequirePackage[quiet]{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
 \RequirePackage{unicode-math}
-\RequirePackage{fontawesome5}
 \providecommand{\faEnvelope}{}\providecommand{\faHome}{}\providecommand{\faMapMarker}{}\providecommand{\faGithub}{}\providecommand{\faLinkedinSquare}{}\providecommand{\faOrcid}{}\providecommand{\faHouseChimney}{}\providecommand{\faSquareGithub}{}\providecommand{\faLinkedin}{}\providecommand{\faMobile}{}\providecommand{\faSquareWhatsapp}{}\providecommand{\faCakeCandles}{}\providecommand{\faGitlab}{}\providecommand{\faBitbucket}{}\providecommand{\faStackOverflow}{}\providecommand{\faGraduationCap}{}\providecommand{\faHackerrank}{}\providecommand{\faKaggle}{}\providecommand{\faMastodon}{}\providecommand{\faMedium}{}\providecommand{\faReddit}{}\providecommand{\faResearchgate}{}\providecommand{\faSkype}{}\providecommand{\faSquareXing}{}\providecommand{\faTelegram}{}\providecommand{\faTwitter}{}\providecommand{\faXTwitter}{}
 \RequirePackage{accsupp}
 \defaultfontfeatures{
@@ -95,22 +94,12 @@
   BoldItalicFont=SourceSans3-BoldItalic.ttf,
 ]{SourceSans3}
 
-% \setsansfont[
-%   Path=fonts/,
-%   UprightFont=SourceSans3-Regular.ttf,
-%   ItalicFont=SourceSans3-Italic.ttf,
-%   BoldFont=SourceSans3-Bold.ttf,
-%   BoldItalicFont=SourceSans3-BoldItalic.ttf,
-% ]{SourceSans3}
 \setsansfont[
   Path=fonts/,
   UprightFont=SourceSans3-Regular.ttf,
   ItalicFont=SourceSans3-Italic.ttf,
   BoldFont=SourceSans3-Bold.ttf,
   BoldItalicFont=SourceSans3-BoldItalic.ttf,
-  FontFace={l}{n}{SourceSans3-Light.ttf},
-  FontFace={l}{it}{SourceSans3-LightItalic.ttf},
-  FontFace={l}{sl}{SourceSans3-LightItalic.ttf},
 ]{SourceSans3}
 
 \newfontfamily\roboto[
@@ -445,15 +434,13 @@
         {}%
         {%
           \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
-          % \href{\@homepage}{\faAlt{homepage: \@homepage}{\faHouseChimney}{\@homepage}}%
-          \href{\@homepage}{\faAlt{homepage: \@homepage}{\faHome}{\@homepage}}%
+          \href{\@homepage}{\faAlt{homepage: \@homepage}{\faHouseChimney}{\@homepage}}%
         }%
       \ifthenelse{\isundefined{\@github}}%
         {}%
         {%
           \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
-          % \href{https://github.com/\@github}{\faAlt{GitHub: @\@github}{\faSquareGithub}{\@github}}%
-          \href{https://github.com/\@github}{\faAlt{GitHub: @\@github}{\faGithubSquare}{\@github}}%
+          \href{https://github.com/\@github}{\faAlt{GitHub: @\@github}{\faSquareGithub}{\@github}}%
         }%
       \ifthenelse{\isundefined{\@gitlab}}%
         {}%

@@ -1,0 +1,17 @@
+# Python dependencies for the CV reference-update pipeline.
+#
+# Install with:   make setup
+# Or directly:    pip install -r requirements.txt
+#
+# Only `requests` is strictly required to run ANY of the fetchers.
+# `bibtexparser` is required for dedup and patent refresh (each script
+# has a regex fallback that covers the common cases, so read operations
+# mostly still work without it, but `update_refs.py --dedup-only` will
+# skip with a warning).
+#
+# Optional extras live in requirements-dev.txt (pytest) and
+# requirements-scholar.txt (Google Scholar support, which is frequently
+# rate-limited and intentionally disabled by default).
+
+requests>=2.28
+bibtexparser>=1.4,<2

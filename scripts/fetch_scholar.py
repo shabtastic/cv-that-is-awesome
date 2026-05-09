@@ -29,7 +29,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
-    normalize_title, load_all_titles,
+    normalize_title, load_all_titles, load_existing_dois, normalize_doi,
+    append_atomic,
 )
 
 # ---------------------------------------------------------------------------
@@ -160,12 +161,7 @@ def main():
         Path("refs/chapters.bib"),
     ]
     existing_titles = load_all_titles(all_bib_files)
-    existing_dois   = set()
-    doi_re          = re.compile(r"doi\s*=\s*\{([^}]+)\}", re.IGNORECASE)
-    for bib in all_bib_files:
-        p = Path(bib) if not isinstance(bib, Path) else bib
-        if p.exists():
-            existing_dois |= {m.lower().strip() for m in doi_re.findall(p.read_text(encoding="utf-8"))}
+    existing_dois   = load_existing_dois(all_bib_files)
     manual_fp       = load_manual_fingerprints(BIB_OUT)
     rejected        = load_rejected(REJECTED_FILE)
 
@@ -222,7 +218,7 @@ def main():
 
         # Post-fetch dedup: check DOI and full title from the filled BibTeX
         # (Scholar stubs often lack DOIs; we only have them after sc.fill())
-        if doi and doi.lower().strip() in existing_dois:
+        if doi and normalize_doi(doi) in existing_dois:
             skipped_exist += 1
             if show: print(f"  [skip-exist]    DOI {doi} already in a .bib file")
             continue
@@ -260,9 +256,11 @@ def main():
     else:
         print(f"  {len(entries)} entry/entries accepted.")
         if not args.dry_run:
-            with open(BIB_OUT, "a", encoding="utf-8") as f:
-                f.write("\n\n% --- Google Scholar auto-fetched ---\n")
-                f.write("\n\n".join(entries))
+            append_atomic(
+                BIB_OUT,
+                "\n\n% --- Google Scholar auto-fetched ---\n"
+                + "\n\n".join(entries),
+            )
             print(f"  Appended to {BIB_OUT}")
         else:
             print("  [dry-run] Would append:\n")
