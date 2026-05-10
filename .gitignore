@@ -16,6 +16,7 @@ cv-full-public.pdf
 cv-industry.pdf
 cv-speaking.pdf
 cv.pdf
+shabnam-hakimi-cv.pdf
 
 # cv-preset.tex IS tracked (it's the committed fallback default).
 # The Makefile overwrites it at build time but the repo always has
@@ -26,6 +27,9 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
+
+# Claude Code (local-only — may contain API keys in allow-listed commands)
+.claude/
 
 # macOS
 .DS_Store
