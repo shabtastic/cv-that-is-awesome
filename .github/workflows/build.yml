@@ -21,6 +21,18 @@ jobs:
             xelatex -interaction=nonstopmode cv.tex
             xelatex -interaction=nonstopmode cv.tex
           post_compile: mv cv.pdf cv-full.pdf
+      - name: Build cv-full-public.pdf
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: cv.tex
+          latexmk_use_xelatex: true
+          pre_compile: |
+            cp config/full-public.tex cv-preset.tex
+            xelatex -interaction=nonstopmode cv.tex || true
+            biber cv
+            xelatex -interaction=nonstopmode cv.tex
+            xelatex -interaction=nonstopmode cv.tex
+          post_compile: mv cv.pdf cv-full-public.pdf
       - name: Build cv-industry.pdf
         uses: xu-cheng/latex-action@v3
         with:
@@ -52,6 +64,7 @@ jobs:
           name: "CV build ${{ github.sha }}"
           files: |
             cv-full.pdf
+            cv-full-public.pdf
             cv-industry.pdf
             cv-speaking.pdf
         env:

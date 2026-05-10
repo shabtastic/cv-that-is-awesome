@@ -53,20 +53,27 @@
 %------------------------------------------------------------------------------
 % PUBLICATION ANNOTATION SYMBOLS
 %
-% \cvfnmark{equalcontrib} — outputs a superscript * to mark equal-contribution
-% authors in usera fields. Always outputs *, no dynamic counter needed.
+% \cvfnmark{equalcontrib} — superscript * (equal contributions / shared 1st)
+% \cvfnmark{mentee}       — superscript † (mentee co-author)
 %
-% The legend ("* equal contributions...") is printed once at the top of the
-% Publications section via \cvpublegend, not repeated per subsection.
+% Used in usera fields and emitted automatically by the default name format
+% for surnames listed in \cvmentees.
+%
+% The legend is printed once at the top of the Publications section via
+% \cvpublegend, not repeated per subsection.
 %------------------------------------------------------------------------------
-\newcommand{\cvfnmark}[1]{\textsuperscript{*}}
+\newcommand{\cvfnmark}[1]{%
+  \IfStrEq{#1}{equalcontrib}{\textsuperscript{*}}{%
+  \IfStrEq{#1}{mentee}{\textsuperscript{\textdagger}}{%
+  \textsuperscript{?}}}%
+}
 
 % \cvpublegend: prints the symbol legend on its own line below the section heading.
 % \bodyfontlight = Roboto-Thin which has no italic variant, so \textit silently
 % falls back to upright. \bodyfont = Roboto-Regular which does have Roboto-Italic.
 \newcommand{\cvpublegend}{%
   \par\vspace{-4pt}%
-  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship}}%
+  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship\quad\textdagger\ mentee co-author}}%
   \par%
 }
 
@@ -201,6 +208,40 @@
 %------------------------------------------------------------------------------
 \def\cvownfamilyname{Hakimi}
 
+%------------------------------------------------------------------------------
+% MENTEE LIST — auto-marks listed surnames in author lists with \cvfnmark{mentee}.
+%
+% Comma-separated. Surname-only matching (case-sensitive, exact word). Hyphenated
+% surnames are fine. KEEP ON ONE LINE — line breaks inside the list become spaces
+% and break matching.
+%
+% Surnames not on this list:
+%   - Wang: collides with non-mentee co-authors Wang, S. (Wang2016autism) and
+%     Wang, C. (Hakimi2020snbf). Mentee Ashley Wang has no current co-authored
+%     pubs; if she does, hand-mark her name via usera with \cvfnmark{mentee}.
+%
+% Note: usera fields bypass the name formatter, so manually add \cvfnmark{mentee}
+% to mentee names in any usera string.
+%------------------------------------------------------------------------------
+\newcommand{\cvmentees}{Nath,Nandy,Madden-Rusnak,Sinclair,Wright,Hsiung,Vu,Jung,Christiano,Eom,Muzekari,Jiang,Shrestha,Thorp,Parelman,George,Som,Firuz,Zhou,Lakshmanan,Ouyang,Candelora,Fulford,Gupta,Tseng,Geisman,Chandrashekharan,Morfin,Paniagua,Stella}
+
+% \cvtestmentee{<surname-macro>}: emit \cvfnmark{mentee} if the macro's
+% expansion exactly matches one of the comma-separated items in \cvmentees.
+% Iterates with \@for and uses \ifx (which compares macro replacement text)
+% so the test is exact-string equality, not substring.
+\makeatletter
+\newcommand{\cvtestmentee}[1]{%
+  \def\cv@menteefound{0}%
+  \@for\cv@menteeitem:=\cvmentees\do{%
+    \edef\cv@menteeitemexp{\cv@menteeitem}%
+    \ifx\cv@menteeitemexp#1%
+      \def\cv@menteefound{1}%
+    \fi
+  }%
+  \ifnum\cv@menteefound=1 \cvfnmark{mentee}\fi
+}
+\makeatother
+
 % Redefine the 'default' name format (used by all numeric-style entries via
 % the sortname alias) to bold the CV owner's name.
 \AtBeginDocument{%
@@ -228,6 +269,8 @@
     \else
       \usebibmacro{name:family-given}{\namepartfamily}{\namepartgiveni}%
                                      {\namepartprefix}{\namepartsuffix}%
+      % Mentee marker: append \cvfnmark{mentee} if surname is in \cvmentees.
+      \cvtestmentee{\cvboldtmpA}%
     \fi
     \usebibmacro{name:andothers}%
   }%
@@ -770,8 +813,11 @@
 
 %-- Teaching & Service --------------------------------------------------------
 \iftoggle{showTeaching}{\input{sections/teaching}}{}
+\iftoggle{showMentorship}{\input{sections/mentorship}}{}
 \iftoggle{showService}{\input{sections/service}}{}
 \iftoggle{showReviewer}{\input{sections/reviewer}}{}
+\iftoggle{showMemberships}{\input{sections/memberships}}{}
+\iftoggle{showReferences}{\input{sections/references}}{}
 
 \iftoggle{showFullCVNote}{%
   \vspace{8mm}%
