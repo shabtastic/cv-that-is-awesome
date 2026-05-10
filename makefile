@@ -29,7 +29,8 @@ full-public:
 	cp config/full-public.tex cv-preset.tex
 	$(MAKE) pdf
 	mv cv.pdf cv-full-public.pdf
-	@echo "→ cv-full-public.pdf"
+	cp cv-full-public.pdf shabnam-hakimi-cv.pdf
+	@echo "→ cv-full-public.pdf (also published as shabnam-hakimi-cv.pdf)"
 
 industry:
 	cp config/industry.tex cv-preset.tex
@@ -57,7 +58,7 @@ pdf: cv-preset.tex
 
 clean:
 	rm -f cv.aux cv.bbl cv.bcf cv.blg cv.log cv.out cv.run.xml cv.toc cvbibcounts.tex
-	rm -f cv-full.pdf cv-full-public.pdf cv-industry.pdf cv-speaking.pdf cv.pdf
+	rm -f cv-full.pdf cv-full-public.pdf cv-industry.pdf cv-speaking.pdf cv.pdf shabnam-hakimi-cv.pdf
 
 fetch:
 	python scripts/update_refs.py

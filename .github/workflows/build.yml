@@ -32,7 +32,9 @@ jobs:
             biber cv
             xelatex -interaction=nonstopmode cv.tex
             xelatex -interaction=nonstopmode cv.tex
-          post_compile: mv cv.pdf cv-full-public.pdf
+          post_compile: |
+            mv cv.pdf cv-full-public.pdf
+            cp cv-full-public.pdf shabnam-hakimi-cv.pdf
       - name: Build cv-industry.pdf
         uses: xu-cheng/latex-action@v3
         with:
@@ -67,5 +69,6 @@ jobs:
             cv-full-public.pdf
             cv-industry.pdf
             cv-speaking.pdf
+            shabnam-hakimi-cv.pdf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
