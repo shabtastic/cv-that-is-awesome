@@ -1,0 +1,30 @@
+%==============================================================================
+% REFERENCES
+%
+% TOGGLE GUIDE:
+%   \toggletrue{showReferences}       → render this section
+%   \togglefalse{showReferences}      → omit entirely
+%
+%   \toggletrue{showFullReferences}   → list named references (fill in below)
+%   \togglefalse{showFullReferences}  → "Available upon request" placeholder
+%==============================================================================
+\cvsection{References}
+
+\iftoggle{showFullReferences}{%
+  \begin{cventries}
+    % Add reference entries here. Awesome-CV \cventry signature:
+    %   \cventry{<Position/Title>}{<Name>}{<Affiliation>}{<Contact>}{}
+    %
+    % Example:
+    %   \cventry
+    %     {Professor of Psychology}
+    %     {R. Alison Adcock, M.D., Ph.D.}
+    %     {Duke University}
+    %     {alison.adcock@duke.edu}
+    %     {}
+  \end{cventries}
+}{%
+  \begin{cvparagraph}
+    Available upon request.
+  \end{cvparagraph}
+}

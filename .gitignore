@@ -12,6 +12,7 @@ cv-preset.tex
 
 # Compiled PDFs (built by CI; not tracked in source)
 cv-full.pdf
+cv-full-public.pdf
 cv-industry.pdf
 cv-speaking.pdf
 cv.pdf

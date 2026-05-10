@@ -1,0 +1,54 @@
+%==============================================================================
+% PRESET: Full Academic CV (Public)
+% Same as `full` but without the Mentorship section. Use this as the version
+% to share publicly — trainees still appear as co-authors (auto-marked with †
+% via \cvmentees in cv.tex), but the standalone "Mentorship" listing is
+% suppressed to avoid surfacing trainee names in a stand-alone roster.
+%==============================================================================
+
+%------------------------------------------------------------------------------
+% SECTION VISIBILITY
+%------------------------------------------------------------------------------
+\toggletrue{showJournals}
+\toggletrue{showPreprints}
+\toggletrue{showConferenceProceedings}
+\toggletrue{showConferencePresentations}
+\toggletrue{showBookChapters}
+\toggletrue{showPatents}
+\toggletrue{showSciComm}
+\toggletrue{showTalks}
+\toggletrue{showGrants}
+\toggletrue{showTeaching}
+\toggletrue{showService}
+\toggletrue{showReviewer}
+\togglefalse{showMentorship}
+\toggletrue{showMemberships}
+\togglefalse{showReferences}       % omit entirely from public version
+\togglefalse{showFullReferences}
+
+%------------------------------------------------------------------------------
+% PUBLICATION FILTERS — show everything
+%------------------------------------------------------------------------------
+\togglefalse{selectedOnlyPublications}
+\togglefalse{selectedOnlyJournals}
+\togglefalse{selectedOnlyPreprints}
+\togglefalse{selectedOnlyConferenceProceedings}
+\togglefalse{selectedOnlyPresentations}
+\togglefalse{selectedOnlyPatents}
+
+\def\patentMode{all}       % none | granted | all
+\def\patentFilter{all}     % selected | all
+
+%------------------------------------------------------------------------------
+% SECTION DEPTH — show all entries in expandable sections
+%------------------------------------------------------------------------------
+\toggletrue{showAllGrants}
+\toggletrue{showAllTalks}
+\toggletrue{showAllTeaching}
+\toggletrue{showAllService}
+
+%------------------------------------------------------------------------------
+% BIBLIOGRAPHY NUMBERING
+%------------------------------------------------------------------------------
+\toggletrue{showBibNumbers}
+\togglefalse{reverseBibNumbers}
