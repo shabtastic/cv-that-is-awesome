@@ -73,7 +73,7 @@
 % falls back to upright. \bodyfont = Roboto-Regular which does have Roboto-Italic.
 \newcommand{\cvpublegend}{%
   \par\vspace{-4pt}%
-  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship\quad\textdagger\ mentee co-author}}%
+  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship,\quad\textdagger\ mentee co-author}}%
   \par%
 }
 
@@ -334,22 +334,35 @@
 \nocite{*}  % include all entries from all .bib files
 
 %------------------------------------------------------------------------------
-% BIBLATEX HEADING — cvsubsection style
+% \cvsubsection — patched for consistent leading spacing
 %
-% \cvsubsection (cls) = \vspace{2.5mm} + \vspace{-3mm} + text = net -0.5mm.
-% The -3mm is intentional for subsections that follow content (tight tuck).
-% But when a subsection is the FIRST thing after \cvsection (no \par yet,
-% still in horizontal mode from \vhrulefill), vspaces are ignored and the
-% text flows inline: "Patents GRANTED".
+% Awesome-CV's default \cvsubsection (cls) does:
+%   \vspace{2.5mm} + \vspace{-3mm} + text  → net -0.5mm
 %
-% Fix: patch to add \par\noindent before the vspaces.
-% \noindent suppresses the extra \parskip that \par would otherwise add,
-% preventing the large gap above subsection headings in Publications.
-% The net vspace = 2.5mm - 3mm = -0.5mm is fine after a section rule.
+% This is fine when subsection follows another biblatex bibliography (tight
+% tuck inside Publications), but produces zero (or even negative) leading
+% space when subsection follows \end{cventries} (e.g. Mentorship subsections)
+% or appears as the first thing after \cvsection (horizontal-mode bug —
+% vspaces get ignored and the heading flows inline).
+%
+% We patch in two parts:
+%   1. \par\noindent before the vspaces — fixes the horizontal-mode bug so
+%      vspaces actually take effect; \noindent suppresses extra \parskip.
+%   2. Conditional leading gap — \cvsubsectionLeadGap pt of breathing room
+%      when subsection follows a \begin{cventries} block. AtEndEnvironment
+%      sets \cvprevwasentries; cvsubsection consumes and clears it.
 %------------------------------------------------------------------------------
+% \cvsubsectionLeadGap   — always added before any \cvsubsection
+% \cvsubsectionAfterEntries — extra gap when subsection follows \end{cventries}
+\newcommand{\cvsubsectionLeadGap}{4pt}
+\newcommand{\cvsubsectionAfterEntries}{6pt}
+\newbool{cvprevwasentries}
+\boolfalse{cvprevwasentries}
+\AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
+
 \patchcmd{\cvsubsection}%
   {\vspace{\acvSectionContentTopSkip}}%
-  {\par\noindent\vspace{\acvSectionContentTopSkip}}%
+  {\par\noindent\vspace{\cvsubsectionLeadGap}\ifbool{cvprevwasentries}{\vspace{\cvsubsectionAfterEntries}\boolfalse{cvprevwasentries}}{}\vspace{\acvSectionContentTopSkip}}%
   {}{}
 
 \defbibheading{cvsubsection}[\bibname]{%
@@ -590,18 +603,21 @@
   \setlength{\parskip}{0pt}%
   \setlength{\parindent}{0pt}%
 }
-% Before each \cventry: if previous entry had a description (cvitems), add
-% 8pt extra clearance so the bullet text (which extends below the tabular's
-% measured height) does not overlap the current entry's header.
-% For plain->plain transitions, 4pt matches the original cls spacing.
+% Before each \cventry: add the right vertical gap based on context.
+%   - First entry in a cventries block: no leading gap.
+%   - Previous entry had bullets (cvitems): \cvgapAfterBullets — clears the
+%     bullet content which extends below the tabular's measured height.
+%   - Plain entry → plain entry: \cvgapPlain — matches cls default.
+\newcommand{\cvgapPlain}{4pt}
+\newcommand{\cvgapAfterBullets}{6pt}
 \pretocmd{\cventry}{%
   \ifbool{firstcventry}{%
     \boolfalse{firstcventry}%
   }{%
     \ifbool{prevhaddesc}{%
-      \vspace{6pt}%  % extra: clears cvitems overflow (was 8pt)
+      \vspace{\cvgapAfterBullets}%
     }{%
-      \vspace{4pt}%  % normal inter-entry gap
+      \vspace{\cvgapPlain}%
     }%
   }%
   \boolfalse{prevhaddesc}%
@@ -611,21 +627,15 @@
 % We can't inspect #5 directly in apptocmd, so we patch cvitems end instead.
 \AtEndEnvironment{cvitems}{\booltrue{prevhaddesc}}
 
-% cvitems: closing \vspace tuned empirically.
+% cvitems: bullet block inside a \cventry's 5th argument (description cell).
 %
-% The closing vspace is INSIDE the \multicolumn cell of \cventry's tabular.
-% Contrary to earlier assumption, it DOES propagate to inter-entry spacing by
-% inflating the tabular row height. A sufficiently negative value (~-10.5mm)
-% compensates for the bullet-list height and brings bullet-entries into
-% alignment with plain entries (~15pt gap).
-%
-% \iftoggle-wrapped entries add a paragraph break on exit (~13.5pt extra).
-% These are patched per-section with explicit \vspace{-13.5pt} after }{}.
-% Any \cventry with bullets followed by another entry needs \vspace{-11.8pt}
-% between them if the cvitems closing vspace is insufficient (e.g. single-item
-% lists whose tabular height floor is hit before the vspace takes effect).
+% Opening \vspace pulls bullets up close to the entry's position line.
+% Closing \vspace inflates the cell so its measured bottom matches where
+% the bullets actually end — without it, bullet content overflows the
+% tabular row and the next entry's header overlaps it. \cvgapAfterBullets
+% in pretocmd handles inter-entry breathing room on top of that.
 \renewenvironment{cvitems}{%
-  \vspace{-4.0mm}%
+  \vspace{-3.0mm}%
   \begin{justify}%
   \begin{itemize}[leftmargin=2ex, nosep, noitemsep]%
     \setlength{\parskip}{0pt}%
@@ -633,7 +643,7 @@
 }{%
   \end{itemize}%
   \end{justify}%
-  \vspace{-4.0mm}%
+  \vspace{2mm}%
 }
 
 %------------------------------------------------------------------------------
@@ -822,7 +832,7 @@
 \iftoggle{showFullCVNote}{%
   \vspace{8mm}%
   \begin{center}
-    \textit{Full CV available upon request.}
+    \textit{Full CV and references available on request.}
   \end{center}%
 }{}
 
