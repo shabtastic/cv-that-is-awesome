@@ -14,24 +14,14 @@ jobs:
         with:
           root_file: cv.tex
           latexmk_use_xelatex: true
-          pre_compile: |
-            cp config/full.tex cv-preset.tex
-            xelatex -interaction=nonstopmode cv.tex || true
-            biber cv
-            xelatex -interaction=nonstopmode cv.tex
-            xelatex -interaction=nonstopmode cv.tex
+          pre_compile: cp config/full.tex cv-preset.tex
           post_compile: mv cv.pdf cv-full.pdf
       - name: Build cv-full-public.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
           latexmk_use_xelatex: true
-          pre_compile: |
-            cp config/full-public.tex cv-preset.tex
-            xelatex -interaction=nonstopmode cv.tex || true
-            biber cv
-            xelatex -interaction=nonstopmode cv.tex
-            xelatex -interaction=nonstopmode cv.tex
+          pre_compile: cp config/full-public.tex cv-preset.tex
           post_compile: |
             mv cv.pdf cv-full-public.pdf
             cp cv-full-public.pdf shabnam-hakimi-cv.pdf
@@ -40,24 +30,14 @@ jobs:
         with:
           root_file: cv.tex
           latexmk_use_xelatex: true
-          pre_compile: |
-            cp config/industry.tex cv-preset.tex
-            xelatex -interaction=nonstopmode cv.tex || true
-            biber cv
-            xelatex -interaction=nonstopmode cv.tex
-            xelatex -interaction=nonstopmode cv.tex
+          pre_compile: cp config/industry.tex cv-preset.tex
           post_compile: mv cv.pdf cv-industry.pdf
       - name: Build cv-speaking.pdf
         uses: xu-cheng/latex-action@v3
         with:
           root_file: cv.tex
           latexmk_use_xelatex: true
-          pre_compile: |
-            cp config/speaking.tex cv-preset.tex
-            xelatex -interaction=nonstopmode cv.tex || true
-            biber cv
-            xelatex -interaction=nonstopmode cv.tex
-            xelatex -interaction=nonstopmode cv.tex
+          pre_compile: cp config/speaking.tex cv-preset.tex
           post_compile: mv cv.pdf cv-speaking.pdf
       - name: Release
         uses: softprops/action-gh-release@v2
