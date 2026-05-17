@@ -47,6 +47,14 @@
     \map{
       \step[fieldsource=status, fieldtarget=addendum]
     }
+    % Drop any entry tagged keywords={unlisted} during source-mapping so it
+    % never reaches biblatex. Used for items kept in a bib file for the
+    % corpus pipeline but intentionally excluded from every compiled CV
+    % (e.g., PhD thesis in chapters.bib).
+    \map{
+      \step[fieldsource=keywords, match=\regexp{\bunlisted\b}, final]
+      \step[entrynull]
+    }
   }
 }
 
