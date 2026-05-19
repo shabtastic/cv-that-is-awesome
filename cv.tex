@@ -392,6 +392,18 @@
   \cvsubsubsection{#1}%
 }
 
+% Composite heading used by the first \printbibliography under a combined
+% umbrella cvsubsection. Routes through biblatex so the cvsubsection picks
+% up the same pre-heading vertical glue as any other bibliography subsection.
+% The second arg in the title is the first sub-sub label, separated by '|'.
+\defbibheading{cvsubsection+sub}[\bibname]{%
+  \cvsubsplit#1\relax
+}
+\def\cvsubsplit#1|#2\relax{%
+  \cvsubsection{#1}%
+  \cvsubsubsection{#2}%
+}
+
 %------------------------------------------------------------------------------
 % BIBLATEX CUSTOM CHECKS — patent status × selected toggle
 %------------------------------------------------------------------------------
@@ -799,10 +811,11 @@
     % Magazine, newsletters) are tagged keywords={commentary} in
     % refs/chapters.bib; book chapters are @incollection. Commentaries come
     % first so the section reads newest-first (matching the rest of the CV).
-    \cvsubsection{Reviews, Book Chapters \& Commentaries}%
+    % The combined heading title is "umbrella|sub-sub" — see
+    % \defbibheading{cvsubsection+sub} above.
     \leavevmode\printbibliography[type=article, keyword=commentary,
-                       title={Commentaries},
-                       heading=cvsubsubsection]%
+                       title={Reviews, Book Chapters \& Commentaries|Commentaries},
+                       heading=cvsubsection+sub]%
     \leavevmode\printbibliography[type=incollection,
                        title={Book Chapters},
                        heading=cvsubsubsection]%
