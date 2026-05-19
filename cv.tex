@@ -378,6 +378,21 @@
 }
 
 %------------------------------------------------------------------------------
+% \cvsubsubsection — lightweight label one level below \cvsubsection.
+% Used to group entries inside a combined cvsubsection (e.g. Commentaries
+% and Book Chapters under "Reviews, Book Chapters & Commentaries").
+% Style mirrors \cvpublegend: 9pt italic Roboto-Regular, on its own line.
+%------------------------------------------------------------------------------
+\newcommand{\cvsubsubsection}[1]{%
+  \par\vspace{3pt}%
+  {\bodyfont\fontsize{9.5pt}{1em}\selectfont\textit{#1}}%
+  \par\vspace{-3pt}%
+}
+\defbibheading{cvsubsubsection}[\bibname]{%
+  \cvsubsubsection{#1}%
+}
+
+%------------------------------------------------------------------------------
 % BIBLATEX CUSTOM CHECKS — patent status × selected toggle
 %------------------------------------------------------------------------------
 
@@ -779,14 +794,18 @@
 
   \iftoggle{showBookChapters}{%
     \startbibsection{bookchapters}%
-    \leavevmode\printbibliography[type=incollection,
-                       title={Reviews, Book Chapters \& Commentaries},
-                       heading=cvsubsection]%
-    % Commentary articles (e.g. AI Magazine, newsletters) live in
-    % refs/chapters.bib tagged keywords={commentary}. Print them here under
-    % the same heading, continuing the numbering from the incollection block.
+    % Umbrella cvsubsection heading printed once; \cvsubsubsection labels
+    % group the two entry types below it. Commentary articles (e.g. AI
+    % Magazine, newsletters) are tagged keywords={commentary} in
+    % refs/chapters.bib; book chapters are @incollection. Commentaries come
+    % first so the section reads newest-first (matching the rest of the CV).
+    \cvsubsection{Reviews, Book Chapters \& Commentaries}%
     \leavevmode\printbibliography[type=article, keyword=commentary,
-                       heading=none]%
+                       title={Commentaries},
+                       heading=cvsubsubsection]%
+    \leavevmode\printbibliography[type=incollection,
+                       title={Book Chapters},
+                       heading=cvsubsubsection]%
     \finishbibsection{bookchapters}%
   }{}
 
