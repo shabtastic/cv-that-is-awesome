@@ -39,6 +39,11 @@ jobs:
           latexmk_use_xelatex: true
           pre_compile: cp config/speaking.tex cv-preset.tex
           post_compile: mv cv.pdf cv-speaking.pdf
+      - name: Build resume.pdf
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: resume.tex
+          latexmk_use_xelatex: true
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -50,5 +55,6 @@ jobs:
             cv-industry.pdf
             cv-speaking.pdf
             shabnam-hakimi-cv.pdf
+            resume.pdf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
