@@ -364,35 +364,49 @@
 %      when subsection follows a \begin{cventries} block. AtEndEnvironment
 %      sets \cvprevwasentries; cvsubsection consumes and clears it.
 %------------------------------------------------------------------------------
-% \cvsubsectionLeadGap     — always added before any \cvsubsection
-% \cvsubsectionAfterEntries — extra gap when subsection follows \end{cventries}
-% \cvsubsectionAfterSection — extra gap when subsection is the first thing
-%                             after \cvsection (no biblatex / cventries glue
-%                             contributes; without this the heading lands
-%                             ~1mm below the section rule).
+% \cvsubsectionLeadGap        — always added before any \cvsubsection
+% \cvsubsectionAfterEntries   — extra gap when subsection follows \end{cventries}
+% \cvsubsectionAfterSection   — extra gap when subsection follows \cvsection
+%                               directly (no biblatex / cventries glue
+%                               contributes; without this the heading lands
+%                               ~1mm below the section rule).
+% \cvsubsectionAfterParagraph — extra gap when subsection follows
+%                               \end{cvparagraph}. The cls only leaves 2mm
+%                               there, which reads as visibly tight between
+%                               sibling cvsubsections (e.g. Reviewing →
+%                               Journals/Conferences, Mentorship subsections).
 \newcommand{\cvsubsectionLeadGap}{4pt}
 \newcommand{\cvsubsectionAfterEntries}{6pt}
 \newcommand{\cvsubsectionAfterSection}{8pt}
+\newcommand{\cvsubsectionAfterParagraph}{6pt}
 \newbool{cvprevwasentries}
 \boolfalse{cvprevwasentries}
 \newbool{cvprevwassection}
 \boolfalse{cvprevwassection}
+\newbool{cvprevwasparagraph}
+\boolfalse{cvprevwasparagraph}
 \AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
+\AtEndEnvironment{cvparagraph}{\booltrue{cvprevwasparagraph}}
 \apptocmd{\cvsection}{\global\booltrue{cvprevwassection}}{}{}
 
-% Priority: entries-gap > section-gap > default. Whichever fires also clears
-% the other, so a single cvsubsection never gets both gaps stacked.
+% Priority: entries > section > paragraph > default. Whichever fires also
+% clears the others, so a single cvsubsection never stacks multiple gaps.
 \patchcmd{\cvsubsection}%
   {\vspace{\acvSectionContentTopSkip}}%
   {\par\noindent\vspace{\cvsubsectionLeadGap}%
    \ifbool{cvprevwasentries}{%
      \vspace{\cvsubsectionAfterEntries}%
-     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}%
+     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}\boolfalse{cvprevwasparagraph}%
    }{%
      \ifbool{cvprevwassection}{%
        \vspace{\cvsubsectionAfterSection}%
-       \boolfalse{cvprevwassection}%
-     }{}%
+       \boolfalse{cvprevwassection}\boolfalse{cvprevwasparagraph}%
+     }{%
+       \ifbool{cvprevwasparagraph}{%
+         \vspace{\cvsubsectionAfterParagraph}%
+         \boolfalse{cvprevwasparagraph}%
+       }{}%
+     }%
    }%
    \vspace{\acvSectionContentTopSkip}}%
   {}{}
@@ -818,19 +832,16 @@
 
   \iftoggle{showBookChapters}{%
     \startbibsection{bookchapters}%
-    % Umbrella cvsubsection heading printed once; \cvsubsubsection labels
-    % group the two entry types below it. Commentary articles (e.g. AI
-    % Magazine, newsletters) are tagged keywords={commentary} in
-    % refs/chapters.bib; book chapters are @incollection. Commentaries come
-    % first so the section reads newest-first (matching the rest of the CV).
-    %
-    % \cvsubsection is called directly (rather than via a biblatex heading)
-    % to keep it at the left margin like every other cvsubsection — routing
-    % the umbrella through biblatex+wrapper leaked \parindent and shifted
-    % the heading right. \addvspace supplies the pre-heading gap that
-    % biblatex would otherwise contribute.
-    \addvspace{\cvsubsectionAfterSection}%
-    \cvsubsection{Reviews, Book Chapters \& Commentaries}%
+    % Umbrella cvsubsection heading printed once via \printbibheading
+    % (biblatex's heading-only entry point) so it picks up the same
+    % \parindent / \leftskip normalisation as every other cvsubsection
+    % heading. \cvsubsubsection labels group the two entry types below
+    % it. Commentary articles (e.g. AI Magazine, newsletters) are
+    % tagged keywords={commentary} in refs/chapters.bib; book chapters
+    % are @incollection. Commentaries come first so the section reads
+    % newest-first (matching the rest of the CV).
+    \printbibheading[heading=cvsubsection,
+                     title={Reviews, Book Chapters \& Commentaries}]%
     \leavevmode\printbibliography[type=article, keyword=commentary,
                        title={Commentaries},
                        heading=cvsubsubsection]%
