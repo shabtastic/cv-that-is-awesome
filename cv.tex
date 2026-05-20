@@ -843,10 +843,11 @@
     % newest-first (matching the rest of the CV).
     %
     % \printbibheading (unlike a real \printbibliography) doesn't emit
-    % its own pre-heading glue, so we supply it: \addvspace tops up the
-    % gap to match the inter-subsection spacing of the other
-    % publication subsections above.
-    \addvspace{\cvsubsectionAfterEntries}%
+    % its own pre-heading glue, so we supply it. \vspace is used (not
+    % \addvspace) because biblatex's end-of-bibliography glue can be
+    % large enough to absorb an \addvspace top-up, leaving the umbrella
+    % heading visibly tight to the prior section.
+    \vspace{18pt}%
     \printbibheading[heading=cvsubsection,
                      title={Reviews, Book Chapters \& Commentaries}]%
     \leavevmode\printbibliography[type=article, keyword=commentary,
