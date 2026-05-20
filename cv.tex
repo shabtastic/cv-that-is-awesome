@@ -87,10 +87,10 @@
   \par\vspace{-4pt}%
   {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship,\quad\textdagger\ mentee co-author}}%
   \par%
-  % Consume the "just after cvsection" flag — the legend already adds
-  % its own line of visual space, so the next cvsubsection shouldn't
-  % also get the extra section gap.
-  \boolfalse{cvprevwassection}%
+  % Flag: the legend is visually part of the section heading block, so
+  % the next \cvsubsection should tuck under it (\cvsubsectionAfterLegend)
+  % instead of using the standard cvsubsection gap.
+  \global\booltrue{cvafterlegend}%
 }
 
 %==============================================================================
@@ -350,63 +350,42 @@
 \nocite{*}  % include all entries from all .bib files
 
 %------------------------------------------------------------------------------
-% \cvsubsection — patched for consistent leading spacing
+% \cvsubsection — patched for uniform leading spacing.
+%
+% Design:
+%   R1. \cvsection above gap: unchanged (\acvSectionTopSkip = 7mm, cls default).
+%   R2. \cvsubsection above gap: \cvsubsectionGap (14pt), UNIFORM regardless of
+%       what precedes — \cvsection rule, \end{cvparagraph}, biblatex
+%       bibliography end, or \end{cventries}. \removelastskip wipes whatever
+%       trailing glue the previous element left; \vspace writes exactly
+%       \cvsubsectionGap.
+%   R3. EXCEPTION: \cvsubsection following \cvpublegend uses
+%       \cvsubsectionAfterLegend (2pt) instead. The legend is visually part of
+%       the section heading block (sits tight under the rule), so the next
+%       subsection tucks under it.
+%   R4. \cvsubsubsection above gap: 3pt (defined in \cvsubsubsection itself,
+%       unchanged).
 %
 % Awesome-CV's default \cvsubsection (cls) does:
 %   \vspace{2.5mm} + \vspace{-3mm} + text  → net -0.5mm
-%
-% This is fine when subsection follows another biblatex bibliography (tight
-% tuck inside Publications), but produces zero (or even negative) leading
-% space when subsection follows \end{cventries} (e.g. Mentorship subsections)
-% or appears as the first thing after \cvsection (horizontal-mode bug —
-% vspaces get ignored and the heading flows inline).
-%
-% We patch in two parts:
-%   1. \par\noindent before the vspaces — fixes the horizontal-mode bug so
-%      vspaces actually take effect; \noindent suppresses extra \parskip.
-%   2. Conditional leading gap — \cvsubsectionLeadGap pt of breathing room
-%      when subsection follows a \begin{cventries} block. AtEndEnvironment
-%      sets \cvprevwasentries; cvsubsection consumes and clears it.
+% which is why \removelastskip must run BEFORE these — the cls's existing
+% vspaces remain (we patch only the leading skip, not the body).
 %------------------------------------------------------------------------------
-% \cvsubsectionLeadGap        — always added before any \cvsubsection
-% \cvsubsectionAfterEntries   — extra gap when subsection follows \end{cventries}
-% \cvsubsectionAfterSection   — extra gap when subsection follows \cvsection
-%                               directly (no biblatex / cventries glue
-%                               contributes; without this the heading lands
-%                               ~1mm below the section rule).
-% Sibling-cvsubsection gap (cvparagraph followed by another cvsubsection)
-% is NOT handled here — it's applied via a manual \vspace{\cvsubsectionAfterParagraph}
-% in the section files (reviewer.tex, mentorship.tex) so the gap fires
-% only where it's needed, not at every \end{cvparagraph} (which would
-% waste space at section ends and shift page breaks unfavourably).
-\newcommand{\cvsubsectionLeadGap}{4pt}
-\newcommand{\cvsubsectionAfterEntries}{6pt}
-\newcommand{\cvsubsectionAfterSection}{8pt}
-\newcommand{\cvsubsectionAfterParagraph}{10pt}
-\newbool{cvprevwasentries}
-\boolfalse{cvprevwasentries}
-\newbool{cvprevwassection}
-\boolfalse{cvprevwassection}
-\AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
-\apptocmd{\cvsection}{\global\booltrue{cvprevwassection}}{}{}
+\newcommand{\cvsubsectionGap}{14pt}
+\newcommand{\cvsubsectionAfterLegend}{2pt}
+\newbool{cvafterlegend}
+\boolfalse{cvafterlegend}
 
-% Priority: entries > section > default. Whichever fires also clears the
-% other, so a single cvsubsection never stacks both. The cvparagraph case
-% is handled out-of-band by \apptocmd to \endcvparagraph above, so no
-% boolean is needed here for it.
 \patchcmd{\cvsubsection}%
   {\vspace{\acvSectionContentTopSkip}}%
-  {\par\noindent\vspace{\cvsubsectionLeadGap}%
-   \ifbool{cvprevwasentries}{%
-     \vspace{\cvsubsectionAfterEntries}%
-     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}%
+  {\par\removelastskip
+   \ifbool{cvafterlegend}{%
+     \vspace{\cvsubsectionAfterLegend}%
+     \global\boolfalse{cvafterlegend}%
    }{%
-     \ifbool{cvprevwassection}{%
-       \vspace{\cvsubsectionAfterSection}%
-       \boolfalse{cvprevwassection}%
-     }{}%
+     \vspace{\cvsubsectionGap}%
    }%
-   \vspace{\acvSectionContentTopSkip}}%
+   \noindent\vspace{\acvSectionContentTopSkip}}%
   {}{}
 
 \defbibheading{cvsubsection}[\bibname]{%
@@ -844,20 +823,15 @@
   \iftoggle{showBookChapters}{%
     \startbibsection{bookchapters}%
     % Umbrella cvsubsection heading printed once via \printbibheading
-    % (biblatex's heading-only entry point) so it picks up the same
-    % \parindent / \leftskip normalisation as every other cvsubsection
-    % heading. \cvsubsubsection labels group the two entry types below
-    % it. Commentary articles (e.g. AI Magazine, newsletters) are
-    % tagged keywords={commentary} in refs/chapters.bib; book chapters
-    % are @incollection. Commentaries come first so the section reads
+    % (biblatex's heading-only entry point). It routes through
+    % \defbibheading{cvsubsection} -> \cvsubsection, which the patched
+    % \cvsubsection treats like any other cvsubsection: \cvsubsectionGap
+    % uniform leading space, applied via \removelastskip + \vspace.
+    % \cvsubsubsection labels group the two entry types below it.
+    % Commentary articles (e.g. AI Magazine, newsletters) are tagged
+    % keywords={commentary} in refs/chapters.bib; book chapters are
+    % @incollection. Commentaries come first so the section reads
     % newest-first (matching the rest of the CV).
-    %
-    % \printbibheading (unlike a real \printbibliography) doesn't emit
-    % its own pre-heading glue, so we supply it. \vspace is used (not
-    % \addvspace) because biblatex's end-of-bibliography glue can be
-    % large enough to absorb an \addvspace top-up, leaving the umbrella
-    % heading visibly tight to the prior section.
-    \vspace{14pt}%
     \printbibheading[heading=cvsubsection,
                      title={Reviews, Book Chapters \& Commentaries}]%
     \leavevmode\printbibliography[type=article, keyword=commentary,
