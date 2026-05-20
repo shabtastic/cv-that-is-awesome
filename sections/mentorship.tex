@@ -3,6 +3,10 @@
 % This section has no toggle — it is always shown in full when included.
 % To hide it entirely, set \togglefalse{showMentorship} in main.tex.
 %==============================================================================
+% Reserve enough vertical space so the cvsection heading isn't widowed
+% from its first subsection content. 4 baselines is a tight floor —
+% just enough for the heading + the first sub-block.
+\needspace{4\baselineskip}
 \cvsection{Mentorship}
 
 \cvsubsection{Doctoral Trainees}\par
@@ -10,16 +14,19 @@
 Surabhi S. Nath; Ananya Nandy; Anna Madden-Rusnak; Alyssa Sinclair; Rachael Wright; Abigail Hsiung; Mai-Anh Vu; Hee Jung Jung
 \end{cvparagraph}
 
+\vspace{\cvsubsectionAfterParagraph}
 \cvsubsection{Postbaccalaureate Trainees}\par
 \begin{cvparagraph}
 Dylan Christiano; Kelly Eom; Benjamin Muzekari; Linxing ``Preston'' Jiang; Sonakchhi Shrestha; John Thorp; Jacob Parelman
 \end{cvparagraph}
 
+\vspace{\cvsubsectionAfterParagraph}
 \cvsubsection{Undergraduate Students}\par
 \begin{cvparagraph}
 Eleanor George; Anuj Som; Ashley Wang; Suhiba Fariha Firuz; Kelvin Zhou; Abinaya Lakshmanan; Tiffany Ouyang; Peter Candelora; Avery Fulford; Savita Gupta; Richard Tseng; Mackenzie Geisman; Shivani Chandrashekharan; Ernesto Morfin Montes de Oca; Sofia Paniagua
 \end{cvparagraph}
 
+\vspace{\cvsubsectionAfterParagraph}
 \cvsubsection{High School Students}\par
 \begin{cvparagraph}
 Olivia Stella
