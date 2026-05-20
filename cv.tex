@@ -9,6 +9,10 @@
 % PACKAGES
 %------------------------------------------------------------------------------
 \usepackage{etoolbox}
+\usepackage{needspace}  % \needspace{N} ensures N of vspace remain on
+                        % the page or forces a break — used to keep
+                        % short sections (Reviewing, Mentorship) from
+                        % being orphaned across page boundaries.
 
 %------------------------------------------------------------------------------
 % BIBLIOGRAPHY STYLE
@@ -370,27 +374,20 @@
 %                               directly (no biblatex / cventries glue
 %                               contributes; without this the heading lands
 %                               ~1mm below the section rule).
-% \cvsubsectionAfterParagraph — extra gap when subsection follows
-%                               \end{cvparagraph}. The cls only leaves 2mm
-%                               there, which reads as visibly tight between
-%                               sibling cvsubsections (e.g. Reviewing →
-%                               Journals/Conferences, Mentorship subsections).
+% Sibling-cvsubsection gap (cvparagraph followed by another cvsubsection)
+% is NOT handled here — it's applied via a manual \vspace{\cvsubsectionAfterParagraph}
+% in the section files (reviewer.tex, mentorship.tex) so the gap fires
+% only where it's needed, not at every \end{cvparagraph} (which would
+% waste space at section ends and shift page breaks unfavourably).
 \newcommand{\cvsubsectionLeadGap}{4pt}
 \newcommand{\cvsubsectionAfterEntries}{6pt}
 \newcommand{\cvsubsectionAfterSection}{8pt}
-\newcommand{\cvsubsectionAfterParagraph}{14pt}
+\newcommand{\cvsubsectionAfterParagraph}{10pt}
 \newbool{cvprevwasentries}
 \boolfalse{cvprevwasentries}
 \newbool{cvprevwassection}
 \boolfalse{cvprevwassection}
 \AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
-% Append the gap to cvparagraph's end-code directly rather than gating
-% on a boolean that the patched \cvsubsection consumes. The
-% \AtEndEnvironment-via-boolean dance worked for cventries but not
-% reliably here — \addvspace at end of \endcvparagraph is simpler and
-% cooperates with whatever element comes next (tops up to the target
-% only if the next element doesn't already emit enough vspace).
-\apptocmd{\endcvparagraph}{\addvspace{\cvsubsectionAfterParagraph}}{}{}
 \apptocmd{\cvsection}{\global\booltrue{cvprevwassection}}{}{}
 
 % Priority: entries > section > default. Whichever fires also clears the
@@ -488,11 +485,15 @@
 %------------------------------------------------------------------------------
 % PATENT PRINT COMMAND
 %------------------------------------------------------------------------------
+% Each subsection (Granted, Filed) gets its own \startbibsection scope so
+% \cvbibindex restarts at [1] per subsection — Filed should not continue
+% numbering where Granted left off.
 \newcommand{\printpatents}{%
   \ifthenelse{\equal{\patentMode}{none}}{%
     % Print nothing
   }{%
     \ifthenelse{\equal{\patentMode}{granted}}{%
+      \startbibsection{patents-granted}%
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Granted},
@@ -502,23 +503,31 @@
                            title={Granted},
                            heading=cvsubsection]%
       }%
+      \finishbibsection{patents-granted}%
     }{%
-      % All (granted + filed)
+      % All (granted + filed) — separate counter scope per subsection
+      \startbibsection{patents-granted}%
       \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=grantedpatentsselected,
                            title={Granted},
                            heading=cvsubsection]%
+      }{%
+        \leavevmode\printbibliography[check=grantedpatents,
+                           title={Granted},
+                           heading=cvsubsection]%
+      }%
+      \finishbibsection{patents-granted}%
+      \startbibsection{patents-filed}%
+      \ifthenelse{\equal{\patentFilter}{selected}}{%
         \leavevmode\printbibliography[check=filedpatentsselected,
                            title={Filed},
                            heading=cvsubsection]%
       }{%
-        \leavevmode\printbibliography[check=grantedpatents,
-                           title={Granted},
-                           heading=cvsubsection]%
         \leavevmode\printbibliography[check=filedpatents,
                            title={Filed},
                            heading=cvsubsection]%
       }%
+      \finishbibsection{patents-filed}%
     }%
   }%
 }
@@ -847,7 +856,7 @@
     % \addvspace) because biblatex's end-of-bibliography glue can be
     % large enough to absorb an \addvspace top-up, leaving the umbrella
     % heading visibly tight to the prior section.
-    \vspace{18pt}%
+    \vspace{14pt}%
     \printbibheading[heading=cvsubsection,
                      title={Reviews, Book Chapters \& Commentaries}]%
     \leavevmode\printbibliography[type=article, keyword=commentary,
@@ -878,9 +887,10 @@
     }{%
       \cvsection{Patents}%
     }%
-    \startbibsection{patents}%
+    % \startbibsection / \finishbibsection now live inside \printpatents
+    % so Granted and Filed each get their own counter scope (each restarts
+    % at [1]).
     \printpatents
-    \finishbibsection{patents}%
   }%
 }{}
 
