@@ -87,10 +87,6 @@
   \par\vspace{-4pt}%
   {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship,\quad\textdagger\ mentee co-author}}%
   \par%
-  % Consume the "just after cvsection" flag — the legend already adds
-  % its own line of visual space, so the next cvsubsection shouldn't
-  % also get the extra section gap.
-  \boolfalse{cvprevwassection}%
 }
 
 %==============================================================================
@@ -350,63 +346,40 @@
 \nocite{*}  % include all entries from all .bib files
 
 %------------------------------------------------------------------------------
-% \cvsubsection — patched for consistent leading spacing
+% \cvsubsection — patched for uniform leading spacing.
 %
 % Awesome-CV's default \cvsubsection (cls) does:
 %   \vspace{2.5mm} + \vspace{-3mm} + text  → net -0.5mm
 %
-% This is fine when subsection follows another biblatex bibliography (tight
-% tuck inside Publications), but produces zero (or even negative) leading
-% space when subsection follows \end{cventries} (e.g. Mentorship subsections)
-% or appears as the first thing after \cvsection (horizontal-mode bug —
-% vspaces get ignored and the heading flows inline).
+% That tucks the heading tightly under the prior element, but the visible
+% gap then DEPENDS on what came before:
+%   - After cvsection (rule line, no trailing vspace): ~0mm
+%   - After \end{cvparagraph} (2mm trailing): ~1.5mm
+%   - After biblatex bibliography (its own glue): ~2-3mm
+%   - After \end{cventries} (no trailing): ~0mm
+% Visibly different gaps above sibling cvsubsections in the same section
+% (e.g. Reviewing → Journals vs Conferences) read as inconsistent.
 %
-% We patch in two parts:
-%   1. \par\noindent before the vspaces — fixes the horizontal-mode bug so
-%      vspaces actually take effect; \noindent suppresses extra \parskip.
-%   2. Conditional leading gap — \cvsubsectionLeadGap pt of breathing room
-%      when subsection follows a \begin{cventries} block. AtEndEnvironment
-%      sets \cvprevwasentries; cvsubsection consumes and clears it.
+% Fix in two parts:
+%   1. \par\noindent — fixes the horizontal-mode bug where, when the
+%      cvsubsection is the FIRST thing after \cvsection, the cls's
+%      \vspace gets ignored and the heading flows inline with the rule.
+%   2. \addvspace{\cvsubsectionLeadingGap} — tops up the existing glue to
+%      a uniform target regardless of what preceded. \addvspace (not
+%      \vspace) is the key: it cooperates with whatever was already
+%      emitted, never stacking, so the visible gap above the heading is
+%      identical in every context.
 %------------------------------------------------------------------------------
-% \cvsubsectionLeadGap        — always added before any \cvsubsection
-% \cvsubsectionAfterEntries   — extra gap when subsection follows \end{cventries}
-% \cvsubsectionAfterSection   — extra gap when subsection follows \cvsection
-%                               directly (no biblatex / cventries glue
-%                               contributes; without this the heading lands
-%                               ~1mm below the section rule).
-% Sibling-cvsubsection gap (cvparagraph followed by another cvsubsection)
-% is NOT handled here — it's applied via a manual \vspace{\cvsubsectionAfterParagraph}
-% in the section files (reviewer.tex, mentorship.tex) so the gap fires
-% only where it's needed, not at every \end{cvparagraph} (which would
-% waste space at section ends and shift page breaks unfavourably).
-\newcommand{\cvsubsectionLeadGap}{4pt}
-\newcommand{\cvsubsectionAfterEntries}{6pt}
-\newcommand{\cvsubsectionAfterSection}{8pt}
-\newcommand{\cvsubsectionAfterParagraph}{10pt}
-\newbool{cvprevwasentries}
-\boolfalse{cvprevwasentries}
-\newbool{cvprevwassection}
-\boolfalse{cvprevwassection}
-\AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
-\apptocmd{\cvsection}{\global\booltrue{cvprevwassection}}{}{}
+\newcommand{\cvsubsectionLeadingGap}{18pt}
 
-% Priority: entries > section > default. Whichever fires also clears the
-% other, so a single cvsubsection never stacks both. The cvparagraph case
-% is handled out-of-band by \apptocmd to \endcvparagraph above, so no
-% boolean is needed here for it.
+% \removelastskip wipes any glue the previous element left at the end
+% of its output (e.g. cvparagraph's trailing 2mm, cvsection's rule, or
+% biblatex's per-bibliography trailing glue). \vspace then writes a
+% uniform \cvsubsectionLeadingGap. Net effect: identical visible space
+% above every cvsubsection, independent of context.
 \patchcmd{\cvsubsection}%
   {\vspace{\acvSectionContentTopSkip}}%
-  {\par\noindent\vspace{\cvsubsectionLeadGap}%
-   \ifbool{cvprevwasentries}{%
-     \vspace{\cvsubsectionAfterEntries}%
-     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}%
-   }{%
-     \ifbool{cvprevwassection}{%
-       \vspace{\cvsubsectionAfterSection}%
-       \boolfalse{cvprevwassection}%
-     }{}%
-   }%
-   \vspace{\acvSectionContentTopSkip}}%
+  {\par\removelastskip\vspace{\cvsubsectionLeadingGap}\noindent\vspace{\acvSectionContentTopSkip}}%
   {}{}
 
 \defbibheading{cvsubsection}[\bibname]{%
