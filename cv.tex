@@ -841,6 +841,12 @@
     % tagged keywords={commentary} in refs/chapters.bib; book chapters
     % are @incollection. Commentaries come first so the section reads
     % newest-first (matching the rest of the CV).
+    %
+    % \printbibheading (unlike a real \printbibliography) doesn't emit
+    % its own pre-heading glue, so we supply it: \addvspace tops up the
+    % gap to match the inter-subsection spacing of the other
+    % publication subsections above.
+    \addvspace{\cvsubsectionAfterEntries}%
     \printbibheading[heading=cvsubsection,
                      title={Reviews, Book Chapters \& Commentaries}]%
     \leavevmode\printbibliography[type=article, keyword=commentary,
