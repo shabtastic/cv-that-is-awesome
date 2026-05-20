@@ -378,35 +378,36 @@
 \newcommand{\cvsubsectionLeadGap}{4pt}
 \newcommand{\cvsubsectionAfterEntries}{6pt}
 \newcommand{\cvsubsectionAfterSection}{8pt}
-\newcommand{\cvsubsectionAfterParagraph}{6pt}
+\newcommand{\cvsubsectionAfterParagraph}{14pt}
 \newbool{cvprevwasentries}
 \boolfalse{cvprevwasentries}
 \newbool{cvprevwassection}
 \boolfalse{cvprevwassection}
-\newbool{cvprevwasparagraph}
-\boolfalse{cvprevwasparagraph}
 \AtEndEnvironment{cventries}{\booltrue{cvprevwasentries}}
-\AtEndEnvironment{cvparagraph}{\booltrue{cvprevwasparagraph}}
+% Append the gap to cvparagraph's end-code directly rather than gating
+% on a boolean that the patched \cvsubsection consumes. The
+% \AtEndEnvironment-via-boolean dance worked for cventries but not
+% reliably here — \addvspace at end of \endcvparagraph is simpler and
+% cooperates with whatever element comes next (tops up to the target
+% only if the next element doesn't already emit enough vspace).
+\apptocmd{\endcvparagraph}{\addvspace{\cvsubsectionAfterParagraph}}{}{}
 \apptocmd{\cvsection}{\global\booltrue{cvprevwassection}}{}{}
 
-% Priority: entries > section > paragraph > default. Whichever fires also
-% clears the others, so a single cvsubsection never stacks multiple gaps.
+% Priority: entries > section > default. Whichever fires also clears the
+% other, so a single cvsubsection never stacks both. The cvparagraph case
+% is handled out-of-band by \apptocmd to \endcvparagraph above, so no
+% boolean is needed here for it.
 \patchcmd{\cvsubsection}%
   {\vspace{\acvSectionContentTopSkip}}%
   {\par\noindent\vspace{\cvsubsectionLeadGap}%
    \ifbool{cvprevwasentries}{%
      \vspace{\cvsubsectionAfterEntries}%
-     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}\boolfalse{cvprevwasparagraph}%
+     \boolfalse{cvprevwasentries}\boolfalse{cvprevwassection}%
    }{%
      \ifbool{cvprevwassection}{%
        \vspace{\cvsubsectionAfterSection}%
-       \boolfalse{cvprevwassection}\boolfalse{cvprevwasparagraph}%
-     }{%
-       \ifbool{cvprevwasparagraph}{%
-         \vspace{\cvsubsectionAfterParagraph}%
-         \boolfalse{cvprevwasparagraph}%
-       }{}%
-     }%
+       \boolfalse{cvprevwassection}%
+     }{}%
    }%
    \vspace{\acvSectionContentTopSkip}}%
   {}{}
