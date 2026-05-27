@@ -58,3 +58,15 @@ jobs:
             resume.pdf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Sync CV to website repo
+        env:
+          WEBSITE_DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+        run: |
+          git clone https://x-access-token:${WEBSITE_DEPLOY_TOKEN}@github.com/shabtastic/shabweb.git /tmp/shabweb
+          cp shabnam-hakimi-cv.pdf /tmp/shabweb/shabnam-hakimi-cv.pdf
+          cd /tmp/shabweb
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add shabnam-hakimi-cv.pdf
+          git diff --cached --quiet || git commit -m "cv: sync shabnam-hakimi-cv.pdf from cv repo ($(date -u +%Y-%m-%d))"
+          git push
