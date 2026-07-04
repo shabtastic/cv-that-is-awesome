@@ -450,9 +450,10 @@ def mode_discover(dry_run: bool) -> None:
     """Search USPTO ODP by inventor name for patents not in KNOWN_PATENT_NUMBERS."""
     print(f"Searching USPTO ODP for patents by {INVENTOR_FIRST} {INVENTOR_LAST}...")
     api_key = get_api_key()
-    # Search by inventor last name, filter to granted patents only (status "Patented Case")
+    # Search by inventor first+last name (ODP requires dotted sub-field paths)
     payload = {
-        "q": f"applicationMetaData.inventorBag:{INVENTOR_LAST}",
+        "q": (f"applicationMetaData.inventorBag.lastName:{INVENTOR_LAST}"
+              f" AND applicationMetaData.inventorBag.firstName:{INVENTOR_FIRST}"),
         "pagination": {"offset": 0, "limit": 50},
     }
     headers = {**HEADERS, "Content-Type": "application/json", "x-api-key": api_key}
@@ -468,16 +469,18 @@ def mode_discover(dry_run: bool) -> None:
         results = r.json()
         bag = (results.get("patentFileWrapperDataBag") or
                results.get("results") or [])
-        docs = [h.get("applicationMetaData", h) for h in bag]
+        # applicationNumberText lives at the wrapper level, not inside applicationMetaData
+        docs = [(h.get("applicationMetaData", h), h.get("applicationNumberText", ""))
+                for h in bag]
     except Exception as e:
         print(f"[error] USPTO ODP discovery search failed: {e}")
         sys.exit(1)
 
     print(f"  Found {len(docs)} total records.")
     new_entries = []
-    for doc in docs:
+    for doc, top_app_num in docs:
         patent_num = doc.get("patentNumber", "")
-        app_num    = doc.get("applicationNumberText", "")
+        app_num    = top_app_num or doc.get("applicationNumberText", "")
         # Use patent number for granted, application number for filed
         num    = patent_num or app_num
         status_hint = "Granted" if patent_num else "Filed"
