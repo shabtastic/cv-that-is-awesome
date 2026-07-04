@@ -1,6 +1,8 @@
 %==============================================================================
-% PRESET: Full Academic CV
-% All sections visible. No selected-only filters.
+% PRESET: Industry / Job Application
+% All publication subsections shown, unfiltered.
+% Talks on (condensed, 6 entries). Service condensed. Reviewer on.
+% Grants, teaching, memberships hidden.
 %==============================================================================
 
 %------------------------------------------------------------------------------
@@ -9,40 +11,41 @@
 \toggletrue{showJournals}
 \toggletrue{showPreprints}
 \toggletrue{showConferenceProceedings}
-\toggletrue{showConferencePresentations}
+\togglefalse{showConferencePresentations}  % separate from invited talks
 \toggletrue{showBookChapters}
 \toggletrue{showPatents}
 \toggletrue{showSciComm}
 \toggletrue{showTalks}
-\toggletrue{showGrants}
-\toggletrue{showTeaching}
+\togglefalse{showGrants}
+\togglefalse{showTeaching}
 \toggletrue{showService}
 \toggletrue{showReviewer}
-\toggletrue{showMentorship}
-\toggletrue{showMemberships}
-\toggletrue{showReferences}
-\togglefalse{showFullReferences}   % false = "Available upon request"
+\togglefalse{showMentorship}
+\togglefalse{showMemberships}
+\togglefalse{showReferences}
+\toggletrue{showFullCVNote}        % closing note on final page
 
 %------------------------------------------------------------------------------
-% PUBLICATION FILTERS — show everything
+% PUBLICATION FILTERS — show everything, no selected-only filtering
 %------------------------------------------------------------------------------
-\togglefalse{selectedOnlyPublications}
+\toggletrue{selectedOnlyPublications}
 \togglefalse{selectedOnlyJournals}
 \togglefalse{selectedOnlyPreprints}
 \togglefalse{selectedOnlyConferenceProceedings}
-\togglefalse{selectedOnlyPresentations}
-\togglefalse{selectedOnlyPatents}
+\toggletrue{selectedOnlyPresentations}     % presentations always selected-only
+\toggletrue{selectedOnlyPatents}           % patents labeled "Selected" in heading
+\toggletrue{selectedOnlyService}            % "Selected Professional Service & Outreach"
 
-\def\patentMode{all}       % none | granted | all
-\def\patentFilter{all}     % selected | all
+\def\patentMode{granted}   % none | granted | all
+\def\patentFilter{all}     % selected | all  (heading already says "Selected")
 
 %------------------------------------------------------------------------------
-% SECTION DEPTH — show all entries in expandable sections
+% SECTION DEPTH
 %------------------------------------------------------------------------------
-\toggletrue{showAllGrants}
-\toggletrue{showAllTalks}
-\toggletrue{showAllTeaching}
-\toggletrue{showAllService}
+\togglefalse{showAllGrants}
+\togglefalse{showAllTalks}      % 6 invited talks (condensed)
+\togglefalse{showAllTeaching}
+\togglefalse{showAllService}    % 7 selected service entries
 
 %------------------------------------------------------------------------------
 % BIBLIOGRAPHY NUMBERING
