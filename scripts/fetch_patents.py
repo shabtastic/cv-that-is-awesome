@@ -74,13 +74,33 @@ HEADERS = {
 }
 
 
+def _load_dotenv(path: Path = Path(".env")) -> None:
+    """Load KEY=VALUE lines from a local .env file into os.environ.
+
+    No-op if the file is missing. Existing environment variables always
+    win over the file (uses setdefault), and the file is gitignored.
+    """
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 def get_api_key() -> str:
-    """Load the USPTO ODP API key from the environment."""
+    """Load the USPTO ODP API key from the environment or a local .env file."""
+    _load_dotenv()
     key = os.environ.get("USPTO_API_KEY", "")
     if not key:
-        print("  [error] USPTO_API_KEY environment variable not set.")
+        print("  [error] USPTO_API_KEY not set.")
         print("          Get your key at https://data.uspto.gov (My ODP)")
-        print("          Then: export USPTO_API_KEY='your_key_here'")
+        print("          Then either:")
+        print("            export USPTO_API_KEY='your_key_here'")
+        print("          or add this line to a local .env file (gitignored):")
+        print("            USPTO_API_KEY=your_key_here")
         sys.exit(1)
     return key
 
