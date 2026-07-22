@@ -54,6 +54,12 @@
 \RequirePackage{setspace}
 \RequirePackage[quiet]{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
+% \scshape auto-invokes the body font's OpenType smcp feature. XeTeX's
+% ToUnicode mapping for those substituted glyphs is unreliable (e.g. i/s
+% land on dotless-i/long-s), breaking copy-paste and automated text
+% extraction. \XeTeXgenerateactualtext wraps substituted runs in a PDF
+% ActualText span carrying the correct original text.
+\XeTeXgenerateactualtext=1
 \RequirePackage{unicode-math}
 \RequirePackage{fontawesome5}
 \providecommand{\faEnvelope}{}\providecommand{\faHome}{}\providecommand{\faMapMarker}{}\providecommand{\faGithub}{}\providecommand{\faLinkedinSquare}{}\providecommand{\faOrcid}{}\providecommand{\faHouseChimney}{}\providecommand{\faSquareGithub}{}\providecommand{\faLinkedin}{}\providecommand{\faMobile}{}\providecommand{\faSquareWhatsapp}{}\providecommand{\faCakeCandles}{}\providecommand{\faGitlab}{}\providecommand{\faBitbucket}{}\providecommand{\faStackOverflow}{}\providecommand{\faGraduationCap}{}\providecommand{\faHackerrank}{}\providecommand{\faKaggle}{}\providecommand{\faMastodon}{}\providecommand{\faMedium}{}\providecommand{\faReddit}{}\providecommand{\faResearchgate}{}\providecommand{\faSkype}{}\providecommand{\faSquareXing}{}\providecommand{\faTelegram}{}\providecommand{\faTwitter}{}\providecommand{\faXTwitter}{}

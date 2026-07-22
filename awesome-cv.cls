@@ -54,6 +54,12 @@
 \RequirePackage{setspace}
 \RequirePackage[quiet]{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
+% \scshape auto-invokes the body font's OpenType smcp feature. XeTeX's
+% ToUnicode mapping for those substituted glyphs is unreliable (e.g. i/s
+% land on dotless-i/long-s), breaking copy-paste and automated text
+% extraction. \XeTeXgenerateactualtext wraps substituted runs in a PDF
+% ActualText span carrying the correct original text.
+\XeTeXgenerateactualtext=1
 \RequirePackage{unicode-math}
 \RequirePackage{fontawesome5}
 % Empty fallbacks for any icon command fontawesome5 doesn't supply —
@@ -438,13 +444,13 @@
         {}%
         {%
           \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
-          \href{\@homepage}{\faAlt{homepage: \@homepage}{\faHouseChimney}{\@homepage}}%
+          \href{\@homepage}{\faAlt{homepage: \@homepage}{\faHome}{\@homepage}}%
         }%
       \ifthenelse{\isundefined{\@github}}%
         {}%
         {%
           \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
-          \href{https://github.com/\@github}{\faAlt{GitHub: @\@github}{\faSquareGithub}{\@github}}%
+          \href{https://github.com/\@github}{\faAlt{GitHub: @\@github}{\faGithub}{\@github}}%
         }%
       \ifthenelse{\isundefined{\@gitlab}}%
         {}%
