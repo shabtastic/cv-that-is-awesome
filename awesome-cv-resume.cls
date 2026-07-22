@@ -142,6 +142,15 @@
   pdfkeywords={}
 }
 \RequirePackage{bookmark}
+% \cvsection/\cvsubsection are custom (not real \section/\subsection), so
+% nothing calls \addcontentsline for us -- the PDF has no outline at all
+% without this. Chrome's PDF viewer falls back to guessing headings from
+% raw glyph runs when a PDF lacks bookmarks, and that heuristic reads
+% straight ToUnicode (not the \XeTeXgenerateactualtext override above), so
+% it re-garbles small-caps text even after the copy-paste fix. Writing a
+% real outline via \pdfbookmark -- using the section's plain-text argument,
+% never routed through \scshape -- sidesteps the bug entirely.
+\newcounter{acvbm}
 
 
 %-------------------------------------------------------------------------------
@@ -590,6 +599,7 @@
   \vspace{\acvSectionTopSkip}
   \sectionstyle{#1}
   \phantomsection
+  \stepcounter{acvbm}\pdfbookmark[0]{#1}{acvbm.\theacvbm}%
   \color{sectiondivider}\vhrulefill{0.9pt}
 }
 
@@ -598,6 +608,7 @@
   \vspace{-3mm}
   \subsectionstyle{#1}
   \phantomsection
+  \stepcounter{acvbm}\pdfbookmark[1]{#1}{acvbm.\theacvbm}%
 }
 
 \newenvironment{cvparagraph}{%
