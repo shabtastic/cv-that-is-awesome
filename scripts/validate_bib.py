@@ -64,12 +64,18 @@ REQUIRED_FIELDS = {
     "misc":          ["author", "title", "year"],
 }
 
-# Which keyword tags carry semantics in cv.tex. An entry with no keywords
-# field at all is fine; one with ``keywords = {}`` or a tag the preamble
-# doesn't use is a warning.
+# Which keyword tags carry semantics in cv.tex (or a downstream tool). An
+# entry with no keywords field at all is fine; one with ``keywords = {}`` or
+# a tag nothing recognizes is a warning.
 KNOWN_KEYWORDS = {
     "selected", "manual", "presentation", "commentary",
     "bookchapter", "scicomm",
+    # cv.tex source-mapping: drops the entry before biblatex sees it
+    # (kept in the corpus, never compiled into any CV -- e.g. PhD thesis).
+    "unlisted",
+    # Personal tracking tags read by an external corpus tool, not by
+    # cv.tex itself.
+    "draft", "unpaywall-closed",
 }
 
 # Entry types that MUST carry at least one known keyword to render.
