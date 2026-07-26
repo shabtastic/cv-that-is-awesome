@@ -699,8 +699,8 @@
 %   - Previous entry had bullets (cvitems): \cvgapAfterBullets — clears the
 %     bullet content which extends below the tabular's measured height.
 %   - Plain entry → plain entry: \cvgapPlain — matches cls default.
-\newcommand{\cvgapPlain}{4pt}
-\newcommand{\cvgapAfterBullets}{6pt}
+\newcommand{\cvgapPlain}{8pt}
+\newcommand{\cvgapAfterBullets}{10pt}
 \pretocmd{\cventry}{%
   \ifbool{firstcventry}{%
     \boolfalse{firstcventry}%
@@ -728,7 +728,7 @@
 \renewenvironment{cvitems}{%
   \vspace{-3.0mm}%
   \begin{justify}%
-  \begin{itemize}[leftmargin=2ex, nosep, noitemsep]%
+  \begin{itemize}[leftmargin=2.5em, nosep, noitemsep]%
     \setlength{\parskip}{0pt}%
     \renewcommand{\labelitemi}{\bullet}%
 }{%
