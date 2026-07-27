@@ -694,6 +694,23 @@
   \setlength{\parskip}{0pt}%
   \setlength{\parindent}{0pt}%
 }
+% Tighten the leading on \cventry's position field (1st argument, e.g. talk
+% quotes) when it wraps to a second line.
+%
+% \baselineskip governs interline glue, which TeX inserts when the array
+% column's internal \par runs — that happens AFTER \entrypositionstyle's own
+% brace group has already closed, so a \baselineskip assignment made inside
+% that group (even via \fontsize's 2nd argument) is discarded before it can
+% take effect. Font size/color don't have this problem because glyphs are
+% rendered immediately, per character, not deferred to \par-time.
+% Workaround: assign \baselineskip globally here, then reset it globally back
+% to the document default at the start of every \cventry (below) — title
+% always runs before position within a single \cventry, so the reset always
+% happens before the next wrapped title is typeset.
+\newlength{\cvdefaultbaselineskip}
+\AtBeginDocument{\setlength{\cvdefaultbaselineskip}{\baselineskip}}
+\renewcommand*{\entrypositionstyle}[1]{{\global\baselineskip=7pt\relax\fontsize{8pt}{1em}\selectfont\bodyfont\scshape\color{graytext} #1}}
+
 % Before each \cventry: add the right vertical gap based on context.
 %   - First entry in a cventries block: no leading gap.
 %   - Previous entry had bullets (cvitems): \cvgapAfterBullets — clears the
@@ -702,6 +719,7 @@
 \newcommand{\cvgapPlain}{8pt}
 \newcommand{\cvgapAfterBullets}{10pt}
 \pretocmd{\cventry}{%
+  \global\baselineskip=\cvdefaultbaselineskip\relax
   \ifbool{firstcventry}{%
     \boolfalse{firstcventry}%
   }{%
