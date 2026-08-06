@@ -84,8 +84,14 @@
 % \bodyfontlight = Roboto-Thin which has no italic variant, so \textit silently
 % falls back to upright. \bodyfont = Roboto-Regular which does have Roboto-Italic.
 \newcommand{\cvpublegend}{%
-  \par\vspace{-4pt}%
-  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship,\quad\textdagger\ mentee co-author}}%
+  % The preceding \cvsection heading is a 16pt line; the interline glue that
+  % would place this 9pt legend below it can't clear a heading that tall, so
+  % the legend collides with the heading + rule. Suppress the interline glue
+  % (\nointerlineskip → prevdepth = -1000pt) and drop the legend an explicit,
+  % measured distance below the heading's bottom edge instead — independent of
+  % baselineskip. (Was \par\vspace{-4pt}, which overlapped the heading.)
+  \par\nointerlineskip\vspace{5pt}%
+  {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{* equal contributions, shared first authorship\quad\textup{\textbar}\quad\textdagger\ mentee co-author}}%
   \par%
   % Flag: the legend is visually part of the section heading block, so
   % the next \cvsubsection should tuck under it (\cvsubsectionAfterLegend)
