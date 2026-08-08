@@ -8,7 +8,12 @@
 *.run.xml
 *.toc
 cvbibcounts.tex
-cv-preset.tex
+
+# NOTE: do NOT add cv-preset.tex here. It IS tracked (the committed fallback
+# default). The Makefile overwrites it at build time — so it shows as modified
+# after every build — but the repo always keeps a valid copy so fresh clones
+# compile cleanly. An ignore rule here would be dead anyway (git ignores
+# .gitignore for already-tracked files) and only misleads.
 
 # Compiled PDFs (built by CI; not tracked in source)
 cv-full.pdf
@@ -23,14 +28,12 @@ resume.pdf
 # not canonical Makefile targets, kept locally but not tracked.
 resume-shabnamhakimi.pdf
 shabnamhakimi-resume.pdf
+shabnam-hakimi-resume.pdf
+shabnam-hakimi-resume-e.pdf
 shabnam-hakimi-cv-i.pdf
 
 # Scratch/comparison resume draft — not a build target.
 resume_eval.tex
-
-# cv-preset.tex IS tracked (it's the committed fallback default).
-# The Makefile overwrites it at build time but the repo always has
-# a valid copy (config/full.tex) so fresh clones compile cleanly.
 
 # Python
 __pycache__/
