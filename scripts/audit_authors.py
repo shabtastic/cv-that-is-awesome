@@ -87,10 +87,18 @@ def field(body: str, name: str) -> str | None:
     return " ".join(m.group(1).split()) if m else None
 
 
+def strip_comments(text: str) -> str:
+    """Drop whole-line BibTeX comments. patents.bib carries a commented-out
+    @patent template (AuthorYYYYkeyword) documenting how to add a filed
+    patent; without this, a commented entry that happened to have a DOI
+    would be audited as though it were real."""
+    return "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("%"))
+
+
 def parse_entries(paths):
     out = []
     for path in paths:
-        for _typ, key, body in ENTRY_RE.findall(path.read_text()):
+        for _typ, key, body in ENTRY_RE.findall(strip_comments(path.read_text())):
             doi = field(body, "doi")
             authors = field(body, "author")
             if not doi or not authors:
