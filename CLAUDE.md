@@ -23,6 +23,7 @@ make setup       # pip install requirements-dev.txt (requests, bibtexparser, pyt
 make check-deps  # verify Python deps are importable
 make test        # pytest tests/
 make validate    # scripts/validate_bib.py (static bib linter)
+make audit-authors # scripts/audit_authors.py (author lists vs Crossref/DataCite; network)
 ```
 
 `make pdf` runs the core compile (`xelatex → biber → xelatex → xelatex`) against whatever `cv-preset.tex` currently holds. **XeLaTeX is required** — pdflatex/lualatex will break fontspec + Awesome-CV.
@@ -79,6 +80,13 @@ Two keywords carry semantics:
 `update_refs.py` orchestrates all fetchers and runs dedup. Each fetcher (`fetch_orcid.py`, `fetch_pubmed.py`, `fetch_scholar.py`, `fetch_patents.py`) silently filters out entries that (a) are already in the `.bib`, (b) match a `manual` fingerprint, or (c) appear in `refs/.<source>_rejected.json`. Use `--show-skipped` to audit what got filtered, `--review-rejected` to un-reject.
 
 `fetch_patents.py` is **not** called by `update_refs.py` — it's interactive and requires `USPTO_API_KEY` in the environment. Run it manually. Three modes: `--mode refresh` (default, re-fetches all known patents), `--mode discover` (searches by inventor name for new ones), `--mode check-status` (scans Filed entries in `patents.bib`, queries USPTO by application number, and updates any that have been granted in-place).
+
+`audit_authors.py` checks author lists against the DOI registries and is the only check that
+catches silently-missing collaborators — an entry can have the right title, journal, year and
+DOI while omitting authors, and nothing in the build complains. Its first run found four such
+entries. Two things it must keep doing: route arXiv DOIs (`10.48550/arXiv.*`) to **DataCite**,
+since Crossref 404s on them, and **skip `usera` entries** — equal-contribution papers reorder
+authors deliberately, so comparing `author` against the registry flags them as wrong.
 
 All fetchers share `_shared.py` for manual-fingerprint loading, interactive review, and keyword prompting. When adding a new fetcher, import from `_shared` via the `sys.path.insert(0, str(Path(__file__).parent))` pattern at the top of the existing scripts so it works both standalone and as a subprocess of `update_refs.py`.
 
