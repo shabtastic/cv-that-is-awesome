@@ -18,7 +18,7 @@
 # and does NOT go through cv-preset.tex or biber. Keep both files in sync with the
 # rest of the CV when content changes (see resume.tex header for guidance).
 
-.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate setup check-deps
+.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate audit-authors setup check-deps
 
 # Build all outputs
 all: full full-public industry speaking resume
@@ -87,6 +87,12 @@ test:
 
 validate:
 	python3 scripts/validate_bib.py
+
+# Checks author lists against Crossref (publisher DOIs) and DataCite
+# (arXiv DOIs). Hits the network, so it is not part of `validate`.
+# Worth running after any fetch, and after hand-editing an author list.
+audit-authors:
+	python3 scripts/audit_authors.py
 
 # First-run setup. Installs `requests` + `bibtexparser` (required for
 # fetchers and dedup) and `pytest` (required for `make test`).
