@@ -588,6 +588,53 @@ def fetch_app_status_odp(app_number: str, api_key: str) -> dict | None:
         return None
 
 
+# ODP reports prosecution state in applicationStatusDescriptionText. It does NOT
+# reliably populate patentNumber in applicationMetaData -- as of 2026-08-16 that
+# field was empty for all 15 filed applications in patents.bib, including one
+# already in "Patented Case". Keying grant detection on patentNumber alone (as
+# this script originally did) therefore never fires: check-status reported "No
+# status changes found" whether or not anything had issued.
+GRANTED_STATUS_MARKERS = ("patented case",)
+ALLOWED_STATUS_MARKERS = (
+    "notice of allowance",
+    "issue fee payment",
+    "ready for issue",
+)
+
+
+def classify_app_status(record: dict | None) -> tuple[str, str | None]:
+    """
+    Classify an ODP applicationMetaData record.
+
+    Returns (state, patent_number) where state is one of:
+      "granted" — issued, or issue notification mailed. patent_number may still
+                  be None: ODP flips the status to "Patented Case" before the
+                  grant number is published, so the number must be filled in by
+                  hand for a few weeks after allowance.
+      "allowed" — allowed and heading for issue, but not yet patented.
+      "pending" — still in prosecution.
+      "unknown" — no record, or a record carrying no status text. Distinct from
+                  "pending" so a failed lookup is never reported as a confident
+                  negative.
+    """
+    if not record:
+        return ("unknown", None)
+
+    raw_num = record.get("patentNumber")
+    number = str(raw_num).strip() if raw_num not in (None, "") else None
+    status = (record.get("applicationStatusDescriptionText") or "").strip().lower()
+
+    if not status:
+        return ("granted", number) if number else ("unknown", None)
+    if any(m in status for m in GRANTED_STATUS_MARKERS):
+        return ("granted", number)
+    if number:
+        return ("granted", number)
+    if any(m in status for m in ALLOWED_STATUS_MARKERS):
+        return ("allowed", None)
+    return ("pending", None)
+
+
 def _extract_filed_entries(bib_path: Path) -> list[dict]:
     """
     Parse patents.bib and return info for each Filed entry:
@@ -672,19 +719,51 @@ def mode_check_status(dry_run: bool) -> None:
     api_key = get_api_key()
     updates = []
 
+    needs_number = []   # granted, but ODP has not published the number yet
+    allowed = []        # allowed / issue fee paid, not yet patented
+    unknown = []        # lookup returned nothing -- not the same as "pending"
+
     for entry in filed:
         print(f"  {entry['cite_key']} (app {entry['app_number']}) ...", end=" ", flush=True)
         record = fetch_app_status_odp(entry["app_number"], api_key)
-        if record and record.get("patentNumber"):
-            patent_num = str(record["patentNumber"])
+        state, patent_num = classify_app_status(record)
+        status_text = (record or {}).get("applicationStatusDescriptionText", "")
+
+        if state == "granted" and patent_num:
             print(f"GRANTED as US {patent_num}")
             updates.append((entry, patent_num))
+        elif state == "granted":
+            print(f"GRANTED ({status_text}) -- grant number not yet published")
+            needs_number.append((entry, status_text))
+        elif state == "allowed":
+            print(f"allowed ({status_text})")
+            allowed.append((entry, status_text))
+        elif state == "unknown":
+            print("NO RECORD -- lookup failed, status unverified")
+            unknown.append(entry)
         else:
-            print("still pending")
+            print(f"still pending ({status_text})")
         time.sleep(0.3)
 
+    if needs_number:
+        print(f"\n  {len(needs_number)} patent(s) issued but awaiting a published number.")
+        print("  ODP flips to 'Patented Case' before the grant number appears, so")
+        print("  these must be filled in by hand once the patent publishes:")
+        for entry, status_text in needs_number:
+            print(f"    {entry['cite_key']}: app {entry['app_number']} — {status_text}")
+
+    if allowed:
+        print(f"\n  {len(allowed)} patent(s) allowed, issue pending (still Filed):")
+        for entry, status_text in allowed:
+            print(f"    {entry['cite_key']}: app {entry['app_number']} — {status_text}")
+
+    if unknown:
+        print(f"\n  {len(unknown)} lookup(s) returned no record — status NOT verified:")
+        for entry in unknown:
+            print(f"    {entry['cite_key']}: app {entry['app_number']}")
+
     if not updates:
-        print("\n  No status changes found.")
+        print("\n  No entries could be auto-updated.")
         return
 
     print(f"\n  {len(updates)} patent(s) newly granted:")
