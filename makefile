@@ -18,7 +18,7 @@
 # and does NOT go through cv-preset.tex or biber. Keep both files in sync with the
 # rest of the CV when content changes (see resume.tex header for guidance).
 
-.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate audit-authors setup check-deps
+.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate audit-authors setup check-deps status
 
 # Build all outputs
 all: full full-public industry speaking resume
@@ -98,6 +98,36 @@ audit-authors:
 # fetchers and dedup) and `pytest` (required for `make test`).
 setup:
 	python3 -m pip install -r requirements-dev.txt
+
+# Working-tree and upstream state for this repo and the research corpus.
+#
+# Every git call goes through `git -C <dir>` rather than `cd <dir> && git`.
+# A cd-chain reports whatever directory the shell happens to be sitting in,
+# so one missing cd makes it print another repo's state under this repo's
+# heading -- wrong, and indistinguishable from right.
+#
+# cv-preset.tex is rewritten by every preset target, so it shows as modified
+# after any build. That is expected and is called out below rather than
+# filtered, so the count always matches what git actually reports.
+CORPUS_DIR ?= $(HOME)/projects/research-corpus
+
+status:
+	@for d in "$(CURDIR)" "$(CORPUS_DIR)"; do \
+	  name=$$(basename "$$d"); \
+	  if [ ! -e "$$d/.git" ]; then \
+	    printf '%-18s not a git repo (%s)\n' "$$name" "$$d"; continue; \
+	  fi; \
+	  branch=$$(git -C "$$d" rev-parse --abbrev-ref HEAD 2>/dev/null); \
+	  head=$$(git -C "$$d" log -1 --format=%h 2>/dev/null); \
+	  dirty=$$(git -C "$$d" status --porcelain | wc -l | tr -d ' '); \
+	  ahead=$$(git -C "$$d" rev-list --count '@{u}..HEAD' 2>/dev/null || echo '-'); \
+	  behind=$$(git -C "$$d" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo '-'); \
+	  printf '%-18s %-6s %-9s dirty:%-4s ahead:%-4s behind:%s\n' \
+	    "$$name" "$$branch" "$$head" "$$dirty" "$$ahead" "$$behind"; \
+	  git -C "$$d" status --porcelain | sed 's/^/                     /'; \
+	done
+	@echo
+	@echo "(cv-preset.tex modified after a build is expected, not dirt.)"
 
 # Preflight: verify required Python deps are importable. Prints an
 # actionable hint instead of a bare ImportError traceback.
