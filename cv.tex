@@ -401,6 +401,15 @@
 \newcommand{\cvsubsectionGap}{14pt}
 \newcommand{\cvsubsectionAfterSectionGap}{18pt}
 \newcommand{\cvsubsectionAfterLegend}{2pt}
+
+% \cvsubsubsection labels sit 2.18pt left of their parent \cvsubsection because
+% \subsectionstyle's 12pt \scshape carries a left pen offset that the 9pt
+% italic sub-label does not. Measured from the built PDF (word-level bboxes):
+% cvsection/cvsubsubsection land at x=39.69, cvsubsection at x=41.87. This
+% length re-aligns the sub-label to its parent heading. Re-measure if
+% \subsectionstyle or the body font changes.
+\newlength{\cvsubsubsectionIndent}
+\setlength{\cvsubsubsectionIndent}{2.18pt}
 \newbool{cvafterlegend}
 \boolfalse{cvafterlegend}
 \newbool{cvprevwassection}
@@ -444,6 +453,7 @@
   % lands tight (≈3pt) above its content — the label is meant to read
   % as a compact divider, not a section break.
   \par\removelastskip\vspace{3pt}%
+  \hspace*{\cvsubsubsectionIndent}%
   {\bodyfont\fontsize{9pt}{1em}\selectfont\textit{#1}}%
   \par\vspace{-3pt}%
 }
