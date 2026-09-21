@@ -32,8 +32,9 @@ shabnam-hakimi-resume.pdf
 shabnam-hakimi-resume-e.pdf
 shabnam-hakimi-cv-i.pdf
 
-# Scratch/comparison resume draft — not a build target.
-resume_eval.tex
+# Scratch/comparison resume drafts — not build targets.
+# Glob so versioned variants (resume_eval_v2.*, etc.) are covered too.
+resume_eval*
 
 # Python
 __pycache__/
