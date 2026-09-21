@@ -60,7 +60,7 @@ REQUIRED_FIELDS = {
     "inproceedings": ["author", "title", "year", "booktitle"],
     "incollection":  ["author", "title", "year", "booktitle", "publisher"],
     "unpublished":   ["author", "title", "year"],
-    "patent":        ["author", "title", "year", "number"],
+    "patent":        ["author", "title", "number"],  # `year` handled below
     "misc":          ["author", "title", "year"],
 }
 
@@ -129,6 +129,91 @@ class Report:
 # PARSING
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Chronological-order policy, per file.
+#
+# cv.tex sets biblatex `sorting=none`, so entries print in the order they
+# appear in the .bib file. "Newest first" is therefore a convention enforced
+# by nothing -- appending a new entry silently puts it last in the rendered
+# CV. This check defends that convention.
+#
+# Not every file is chronological, and the grouping differs:
+#   "strict"     whole file must be newest-first
+#   "by_status"  newest-first *within* each status block (patents: Granted,
+#                then Filed) -- the block boundary is not an inversion.
+#                Ordered by PATENT/APPLICATION NUMBER, not `year`: US numbers
+#                are assigned sequentially, so a higher number is always a
+#                later grant/filing, whereas `year` is populated
+#                inconsistently across these entries (filing year for some,
+#                publication year for others).
+#   "by_type"    newest-first *within* each entry type (chapters: @article
+#                commentaries, then @incollection, then @phdthesis)
+# Files absent from this map are skipped. presentations.bib is deliberately
+# clustered by author/work (one study presented at three venues stays
+# together), so chronology does not apply to it.
+ORDER_POLICY = {
+    "journals.bib":     "strict",
+    "conference.bib":   "strict",
+    "preprints.bib":    "strict",
+    "scicomm.bib":      "strict",
+    "patents.bib":      "by_status",
+    "chapters.bib":     "by_type",
+}
+
+YEAR_RE   = re.compile(r"year\s*=\s*\{?\s*(\d{4})", re.IGNORECASE)
+STATUS_RE = re.compile(r"status\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
+NUMBER_RE = re.compile(r"number\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
+
+
+def check_order(path: Path, entries: list[str], report: Report) -> None:
+    """Warn when a newer entry sits below an older one (see ORDER_POLICY)."""
+    policy = ORDER_POLICY.get(path.name)
+    if not policy:
+        return
+
+    rows = []
+    for entry in entries:
+        m = ENTRY_RE.search(entry)
+        if not m:
+            continue
+        etype, key = m.group(1).lower(), m.group(2)
+        ym = YEAR_RE.search(entry)
+        # NB: the year lookup must not gate the by_status branch - patents are
+        # ordered by number, and applications deliberately carry no year.
+        if policy == "by_status":
+            sm = STATUS_RE.search(entry)
+            group = sm.group(1).lower() if sm else ""
+            nm = NUMBER_RE.search(entry)
+            if nm:
+                digits = re.sub(r"[^\d/]", "", nm.group(1))
+                if "/" in digits:                 # application: series/serial
+                    a, b = digits.split("/", 1)
+                    rows.append((key, (int(a or 0), int(b or 0)), group))
+                else:                             # granted: patent number
+                    rows.append((key, (0, int(digits or 0)), group))
+                continue
+        elif policy == "by_type":
+            group = etype
+        else:
+            group = ""
+        if not ym:
+            continue
+        rows.append((key, int(ym.group(1)), group))
+
+    for prev, cur in zip(rows, rows[1:]):
+        if prev[2] != cur[2]:
+            continue  # group boundary, not an inversion
+        if cur[1] > prev[1]:
+            fmt = lambda v: v if not isinstance(v, tuple) else (
+                f"{v[0]}/{v[1]}" if v[0] else v[1])
+            report.warn(
+                f"{path.name}:order",
+                f"{cur[0]} ({fmt(cur[1])}) is below {prev[0]} ({fmt(prev[1])}); "
+                f"this file is kept newest-first, so it will render lower "
+                f"in the CV than it should",
+            )
+
+
 ENTRY_RE = re.compile(r"@(\w+)\s*\{\s*([^,\s]+)\s*,", re.IGNORECASE)
 
 
@@ -174,7 +259,19 @@ def check_entry(entry: str, file_name: str, report: Report) -> dict:
         report.error(where, f"unbalanced braces (net {bal:+d})")
 
     # 2. Required fields per entry type
-    required = REQUIRED_FIELDS.get(entry_type, [])
+    required = list(REQUIRED_FIELDS.get(entry_type, []))
+    if entry_type == "patent":
+        # `year` on a patent means the GRANT year, and that is the only patent
+        # date this repo can source: fetch_patents.py reads only issuance
+        # fields (patentIssuanceDate / patentGrantDate / ...), never a filing
+        # date. A pending application therefore has no year the tooling can
+        # verify or refresh, so we require one only once the patent is
+        # granted. Hand-entered years on applications were inconsistent
+        # (some filing year, some publication year) and contradicted the
+        # sequentially-assigned application serials.
+        status = _extract_braced_field(entry, "status").strip().lower()
+        if status == "granted":
+            required.append("year")
     for field in required:
         raw = _extract_braced_field(entry, field)
         if not raw.strip():
@@ -230,6 +327,7 @@ def check_file(path: Path, report: Report) -> list[dict]:
         return []
 
     entries = split_entries(text)
+    check_order(path, entries, report)
     results = []
     for entry in entries:
         meta = check_entry(entry, path.name, report)
