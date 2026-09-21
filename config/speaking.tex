@@ -50,3 +50,11 @@
 %------------------------------------------------------------------------------
 \toggletrue{showBibNumbers}
 \togglefalse{reverseBibNumbers}
+%------------------------------------------------------------------------------
+% PAGE-BREAK RULES
+%------------------------------------------------------------------------------
+% Keep R5 (no citation split across a page) -- it costs nothing.
+% Drop R6 (no heading stranded at a page foot): this is the one preset where
+% the heading guard pushes content onto an extra page (3pp -> 4pp), and a
+% short speaking CV is worth more than a perfectly-placed heading.
+\togglefalse{keepHeadingsWithContent}
