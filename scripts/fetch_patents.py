@@ -109,6 +109,8 @@ def get_api_key() -> str:
 # Add new numbers here as patents are granted; run --mode refresh to update.
 # Plain number strings only — no "US" prefix.
 KNOWN_PATENT_NUMBERS = [
+    "12737593",   # Zhang et al. 2026 — ConjointNet architecture
+    "12718115",   # Harinen et al. 2026 — generalized utilities
     "12524477",   # Sumner et al. 2025 — application exploration
     "12524132",   # Zhang et al. 2025 — drift detection
     "12541651",   # Chen et al. 2026 — psychological complexity
