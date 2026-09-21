@@ -18,7 +18,7 @@
 # and does NOT go through cv-preset.tex or biber. Keep both files in sync with the
 # rest of the CV when content changes (see resume.tex header for guidance).
 
-.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate audit-authors setup check-deps status
+.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate check-breaks audit-authors setup check-deps status
 
 # Build all outputs
 all: full full-public industry speaking resume
@@ -87,6 +87,14 @@ test:
 
 validate:
 	python3 scripts/validate_bib.py
+
+# Verify the built PDFs obey the page-break style rules (cv.tex:
+# keepCitationsWhole) -- no bibliography entry split across a page, no
+# heading stranded at the foot of one. Checks rendered output because a
+# lapsed TeX rule produces no error, only a worse-looking PDF.
+# Run after `make all`; needs the PDFs to exist.
+check-breaks:
+	python3 scripts/check_pagebreaks.py
 
 # Checks author lists against Crossref (publisher DOIs) and DataCite
 # (arXiv DOIs). Hits the network, so it is not part of `validate`.
