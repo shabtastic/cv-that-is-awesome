@@ -131,14 +131,24 @@ def check(pdf: str) -> list[str]:
         # R6: a heading on this page with too little content beneath it.
         if "R6" in off:
             continue
+        # A short block whose content is complete is not stranded: if the next
+        # page opens with a heading, everything under this one fit on this page
+        # (e.g. a one-line Mentorship list).
+        nxt = page_lines(pdf, n + 1) if n < npages else []
+        next_opens_heading = bool(nxt) and any(
+            t.strip()[:28] in nxt[0] for t in headings.get(n + 1, [])
+        )
         for title in headings.get(n, []):
             needle = title.strip()[:28]
             for i, line in enumerate(cur):
                 if needle and needle in line:
-                    if len(cur) - (i + 1) < MIN_LINES_UNDER_HEADING:
+                    below = len(cur) - (i + 1)
+                    if below >= 1 and next_opens_heading and title == headings[n][-1]:
+                        break
+                    if below < MIN_LINES_UNDER_HEADING:
                         problems.append(
                             f"R6 p{n}: heading {title!r} stranded "
-                            f"({len(cur) - (i + 1)} line(s) beneath it)"
+                            f"({below} line(s) beneath it)"
                         )
                     break
     return problems
