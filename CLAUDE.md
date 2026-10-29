@@ -34,11 +34,11 @@ cp config/full.tex cv-preset.tex   # pick a preset
 xelatex cv.tex && biber cv && xelatex cv.tex && xelatex cv.tex
 ```
 
-CI (`.github/workflows/build.yml`) builds all three presets on every push to `main` and attaches the PDFs to a GitHub release tagged `cv-<sha>`.
+CI (`.github/workflows/build.yml`) runs `validate_bib.py` first, then builds all four presets + `resume.pdf` on every push to `main`, attaches the PDFs to a GitHub release tagged `cv-<sha>`, and syncs `shabnam-hakimi-cv.pdf` to the website repo. A validation error blocks all of it.
 
 ## Preset architecture
 
-`cv.tex` is the single master file. It declares every toggle with its default, then near the end does `\input{cv-preset}` to load overrides. The three `config/*.tex` files are preset override snippets; the Makefile's preset targets `cp config/<name>.tex cv-preset.tex` before running `pdf`.
+`cv.tex` is the single master file. It declares every toggle with its default, then near the end does `\input{cv-preset}` to load overrides. The four `config/*.tex` files (full, full-public, industry, speaking) are preset override snippets; the Makefile's preset targets `cp config/<name>.tex cv-preset.tex` before running `pdf`.
 
 - `cv-preset.tex` is **tracked in git** (not gitignored) so fresh clones compile cleanly. The Makefile overwrites it at build time, so expect it to be dirty after a build.
 - The Makefile has a fallback rule that copies `config/full.tex` to `cv-preset.tex` if missing.
@@ -67,7 +67,11 @@ This is intentional, to keep the left margin aligned with other sections. Field 
 
 ## Reference data (`refs/`)
 
-Split by entry type: `journals.bib` (@article), `preprints.bib` (@unpublished), `conference.bib` (@inproceedings), `presentations.bib` (@misc, selected talks), `patents.bib` (@patent), `scicomm.bib` (@misc, keyword=scicomm), `chapters.bib` (@incollection).
+Split by entry type: `journals.bib` (@article), `preprints.bib` (@unpublished), `conference.bib` (@inproceedings), `presentations.bib` (@unpublished, keyword=presentation), `patents.bib` (@patent), `scicomm.bib` (@misc, keyword=scicomm), `chapters.bib` (@incollection).
+
+**File order is CV order.** `cv.tex` uses biblatex `sorting=none`, so every file in `ORDER_POLICY` (`scripts/_shared.py`) is kept newest-first (by year+month; by entry type for `chapters.bib`; by patent/application number within Granted/Filed for `patents.bib`). `validate_bib.py` treats an inversion as an error and CI enforces it. Tools that add entries use `insert_entries_sorted()`. Never re-serialize a `.bib` with bibtexparser's `BibTexWriter` — it sorts by cite key and rewraps `%` comments.
+
+Patent `holder` is a biblatex *name list*: write `holder = {{Toyota Research Institute}}` (double braces) or it renders as "Institute, T. R.".
 
 Two keywords carry semantics:
 - `keywords = {manual}` — entry is protected from dedup + never overwritten by fetch scripts. Hand-added entries should always include this.
@@ -79,7 +83,7 @@ Two keywords carry semantics:
 
 `update_refs.py` orchestrates all fetchers and runs dedup. Each fetcher (`fetch_orcid.py`, `fetch_pubmed.py`, `fetch_scholar.py`, `fetch_patents.py`) silently filters out entries that (a) are already in the `.bib`, (b) match a `manual` fingerprint, or (c) appear in `refs/.<source>_rejected.json`. Use `--show-skipped` to audit what got filtered, `--review-rejected` to un-reject.
 
-`fetch_patents.py` is **not** called by `update_refs.py` — it's interactive and requires `USPTO_API_KEY` in the environment. Run it manually. Three modes: `--mode refresh` (default, re-fetches all known patents), `--mode discover` (searches by inventor name for new ones), `--mode check-status` (scans Filed entries in `patents.bib`, queries USPTO by application number, and updates any that have been granted in-place).
+`fetch_patents.py` is **not** called by `update_refs.py` — it's interactive and requires `USPTO_API_KEY` in the environment. Run it manually. Three modes: `--mode refresh` (default, re-fetches all known patents), `--mode discover` (searches by inventor name for new ones), `--mode check-status` (scans Filed entries in `patents.bib`, queries USPTO by application number, and updates any that have been granted in-place). After `check-status` grants or `discover` adds anything, move those entries by hand (newly granted patent → top of the Granted block, with `year` added) or validation fails.
 
 `audit_authors.py` checks author lists against the DOI registries and is the only check that
 catches silently-missing collaborators — an entry can have the right title, journal, year and
@@ -92,7 +96,7 @@ All fetchers share `_shared.py` for manual-fingerprint loading, interactive revi
 
 ## When making changes
 
-- **Toggle / preset changes:** update all three `config/*.tex` files as needed, and re-verify each preset builds (`make all`).
+- **Toggle / preset changes:** update every `config/*.tex` file as needed, and re-verify each preset builds (`make all`).
 - **Changes to bibliography machinery in `cv.tex`:** rebuild twice (once to write `cvbibcounts.tex`, once to read it) and visually check the first and last entry of each subsection. Reverse-order mode (`reverseBibNumbers`) is the usual regression vector.
 - **Spacing tweaks in `cv.tex`:** the negative-vspace values around `cvitems` and `\cventry` are load-bearing. Build and eyeball the Teaching and Service sections (densest `\cventry` blocks) after any change.
 - **Verify what you changed matches what you intended** — this is a long single `cv.tex` file with many interacting patches; prefer surgical edits over rewrites.
