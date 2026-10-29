@@ -326,7 +326,7 @@ def record_to_bibtex(record: dict, keywords: str = "selected",
     lines.append(f"  title    = {{{record['title']}}},")
     lines.append(f"  number   = {{US~{record['number']}}},")
     lines.append(f"  year     = {{{record['year']}}},")
-    lines.append(f"  holder   = {{{holder}}},")
+    lines.append(f"  holder   = {{{{{holder}}}}},")
     lines.append(f"  note     = {{U.S. Patent and Trademark Office, "
                  f"Washington, DC. Status: {status}}},")
     lines.append(f"  keywords = {{{keywords}}},")
@@ -342,7 +342,7 @@ def make_stub(patent_number: str, holder: str = HOLDER,
         f"  title    = {{TODO: fetch title for US {patent_number}}},\n"
         f"  number   = {{US~{patent_number}}},\n"
         f"  year     = {{????}},\n"
-        f"  holder   = {{{holder}}},\n"
+        f"  holder   = {{{{{holder}}}}},\n"
         f"  note     = {{U.S. Patent and Trademark Office, Washington, DC."
         f" Status: {status}}},\n"
         f"  keywords = {{}},\n"
