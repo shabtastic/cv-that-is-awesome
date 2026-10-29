@@ -43,8 +43,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _shared import (  # noqa: E402
-    ORDER_POLICY, _extract_braced_field, entry_date, is_newer, normalize_doi,
-    normalize_title,
+    ORDER_POLICY, BibParseError, _entry_spans, _extract_braced_field,
+    entry_date, is_newer, normalize_doi, normalize_title,
 )
 
 
@@ -148,20 +148,31 @@ STATUS_RE = re.compile(r"status\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
 NUMBER_RE = re.compile(r"number\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
 
 
-def check_order(path: Path, entries: list[str], report: Report) -> None:
-    """Error when a newer entry sits below an older one (see ORDER_POLICY)."""
+def check_order(path: Path, text: str, report: Report) -> None:
+    """Error when a newer entry sits below an older one (see ORDER_POLICY).
+
+    Uses _entry_spans (the splitter the writers use) and compares each entry
+    with EVERY earlier entry in its group, not just its neighbour: groups can
+    interleave (a patent flipped to Granted inside the Filed block), and
+    is_newer isn't transitive across a year-only entry.
+    """
     policy = ORDER_POLICY.get(path.name)
     if not policy:
         return
+    try:
+        spans = _entry_spans(text)
+    except BibParseError:
+        return  # check_file reports the unbalanced braces itself
 
     # rows: (key, sort value, group). Patents sort by number tuple; everything
     # else by entry_date() = (year, month-or-None), compared via is_newer().
     rows = []
-    for entry in entries:
+    for start, end, etype in spans:
+        entry = text[start:end]
         m = ENTRY_RE.search(entry)
         if not m:
             continue
-        etype, key = m.group(1).lower(), m.group(2)
+        key = m.group(2)
         # NB: the date lookup must not gate the by_status branch - patents are
         # ordered by number, and applications deliberately carry no year.
         if policy == "by_status":
@@ -178,6 +189,11 @@ def check_order(path: Path, entries: list[str], report: Report) -> None:
             continue
         date = entry_date(entry)
         if date is None:
+            report.error(
+                f"{path.name}:order",
+                f"'{key}' has no parseable year, so it can't be placed in this "
+                f"newest-first file (it would print as the oldest entry)",
+            )
             continue
         rows.append((key, date, etype if policy == "by_type" else ""))
 
@@ -186,18 +202,19 @@ def check_order(path: Path, entries: list[str], report: Report) -> None:
             return f"{v[0]}/{v[1]}" if v[0] else v[1]
         return f"{v[0]}-{v[1]:02d}" if v[1] else str(v[0])
 
-    for prev, cur in zip(rows, rows[1:]):
-        if prev[2] != cur[2]:
-            continue  # group boundary, not an inversion
-        newer = (cur[1] > prev[1]) if policy == "by_status" \
-            else is_newer(cur[1], prev[1])
-        if newer:
-            report.error(
-                f"{path.name}:order",
-                f"{cur[0]} ({fmt(cur[1])}) is below {prev[0]} ({fmt(prev[1])}); "
-                f"this file is kept newest-first, so it will render lower "
-                f"in the CV than it should",
-            )
+    def newer(x, y):
+        return x > y if policy == "by_status" else is_newer(x, y)
+
+    for i, cur in enumerate(rows):
+        for prev in rows[:i]:
+            if prev[2] == cur[2] and newer(cur[1], prev[1]):
+                report.error(
+                    f"{path.name}:order",
+                    f"{cur[0]} ({fmt(cur[1])}) is below {prev[0]} "
+                    f"({fmt(prev[1])}); this file is kept newest-first, so it "
+                    f"will render lower in the CV than it should",
+                )
+                break  # one error per misplaced entry
 
 
 ENTRY_RE = re.compile(r"@(\w+)\s*\{\s*([^,\s]+)\s*,", re.IGNORECASE)
@@ -313,7 +330,7 @@ def check_file(path: Path, report: Report) -> list[dict]:
         return []
 
     entries = split_entries(text)
-    check_order(path, entries, report)
+    check_order(path, text, report)
     results = []
     for entry in entries:
         meta = check_entry(entry, path.name, report)

@@ -52,8 +52,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
-    _entry_spans, _extract_braced_field, is_manual, load_manual_fingerprints,
-    fingerprint_matches, write_atomic,
+    _entry_spans, field_value, is_manual, load_manual_fingerprints,
+    fingerprint_matches, normalize_doi, write_atomic,
 )
 
 BIB_FILES = {
@@ -95,67 +95,47 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
 
     text = bib_path.read_text(encoding="utf-8")
     entries = []
-    for start, end, _ in _entry_spans(text):
+    for start, end, _ in _entry_spans(text):   # BibParseError: leave file alone
         body = text[start:end]
         m = re.match(r"@\w+\s*\{\s*([^,\s]+)", body)
         entries.append({
-            "span":   (start, end),
-            "ID":     m.group(1) if m else "",
-            "doi":    _extract_braced_field(body, "doi"),
-            "keywords": _extract_braced_field(body, "keywords"),
+            "span":     (start, end),
+            "ID":       m.group(1) if m else "",
+            "doi":      normalize_doi(field_value(body, "doi")),
+            "keywords": field_value(body, "keywords"),
         })
 
-    manual_keys = set()
-    manual_dois = set()
-
+    # Compare each entry against the survivors so far (not remembered keys,
+    # which go stale once an entry is replaced). Manual entries are never
+    # removed: a manual entry replaces earlier fetched copies, a fetched entry
+    # yields to anything earlier, and two manual copies are left for a human.
+    unique  = []
+    removed = 0
     for entry in entries:
-        if not is_manual(entry):
-            continue
-        manual_keys.add(entry.get("ID", "").lower())
-        doi = entry.get("doi", "").lower().strip()
-        if doi:
-            manual_dois.add(doi)
-
-    seen_keys   = set()
-    seen_dois   = set()
-    unique      = []
-    removed     = 0
-    warned_keys = set()
-
-    for entry in entries:
-        key    = entry.get("ID", "")
-        doi    = entry.get("doi", "").lower().strip()
-        manual = is_manual(entry)
-
-        is_dup = key.lower() in seen_keys or (doi and doi in seen_dois)
-
-        if is_dup:
-            # The manual check must come first: a manual entry's own key/doi
-            # are in manual_keys/manual_dois, so testing those first would
-            # delete the manual entry and keep the fetched copy above it.
-            # (Two manual copies of the same work: keep the earlier one.)
-            def same(e):
-                return (e.get("ID", "").lower() == key.lower()
-                        or (doi and e.get("doi", "").lower().strip() == doi))
-            if manual and not any(is_manual(e) for e in unique if same(e)):
-                unique = [e for e in unique if not same(e)]
-                removed += 1
-                print(f"  [info] Replaced non-manual '{key}' with manual version.")
-            elif key.lower() in manual_keys or doi in manual_dois:
-                if key not in warned_keys:
-                    print(f"  [warn] '{key}' duplicates a manual entry -- "
-                          f"removing fetched version.")
-                    warned_keys.add(key)
-                removed += 1
-                continue
-            else:
-                removed += 1
-                continue
-
-        seen_keys.add(key.lower())
-        if doi:
-            seen_dois.add(doi)
-        unique.append(entry)
+        key, doi = entry["ID"].lower(), entry["doi"]
+        matches = [e for e in unique
+                   if e["ID"].lower() == key or (doi and e["doi"] == doi)]
+        if not matches:
+            unique.append(entry)
+        elif is_manual(entry):
+            fetched = [e for e in matches if not is_manual(e)]
+            for e in matches:
+                if is_manual(e):
+                    print(f"  [warn] manual entries '{e['ID']}' and "
+                          f"'{entry['ID']}' look like duplicates -- keeping "
+                          f"both; resolve by hand.")
+            if fetched:
+                print(f"  [info] Replaced non-manual "
+                      f"{', '.join(repr(e['ID']) for e in fetched)} with "
+                      f"manual '{entry['ID']}'.")
+                removed += len(fetched)
+                unique = [e for e in unique if e not in fetched]
+            unique.append(entry)
+        else:
+            kind = "a manual" if any(is_manual(e) for e in matches) else "an earlier"
+            print(f"  [warn] '{entry['ID']}' duplicates {kind} entry "
+                  f"('{matches[0]['ID']}') -- removing it.")
+            removed += 1
 
     if removed and not dry_run:
         bak = backup_bib(bib_path)

@@ -107,14 +107,48 @@ class TestRemovesOnlyTheDuplicate:
         assert dedup_bib_file(bib) == 1
         assert keys(bib) == ["nodoi1", "nodoi2", "k"]
 
-    def test_two_manual_duplicates_keep_the_first(self, tmp_path):
-        # Both hand-entered: nothing to prefer, so keep the earlier position
-        # (the pre-existing behavior) rather than the later one.
+    def test_two_manual_duplicates_are_both_kept(self, tmp_path, capsys):
+        # CLAUDE.md: keywords={manual} entries are protected from dedup.
+        # Two hand-entered copies is for a human to resolve, so warn loudly.
         bib = write(tmp_path, entry("hand1", doi="10.1/m", keywords="manual"),
                     entry("mid"),
                     entry("hand2", doi="10.1/m", keywords="manual"))
+        before = bib.read_bytes()
+        assert dedup_bib_file(bib) == 0
+        assert bib.read_bytes() == before
+        out = capsys.readouterr().out
+        assert "hand2" in out and "hand1" in out and "keeping both" in out
+
+    def test_manual_replacing_two_copies_counts_both(self, tmp_path):
+        bib = write(tmp_path, entry("k"), entry("other", doi="10.1/d"),
+                    entry("keep"),
+                    entry("k", doi="10.1/d", keywords="manual"))
+        assert dedup_bib_file(bib) == 2
+        assert keys(bib) == ["keep", "k"]
+
+    def test_doi_forms_are_normalized(self, tmp_path):
+        bib = write(tmp_path, entry("a", doi="https://doi.org/10.1000/X"),
+                    entry("b", doi="10.1000/x"))
         assert dedup_bib_file(bib) == 1
-        assert keys(bib) == ["hand1", "mid"]
+        assert keys(bib) == ["a"]
+
+    def test_quoted_manual_keyword_is_recognised(self, tmp_path):
+        bib = tmp_path / "journals.bib"
+        bib.write_text(
+            entry("fetched", doi="10.1/q") + "\n\n"
+            '@article{hand,\n  title = {T},\n  year = {2020},\n'
+            '  doi = "10.1/q",\n  keywords = "manual",\n}\n')
+        assert dedup_bib_file(bib) == 1
+        assert keys(bib) == ["hand"]
+
+    def test_malformed_file_is_left_untouched(self, tmp_path):
+        from _shared import BibParseError
+        bib = write(tmp_path, entry("a"), entry("a"),
+                    "@article{bad,\n  title = {Unclosed,\n}")
+        before = bib.read_bytes()
+        with pytest.raises(BibParseError):
+            dedup_bib_file(bib)
+        assert bib.read_bytes() == before
 
     def test_nested_braces_and_comments_between_entries_survive(self, tmp_path):
         tricky = entry("t", year=2024,

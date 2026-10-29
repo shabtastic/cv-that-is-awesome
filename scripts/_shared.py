@@ -87,8 +87,11 @@ def append_atomic(path: Path, text: str, encoding: str = "utf-8") -> None:
 #   "by_type"    newest-first within each entry type (chapters: @article
 #                commentaries, then @incollection, then @phdthesis)
 #   "by_status"  patents: newest-first by PATENT/APPLICATION NUMBER within
-#                Granted / Filed. fetch_patents.py manages that file itself,
-#                so insert_entries_sorted() just appends there.
+#                Granted / Filed. insert_entries_sorted() just appends there:
+#                `fetch_patents.py --mode discover` appends review stubs (in a
+#                different number format) and `--mode check-status` flips
+#                Filed -> Granted in place. Both need placing by hand, and
+#                validate_bib fails (CI blocks) until they are.
 # Files absent from this map are not ordered.
 # ---------------------------------------------------------------------------
 
@@ -134,23 +137,53 @@ def is_newer(a, b) -> bool:
     return a[1] is not None and b[1] is not None and a[1] > b[1]
 
 
+class BibParseError(ValueError):
+    """A .bib file whose entries can't be delimited safely (unbalanced braces).
+
+    Raised instead of guessing: callers cut and splice by these spans, so a
+    span that ran to end-of-file would delete or misplace every later entry.
+    """
+
+
 def _entry_spans(text: str) -> list:
-    """[(start, end, etype)] for each @entry{...} in text (brace-matched)."""
+    """[(start, end, etype)] for each @entry{...} in text (brace-matched).
+
+    LaTeX-escaped \\{ and \\} are literal characters, not delimiters (same
+    rule as validate_bib's brace check). Raises BibParseError for an entry
+    whose braces never close.
+    """
     spans = []
     for m in _ENTRY_START_RE.finditer(text):
         if spans and m.start() < spans[-1][1]:
             continue  # an '@' inside the previous entry's body
         depth, i = 0, m.end() - 1
         while i < len(text):
-            if text[i] == "{":
+            c = text[i]
+            if c == "\\":
+                i += 2          # skip the escaped character
+                continue
+            if c == "{":
                 depth += 1
-            elif text[i] == "}":
+            elif c == "}":
                 depth -= 1
                 if depth == 0:
                     break
             i += 1
+        else:
+            line = text.count("\n", 0, m.start()) + 1
+            raise BibParseError(
+                f"unbalanced braces in the entry starting on line {line}")
         spans.append((m.start(), i + 1, m.group(1).lower()))
     return spans
+
+
+def field_value(entry: str, field: str) -> str:
+    """Value of `field` in a raw BibTeX entry, braced, quoted or bare; "" if absent."""
+    if re.search(rf"\b{field}\s*=\s*\{{", entry, re.IGNORECASE):
+        return _extract_braced_field(entry, field)
+    m = re.search(rf'\b{field}\s*=\s*(?:"([^"]*)"|([^,\s}}]+))', entry,
+                  re.IGNORECASE)
+    return (m.group(1) if m.group(1) is not None else m.group(2)) if m else ""
 
 
 def insert_entries_sorted(path: Path, entries: list,

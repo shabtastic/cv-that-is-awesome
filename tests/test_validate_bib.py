@@ -182,3 +182,37 @@ class TestFailureModes:
         self._write_talks(bad_repo, ("oct", 2026, "oct"), ("may", 2026, "may"))
         r = run([], cwd=bad_repo)
         assert r.returncode == 0, r.stdout
+
+    def test_inversion_hidden_by_year_only_entry_is_caught(self, bad_repo):
+        # is_newer isn't transitive across a year-only entry, so comparing
+        # only neighbours let 2025-06 sit below 2025-01.
+        self._write_talks(bad_repo, ("jan", 2025, "jan"), ("y", 2025, None),
+                          ("jun", 2025, "jun"))
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 1
+        assert "presentations.bib:order" in r.stdout
+
+    def test_patent_inversion_across_status_blocks_is_caught(self, bad_repo):
+        # check-status flips Filed -> Granted in place, so a Granted entry
+        # can sit after the Filed block; neighbours-only never compared it.
+        def pat(k, num, status):
+            return ("@patent{%s, author={A}, title={T}, number={%s},"
+                    " holder={{H}}, year={2026}, status={%s}}" % (k, num, status))
+        (bad_repo / "refs" / "patents.bib").write_text("\n\n".join([
+            pat("g1", "US~12,000,000", "Granted"),
+            pat("f1", "US App.~18/000,001", "Filed"),
+            pat("g2", "US~12,500,000", "Granted"),
+        ]) + "\n")
+        (bad_repo / "cv.tex").write_text(r"\addbibresource{refs/patents.bib}" + "\n")
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 1
+        assert "patents.bib:order" in r.stdout and "g2" in r.stdout
+
+    def test_undatable_entry_in_ordered_file_is_an_error(self, bad_repo):
+        (bad_repo / "refs" / "journals.bib").write_text(
+            "@article{a, author={A}, title={T}, journal={J}, year={2024}}\n\n"
+            "@article{p, author={A}, title={T}, journal={J}, year={in press}}\n")
+        (bad_repo / "cv.tex").write_text(r"\addbibresource{refs/journals.bib}" + "\n")
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 1
+        assert "journals.bib:order" in r.stdout and "'p'" in r.stdout

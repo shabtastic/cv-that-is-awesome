@@ -488,3 +488,30 @@ class TestInsertEntriesSorted:
         text = bib.read_text()
         assert _keys(bib) == ["a", "old"]
         assert text.rstrip().endswith("% trailing note")
+
+
+class TestEntrySpansSafety:
+    def test_escaped_braces_do_not_shift_entry_ends(self, tmp_path):
+        from _shared import _entry_spans
+        text = ("@article{a,\n  title = {A literal \\} brace},\n  year = {2024},\n}\n\n"
+                "@article{b,\n  title = {B},\n  year = {2001},\n}\n")
+        spans = _entry_spans(text)
+        assert len(spans) == 2
+        first = text[spans[0][0]:spans[0][1]]
+        assert first.endswith("year = {2024},\n}")   # not cut at the \}
+
+    def test_unterminated_entry_raises_instead_of_swallowing(self):
+        from _shared import BibParseError, _entry_spans
+        text = ("@article{a,\n  title = {Unclosed,\n  year = {2024},\n}\n\n"
+                "@article{b,\n  title = {B},\n}\n")
+        with pytest.raises(BibParseError):
+            _entry_spans(text)
+
+    def test_insert_leaves_malformed_file_untouched(self, tmp_path):
+        from _shared import BibParseError
+        bib = tmp_path / "journals.bib"
+        bib.write_text("@article{a,\n  title = {Unclosed,\n  year = {2024},\n}\n")
+        before = bib.read_bytes()
+        with pytest.raises(BibParseError):
+            insert_entries_sorted(bib, [_entry("new", 2026)])
+        assert bib.read_bytes() == before
