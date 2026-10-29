@@ -52,7 +52,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
-    is_manual, load_manual_fingerprints, fingerprint_matches, write_atomic,
+    _entry_spans, _extract_braced_field, is_manual, load_manual_fingerprints,
+    fingerprint_matches, write_atomic,
 )
 
 BIB_FILES = {
@@ -83,24 +84,31 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
     Manual entries are always kept; fetched duplicates of manual entries
     are removed with a warning.
     Returns number of duplicates removed.
-    """
-    try:
-        import bibtexparser
-        from bibtexparser.bwriter import BibTexWriter
-    except ImportError:
-        print("  [warn] bibtexparser not installed; skipping dedup.")
-        return 0
 
+    Works on the raw text and cuts out only the duplicate entries. cv.tex
+    prints file order, so re-serializing is not an option: bibtexparser's
+    BibTexWriter sorts entries by cite key by default and rewraps every
+    % comment as @comment{...}.
+    """
     if not bib_path.exists():
         return 0
 
-    with open(bib_path, encoding="utf-8") as f:
-        db = bibtexparser.load(f)
+    text = bib_path.read_text(encoding="utf-8")
+    entries = []
+    for start, end, _ in _entry_spans(text):
+        body = text[start:end]
+        m = re.match(r"@\w+\s*\{\s*([^,\s]+)", body)
+        entries.append({
+            "span":   (start, end),
+            "ID":     m.group(1) if m else "",
+            "doi":    _extract_braced_field(body, "doi"),
+            "keywords": _extract_braced_field(body, "keywords"),
+        })
 
     manual_keys = set()
     manual_dois = set()
 
-    for entry in db.entries:
+    for entry in entries:
         if not is_manual(entry):
             continue
         manual_keys.add(entry.get("ID", "").lower())
@@ -114,7 +122,7 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
     removed     = 0
     warned_keys = set()
 
-    for entry in db.entries:
+    for entry in entries:
         key    = entry.get("ID", "")
         doi    = entry.get("doi", "").lower().strip()
         manual = is_manual(entry)
@@ -122,19 +130,24 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
         is_dup = key.lower() in seen_keys or (doi and doi in seen_dois)
 
         if is_dup:
-            if key.lower() in manual_keys or doi in manual_dois:
+            # The manual check must come first: a manual entry's own key/doi
+            # are in manual_keys/manual_dois, so testing those first would
+            # delete the manual entry and keep the fetched copy above it.
+            # (Two manual copies of the same work: keep the earlier one.)
+            def same(e):
+                return (e.get("ID", "").lower() == key.lower()
+                        or (doi and e.get("doi", "").lower().strip() == doi))
+            if manual and not any(is_manual(e) for e in unique if same(e)):
+                unique = [e for e in unique if not same(e)]
+                removed += 1
+                print(f"  [info] Replaced non-manual '{key}' with manual version.")
+            elif key.lower() in manual_keys or doi in manual_dois:
                 if key not in warned_keys:
                     print(f"  [warn] '{key}' duplicates a manual entry -- "
                           f"removing fetched version.")
                     warned_keys.add(key)
                 removed += 1
                 continue
-            elif manual:
-                unique = [e for e in unique
-                          if e.get("ID", "").lower() != key.lower()
-                          and e.get("doi", "").lower() != doi]
-                removed += 1
-                print(f"  [info] Replaced non-manual '{key}' with manual version.")
             else:
                 removed += 1
                 continue
@@ -147,10 +160,20 @@ def dedup_bib_file(bib_path: Path, dry_run: bool = False) -> int:
     if removed and not dry_run:
         bak = backup_bib(bib_path)
         print(f"  [backup] {bib_path.name} -> {bak.name}")
-        db.entries    = unique
-        writer        = BibTexWriter()
-        writer.indent = "  "
-        write_atomic(bib_path, writer.write(db))
+        kept = {id(e) for e in unique}
+        # Cut from the end so earlier spans stay valid. Each cut takes the
+        # entry plus the blank lines after it, so the separator before it
+        # now separates its neighbours.
+        for entry in reversed(entries):
+            if id(entry) in kept:
+                continue
+            start, end = entry["span"]
+            while end < len(text) and text[end] in " \t\n":
+                end += 1
+            if end == len(text):            # last entry: drop the gap before
+                start = len(text[:start].rstrip())
+            text = text[:start] + text[end:]
+        write_atomic(bib_path, text.rstrip("\n") + "\n")
         print(f"  [dedup]  Removed {removed} duplicate(s) from {bib_path}")
     elif removed and dry_run:
         print(f"  [dry-run] Would remove {removed} duplicate(s) from {bib_path}")
