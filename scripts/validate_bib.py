@@ -148,13 +148,14 @@ class Report:
 #                publication year for others).
 #   "by_type"    newest-first *within* each entry type (chapters: @article
 #                commentaries, then @incollection, then @phdthesis)
-# Files absent from this map are skipped. presentations.bib is deliberately
-# clustered by author/work (one study presented at three venues stays
-# together), so chronology does not apply to it.
+# Files absent from this map are skipped. presentations.bib used to be
+# clustered by author/work, but the rendered list showed no grouping, only
+# dates jumping around - it is now newest-first like the rest.
 ORDER_POLICY = {
     "journals.bib":     "strict",
     "conference.bib":   "strict",
     "preprints.bib":    "strict",
+    "presentations.bib": "strict",
     "scicomm.bib":      "strict",
     "patents.bib":      "by_status",
     "chapters.bib":     "by_type",
