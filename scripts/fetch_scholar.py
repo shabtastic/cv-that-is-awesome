@@ -30,7 +30,7 @@ from _shared import (  # noqa: E402
     load_manual_fingerprints, fingerprint_matches,
     load_rejected, save_rejected, interactive_review, review_rejected,
     normalize_title, load_all_titles, load_existing_dois, normalize_doi,
-    append_atomic,
+    insert_entries_sorted,
 )
 
 # ---------------------------------------------------------------------------
@@ -256,14 +256,10 @@ def main():
     else:
         print(f"  {len(entries)} entry/entries accepted.")
         if not args.dry_run:
-            append_atomic(
-                BIB_OUT,
-                "\n\n% --- Google Scholar auto-fetched ---\n"
-                + "\n\n".join(entries),
-            )
-            print(f"  Appended to {BIB_OUT}")
+            insert_entries_sorted(BIB_OUT, entries)
+            print(f"  Inserted (newest-first) into {BIB_OUT}")
         else:
-            print("  [dry-run] Would append:\n")
+            print("  [dry-run] Would insert (newest-first):\n")
             for e in entries:
                 print(e, "\n")
 

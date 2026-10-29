@@ -34,7 +34,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
-    edit_in_editor, prompt_keywords, inject_keywords, append_atomic,
+    edit_in_editor, prompt_keywords, inject_keywords, insert_entries_sorted,
     normalize_doi, normalize_title, load_existing_dois, load_all_titles,
     _extract_braced_field,
 )
@@ -533,7 +533,7 @@ def main():
     print()
 
     if args.dry_run:
-        print("  [dry-run] Would append the above entry.")
+        print("  [dry-run] Would insert the above entry (newest-first).")
         return
 
     try:
@@ -541,7 +541,7 @@ def main():
     except (EOFError, KeyboardInterrupt):
         ch = "n"
     if ch in ("", "y", "yes"):
-        append_atomic(bib_path, f"\n\n% --- manually added ---\n{bibtex}\n")
+        insert_entries_sorted(bib_path, [bibtex])
         print(f"  Written to {bib_path}")
     else:
         print("  Aborted.")

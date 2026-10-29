@@ -40,7 +40,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from _shared import (  # noqa: E402
     display_entry, edit_in_editor, prompt_keywords, inject_keywords,
-    write_atomic, append_atomic,
+    write_atomic, insert_entries_sorted,
 )
 
 # ---------------------------------------------------------------------------
@@ -508,10 +508,10 @@ def main():
     # Write promoted entries to their target files
     for new_bib, target in promoted:
         if args.dry_run:
-            print(f"  [dry-run] Would append to {target}")
+            print(f"  [dry-run] Would insert into {target}")
         else:
-            append_atomic(target, f"\n{new_bib}\n")
-            print(f"  [written] Appended to {target}")
+            insert_entries_sorted(target, [new_bib])
+            print(f"  [written] Inserted into {target}")
 
 
 if __name__ == "__main__":

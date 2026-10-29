@@ -42,7 +42,10 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _shared import _extract_braced_field, normalize_doi, normalize_title  # noqa: E402
+from _shared import (  # noqa: E402
+    ORDER_POLICY, _extract_braced_field, entry_date, is_newer, normalize_doi,
+    normalize_title,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -130,56 +133,36 @@ class Report:
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# Chronological-order policy, per file.
+# Chronological order. ORDER_POLICY and the date comparison live in _shared,
+# so this check and insert_entries_sorted() (used by every tool that adds an
+# entry) can't disagree. An inversion is an ERROR: cv.tex uses sorting=none,
+# so it is a visible defect in the rendered CV, and CI runs this script.
 #
-# cv.tex sets biblatex `sorting=none`, so entries print in the order they
-# appear in the .bib file. "Newest first" is therefore a convention enforced
-# by nothing -- appending a new entry silently puts it last in the rendered
-# CV. This check defends that convention.
-#
-# Not every file is chronological, and the grouping differs:
-#   "strict"     whole file must be newest-first
-#   "by_status"  newest-first *within* each status block (patents: Granted,
-#                then Filed) -- the block boundary is not an inversion.
-#                Ordered by PATENT/APPLICATION NUMBER, not `year`: US numbers
-#                are assigned sequentially, so a higher number is always a
-#                later grant/filing, whereas `year` is populated
-#                inconsistently across these entries (filing year for some,
-#                publication year for others).
-#   "by_type"    newest-first *within* each entry type (chapters: @article
-#                commentaries, then @incollection, then @phdthesis)
-# Files absent from this map are skipped. presentations.bib used to be
-# clustered by author/work, but the rendered list showed no grouping, only
-# dates jumping around - it is now newest-first like the rest.
-ORDER_POLICY = {
-    "journals.bib":     "strict",
-    "conference.bib":   "strict",
-    "preprints.bib":    "strict",
-    "presentations.bib": "strict",
-    "scicomm.bib":      "strict",
-    "patents.bib":      "by_status",
-    "chapters.bib":     "by_type",
-}
+# Patents ("by_status") are ordered by PATENT/APPLICATION NUMBER, not `year`:
+# US numbers are assigned sequentially, so a higher number is always a later
+# grant/filing, whereas `year` is populated inconsistently across those
+# entries (filing year for some, publication year for others).
+# ---------------------------------------------------------------------------
 
-YEAR_RE   = re.compile(r"year\s*=\s*\{?\s*(\d{4})", re.IGNORECASE)
 STATUS_RE = re.compile(r"status\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
 NUMBER_RE = re.compile(r"number\s*=\s*\{\s*([^}]*?)\s*\}", re.IGNORECASE)
 
 
 def check_order(path: Path, entries: list[str], report: Report) -> None:
-    """Warn when a newer entry sits below an older one (see ORDER_POLICY)."""
+    """Error when a newer entry sits below an older one (see ORDER_POLICY)."""
     policy = ORDER_POLICY.get(path.name)
     if not policy:
         return
 
+    # rows: (key, sort value, group). Patents sort by number tuple; everything
+    # else by entry_date() = (year, month-or-None), compared via is_newer().
     rows = []
     for entry in entries:
         m = ENTRY_RE.search(entry)
         if not m:
             continue
         etype, key = m.group(1).lower(), m.group(2)
-        ym = YEAR_RE.search(entry)
-        # NB: the year lookup must not gate the by_status branch - patents are
+        # NB: the date lookup must not gate the by_status branch - patents are
         # ordered by number, and applications deliberately carry no year.
         if policy == "by_status":
             sm = STATUS_RE.search(entry)
@@ -192,22 +175,24 @@ def check_order(path: Path, entries: list[str], report: Report) -> None:
                     rows.append((key, (int(a or 0), int(b or 0)), group))
                 else:                             # granted: patent number
                     rows.append((key, (0, int(digits or 0)), group))
-                continue
-        elif policy == "by_type":
-            group = etype
-        else:
-            group = ""
-        if not ym:
             continue
-        rows.append((key, int(ym.group(1)), group))
+        date = entry_date(entry)
+        if date is None:
+            continue
+        rows.append((key, date, etype if policy == "by_type" else ""))
+
+    def fmt(v):
+        if policy == "by_status":
+            return f"{v[0]}/{v[1]}" if v[0] else v[1]
+        return f"{v[0]}-{v[1]:02d}" if v[1] else str(v[0])
 
     for prev, cur in zip(rows, rows[1:]):
         if prev[2] != cur[2]:
             continue  # group boundary, not an inversion
-        if cur[1] > prev[1]:
-            fmt = lambda v: v if not isinstance(v, tuple) else (
-                f"{v[0]}/{v[1]}" if v[0] else v[1])
-            report.warn(
+        newer = (cur[1] > prev[1]) if policy == "by_status" \
+            else is_newer(cur[1], prev[1])
+        if newer:
+            report.error(
                 f"{path.name}:order",
                 f"{cur[0]} ({fmt(cur[1])}) is below {prev[0]} ({fmt(prev[1])}); "
                 f"this file is kept newest-first, so it will render lower "

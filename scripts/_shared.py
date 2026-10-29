@@ -76,6 +76,125 @@ def append_atomic(path: Path, text: str, encoding: str = "utf-8") -> None:
 
 
 # ---------------------------------------------------------------------------
+# CHRONOLOGICAL ORDER
+#
+# cv.tex sets biblatex `sorting=none`, so entries print in the order they
+# appear in the .bib file: file position IS CV position. Every tool that adds
+# an entry goes through insert_entries_sorted(), and validate_bib.py enforces
+# the same ORDER_POLICY, so the two can't drift apart.
+#
+#   "strict"     whole file newest-first
+#   "by_type"    newest-first within each entry type (chapters: @article
+#                commentaries, then @incollection, then @phdthesis)
+#   "by_status"  patents: newest-first by PATENT/APPLICATION NUMBER within
+#                Granted / Filed. fetch_patents.py manages that file itself,
+#                so insert_entries_sorted() just appends there.
+# Files absent from this map are not ordered.
+# ---------------------------------------------------------------------------
+
+ORDER_POLICY = {
+    "journals.bib":      "strict",
+    "conference.bib":    "strict",
+    "preprints.bib":     "strict",
+    "presentations.bib": "strict",
+    "scicomm.bib":       "strict",
+    "patents.bib":       "by_status",
+    "chapters.bib":      "by_type",
+}
+
+_MONTHS = {m: i for i, m in enumerate(
+    "jan feb mar apr may jun jul aug sep oct nov dec".split(), 1)}
+_YEAR_RE  = re.compile(r"\byear\s*=\s*[{\"]?\s*(\d{4})", re.IGNORECASE)
+_MONTH_RE = re.compile(r"\bmonth\s*=\s*[{\"]?\s*([A-Za-z]+|\d{1,2})\b",
+                       re.IGNORECASE)
+_ENTRY_START_RE = re.compile(r"^[ \t]*@(\w+)\s*\{", re.MULTILINE)
+
+
+def entry_date(entry: str):
+    """(year, month-or-None) for a BibTeX entry string; None if no year."""
+    ym = _YEAR_RE.search(entry)
+    if not ym:
+        return None
+    month = None
+    mm = _MONTH_RE.search(entry)
+    if mm:
+        raw = mm.group(1).lower()
+        month = int(raw) if raw.isdigit() else _MONTHS.get(raw[:3])
+    return (int(ym.group(1)), month)
+
+
+def is_newer(a, b) -> bool:
+    """True if date `a` should print above date `b` (newest-first).
+
+    Months only break ties when BOTH entries have one; a year-only entry is
+    never out of order relative to a same-year entry with a month.
+    """
+    if a[0] != b[0]:
+        return a[0] > b[0]
+    return a[1] is not None and b[1] is not None and a[1] > b[1]
+
+
+def _entry_spans(text: str) -> list:
+    """[(start, end, etype)] for each @entry{...} in text (brace-matched)."""
+    spans = []
+    for m in _ENTRY_START_RE.finditer(text):
+        if spans and m.start() < spans[-1][1]:
+            continue  # an '@' inside the previous entry's body
+        depth, i = 0, m.end() - 1
+        while i < len(text):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        spans.append((m.start(), i + 1, m.group(1).lower()))
+    return spans
+
+
+def insert_entries_sorted(path: Path, entries: list,
+                          encoding: str = "utf-8") -> None:
+    """Insert BibTeX entry strings into `path` at their chronological spots.
+
+    Each entry goes directly above the first existing entry it is newer than
+    (in its group, per ORDER_POLICY), so same-date entries keep their order
+    and the new one lands below them. Files without a date policy, patents,
+    and entries without a year are appended, as before.
+    """
+    path = Path(path)
+    text = path.read_text(encoding=encoding) if path.exists() else ""
+    policy = ORDER_POLICY.get(path.name)
+
+    for entry in entries:
+        entry = entry.strip()
+        date = entry_date(entry)
+        spans = _entry_spans(text)
+        if policy not in ("strict", "by_type") or date is None or not spans:
+            text = text.rstrip("\n") + ("\n\n" if text.strip() else "") \
+                + entry + "\n"
+            continue
+
+        m = _ENTRY_START_RE.match(entry)
+        etype = m.group(1).lower() if m else ""
+        group = [s for s in spans if policy == "strict" or s[2] == etype]
+
+        at = None
+        for start, end, _ in group:
+            existing = entry_date(text[start:end])
+            if existing and is_newer(date, existing):
+                at = start
+                break
+        if at is not None:
+            text = text[:at] + entry + "\n\n" + text[at:]
+        else:
+            end = (group or spans)[-1][1]
+            text = text[:end] + "\n\n" + entry + text[end:]
+
+    write_atomic(path, text, encoding=encoding)
+
+
+# ---------------------------------------------------------------------------
 # MANUAL ENTRY PROTECTION
 # ---------------------------------------------------------------------------
 

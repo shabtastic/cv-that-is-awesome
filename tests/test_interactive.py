@@ -192,10 +192,11 @@ class TestAddRefManualFlow:
         script.chmod(0o755)
         return script
 
-    def test_manual_flow_appends_via_atomic(self, sandbox, fake_editor):
+    def test_manual_flow_inserts_newest_first(self, sandbox, fake_editor):
         """Run add_ref.py --manual non-interactively and confirm the
-        entry reaches refs/journals.bib through append_atomic, with
-        keywords auto-injecting manual and leaving no tmp files."""
+        entry reaches refs/journals.bib at its chronological spot (2099 ->
+        top, since cv.tex prints file order), with keywords auto-injecting
+        manual, the rest of the file untouched, and no tmp files left."""
         bib = sandbox / "refs" / "journals.bib"
         before_bytes = bib.read_bytes()
 
@@ -212,13 +213,17 @@ class TestAddRefManualFlow:
         )
         assert result.returncode == 0, result.stderr or result.stdout
 
-        after_bytes = bib.read_bytes()
-        assert len(after_bytes) > len(before_bytes), "file did not grow"
-        # Bytewise exact: file == original + appended block (no corruption)
-        appended = after_bytes[len(before_bytes):].decode("utf-8")
-        assert "Synth2099test" in appended
-        assert "keywords = {manual, selected}" in appended
-        assert "% --- manually added ---" in appended
+        after = bib.read_text(encoding="utf-8")
+        before = before_bytes.decode("utf-8")
+        start = after.index("@article{Synth2099test,")
+        end = after.index("\n}", start) + 2
+        inserted = after[start:end]
+        assert "keywords = {manual, selected}" in inserted
+        # Newest entry: lands above every existing entry...
+        first_existing = before.index("\n@") + 1
+        assert start == first_existing
+        # ...and removing it gives back the original bytes (no corruption).
+        assert after[:start] + after[end:].lstrip("\n") == before
 
         # No leftover atomic-write tempfiles
         leftovers = [

@@ -28,7 +28,9 @@ from _shared import (  # noqa: E402
     _extract_braced_field,
     _load_manual_fingerprints_regex,
     append_atomic,
+    entry_date,
     fingerprint_matches,
+    insert_entries_sorted,
     inject_keywords,
     load_all_titles,
     load_existing_dois,
@@ -368,3 +370,121 @@ class TestInjectKeywords:
         out = inject_keywords(bib, "new, manual")
         assert "author = {X, Y}" in out
         assert "title = {T}" in out
+
+
+# ---------------------------------------------------------------------------
+# Sorted insertion -- cv.tex uses sorting=none, so a new entry's position in
+# the file IS its position in the CV. Appending put every new entry last.
+# ---------------------------------------------------------------------------
+
+def _entry(key, year=None, month=None, etype="article"):
+    fields = [f"  title = {{{key}}}"]
+    if year:
+        fields.append(f"  year = {{{year}}}")
+    if month:
+        fields.append(f"  month = {month}")
+    return f"@{etype}{{{key},\n" + ",\n".join(fields) + ",\n}"
+
+
+def _keys(path):
+    import re
+    return re.findall(r"@\w+\{([^,]+),", path.read_text())
+
+
+class TestEntryDate:
+    @pytest.mark.parametrize("month, expected", [
+        ("jun", 6), ("{jun}", 6), ("{June}", 6), ("{6}", 6), ("sep", 9),
+    ])
+    def test_month_forms(self, month, expected):
+        assert entry_date(_entry("k", 2024, month)) == (2024, expected)
+
+    def test_no_month(self):
+        assert entry_date(_entry("k", 2024)) == (2024, None)
+
+    def test_no_year(self):
+        assert entry_date(_entry("k")) is None
+
+
+class TestInsertEntriesSorted:
+    def test_strict_file_goes_before_first_older_entry(self, tmp_path):
+        bib = tmp_path / "presentations.bib"
+        bib.write_text("% header\n\n" + "\n\n".join([
+            _entry("a2026", 2026, "oct"),
+            _entry("b2025", 2025, "oct"),
+            _entry("c2024", 2024, "jun"),
+        ]) + "\n")
+        insert_entries_sorted(bib, [_entry("new", 2025, "jun")])
+        assert _keys(bib) == ["a2026", "b2025", "new", "c2024"]
+        assert bib.read_text().startswith("% header\n")
+
+    def test_newest_goes_to_top(self, tmp_path):
+        bib = tmp_path / "journals.bib"
+        bib.write_text(_entry("old", 2020) + "\n")
+        insert_entries_sorted(bib, [_entry("new", 2026)])
+        assert _keys(bib) == ["new", "old"]
+
+    def test_same_date_goes_after_existing(self, tmp_path):
+        bib = tmp_path / "presentations.bib"
+        bib.write_text("\n\n".join([
+            _entry("x", 2026, "oct"), _entry("y", 2025, "jan")]) + "\n")
+        insert_entries_sorted(bib, [_entry("new", 2026, "oct")])
+        assert _keys(bib) == ["x", "new", "y"]
+
+    def test_year_only_entry_does_not_jump_same_year_months(self, tmp_path):
+        bib = tmp_path / "presentations.bib"
+        bib.write_text("\n\n".join([
+            _entry("dec", 2025, "dec"), _entry("jan", 2025, "jan"),
+            _entry("old", 2024, "may")]) + "\n")
+        insert_entries_sorted(bib, [_entry("new", 2025)])
+        assert _keys(bib) == ["dec", "jan", "new", "old"]
+
+    def test_multiple_entries_each_placed(self, tmp_path):
+        bib = tmp_path / "conference.bib"
+        bib.write_text("\n\n".join([_entry("a", 2024), _entry("b", 2020)]) + "\n")
+        insert_entries_sorted(bib, [_entry("n1", 2019), _entry("n2", 2026)])
+        assert _keys(bib) == ["n2", "a", "b", "n1"]
+
+    def test_by_type_stays_within_type_group(self, tmp_path):
+        bib = tmp_path / "chapters.bib"
+        bib.write_text("\n\n".join([
+            _entry("art2023", 2023, etype="article"),
+            _entry("art2015", 2015, etype="article"),
+            _entry("ch2018", 2018, etype="incollection"),
+            _entry("ch2009", 2009, etype="incollection"),
+        ]) + "\n")
+        insert_entries_sorted(bib, [_entry("ch2020", 2020, etype="incollection")])
+        assert _keys(bib) == ["art2023", "art2015", "ch2020", "ch2018", "ch2009"]
+
+    def test_by_type_new_type_appends(self, tmp_path):
+        bib = tmp_path / "chapters.bib"
+        bib.write_text(_entry("art2023", 2023) + "\n")
+        insert_entries_sorted(bib, [_entry("th2014", 2014, etype="phdthesis")])
+        assert _keys(bib) == ["art2023", "th2014"]
+
+    def test_unordered_file_appends(self, tmp_path):
+        bib = tmp_path / "patents.bib"   # ordered by number, not managed here
+        bib.write_text(_entry("p2026", 2026, etype="patent") + "\n")
+        insert_entries_sorted(bib, [_entry("p2030", 2030, etype="patent")])
+        assert _keys(bib) == ["p2026", "p2030"]
+
+    def test_entry_without_year_appends(self, tmp_path):
+        bib = tmp_path / "journals.bib"
+        bib.write_text(_entry("a", 2024) + "\n")
+        insert_entries_sorted(bib, [_entry("noyear")])
+        assert _keys(bib) == ["a", "noyear"]
+
+    def test_creates_missing_file(self, tmp_path):
+        bib = tmp_path / "journals.bib"
+        insert_entries_sorted(bib, [_entry("a", 2024)])
+        assert _keys(bib) == ["a"]
+
+    def test_trailing_comment_block_stays_at_end(self, tmp_path):
+        # patents-style trailing sections and stray comments must not be
+        # torn away from where they are; an entry older than everything
+        # goes after the last entry, before any trailing comment.
+        bib = tmp_path / "journals.bib"
+        bib.write_text(_entry("a", 2024) + "\n\n% trailing note\n")
+        insert_entries_sorted(bib, [_entry("old", 2001)])
+        text = bib.read_text()
+        assert _keys(bib) == ["a", "old"]
+        assert text.rstrip().endswith("% trailing note")

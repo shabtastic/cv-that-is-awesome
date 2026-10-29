@@ -9,6 +9,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # Gate everything (release + website sync) on the bib linter: a
+      # newest-first inversion is a visible defect in the rendered CV.
+      - name: Validate bibliographies
+        run: python3 scripts/validate_bib.py
       - name: Build cv-full.pdf
         uses: xu-cheng/latex-action@v3
         with:

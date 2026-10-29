@@ -141,3 +141,44 @@ class TestFailureModes:
         r = run([], cwd=bad_repo)
         assert r.returncode == 1
         assert "keywords={presentation}" in r.stdout
+
+    # -- chronological order ------------------------------------------------
+    # cv.tex uses sorting=none, so file order is CV order. An inversion is a
+    # visible defect in the rendered CV, so it fails the run (and CI).
+
+    def _write_talks(self, repo, *entries):
+        body = "\n\n".join(
+            "@unpublished{%s, title={T}, author={A}, year={%d},%s"
+            " keywords={presentation}}" % (k, y, f" month={m}," if m else "")
+            for k, y, m in entries
+        )
+        (repo / "refs" / "presentations.bib").write_text(body + "\n")
+        (repo / "cv.tex").write_text(
+            r"\addbibresource{refs/presentations.bib}" + "\n"
+        )
+
+    def test_year_inversion_is_an_error(self, bad_repo):
+        self._write_talks(bad_repo, ("old", 2019, None), ("new", 2024, None))
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 1
+        assert "ERROR   presentations.bib:order" in r.stdout
+
+    def test_month_inversion_within_a_year_is_caught(self, bad_repo):
+        self._write_talks(bad_repo, ("may", 2026, "may"), ("oct", 2026, "oct"))
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 1
+        assert "oct" in r.stdout and "presentations.bib:order" in r.stdout
+
+    def test_year_only_entry_beside_dated_ones_is_not_an_inversion(self, bad_repo):
+        self._write_talks(
+            bad_repo, ("jan", 2026, "jan"), ("noyearmonth", 2026, None),
+            ("dec25", 2025, "dec"),
+        )
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 0, r.stdout
+        assert ":order" not in r.stdout
+
+    def test_newest_first_with_months_passes(self, bad_repo):
+        self._write_talks(bad_repo, ("oct", 2026, "oct"), ("may", 2026, "may"))
+        r = run([], cwd=bad_repo)
+        assert r.returncode == 0, r.stdout
