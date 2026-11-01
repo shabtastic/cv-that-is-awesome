@@ -15,6 +15,8 @@ make full        # cv-full.pdf       (all sections, unfiltered)
 make industry    # cv-industry.pdf   (selected pubs, condensed)
 make speaking    # cv-speaking.pdf   (talks emphasis)
 make all         # all three
+make tailored    # resumes/shabnam-hakimi-resume-<name>.pdf (NAME=<name> for one)
+make new-resume NAME=<name>  # start resumes/<name>.tex from resume.tex
 make clean       # removes *.aux/*.bbl/*.bcf/etc. AND all built PDFs
 make fetch       # runs scripts/update_refs.py (ORCID+PubMed+Scholar)
 make fetch-dry   # dry run

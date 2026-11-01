@@ -1,7 +1,8 @@
 %-------------------------------------------------------------------------------
-% resume.tex — 1-page industry resume
-% Uses awesome-cv-resume.cls as cv.tex.
-% Compile: xelatex resume.tex && xelatex resume.tex
+% resume.tex -- canonical 1-page resume. This file is PUBLIC: contact details
+% that should stay private go in resumes/contact.tex (see `make new-resume`).
+% Uses awesome-cv-resume.cls.
+% Compile: make resume
 %-------------------------------------------------------------------------------
 \documentclass[11pt, letterpaper]{awesome-cv-resume}
 
@@ -50,11 +51,11 @@
     {Jan 2021 -- Present}
     {
       \begin{cvitems}
-        \item Lead research and development of novel AI and machine learning methods for consumer demand forecasting, employing GAN   and VAE architectures. Demonstrate improved forecasting accuracy for innovative products under high uncertainty, impacting \$MM business decision making.
-        \item Leverage theory- and data-driven approaches to design new methods for consumer preference elicitation and test at scale; model behavioral and physiological preference data jointly with text responses to develop new, transformer-based natural language processing methods for analyzing sparse consumer language.  
-        \item Conduct frontier human-centered AI research using LLM, VLM, and diffusion models to develop psychological guidance methods for generative AI. Architect human-aligned AI intervention generation system driven by psychology and neuroscience. Test causal impact of generative AI interventions on human creativity and decision making.
-        \item Lead large, multi-site projects with cross-functional teams comprising 5-15 people. Define project scope, objectives, and deliverables; manage budgets and maintain alignment with business goals to ensure project success; proactively identify risks and develop mitigation strategies. 
-        \item Communicate research results to diverse industry and academic stakeholders. Generate patentable IP; publish scientific articles in top-tier journals and conferences. \textit{Ad hoc} reviewer for scientific journals.
+        \item Own end-to-end evaluation frameworks and quality metrics for AI systems (LLMs, VLMs, diffusion models) that combine structured human evaluation (rubrics, benchmark datasets, inter-rater reliability testing) with automated, model-based approaches (LLM-as-judge) to assess model alignment across diverse populations and conditions. Develop new instruments for measuring and modeling unobservable human and artificial agent states for complex phenomena like creativity and motivation.
+        \item Lead original research on the causal impact of generative AI interventions on human creativity and decision making. Architect human-aligned AI systems grounded in psychology and neuroscience with rigorous evaluation of downstream behavioral effects.
+        \item Build novel multimodal AI and ML methods for consumer demand forecasting. Leverage GAN, VAE, and transformer-based NLP methods for analyzing sparse consumer data. Model behavioral, physiological, and text response data jointly to develop new preference measurement and prediction approaches at scale. Demonstrate improved forecasting accuracy for innovative products under high uncertainty, materially impacting business decision making.
+        \item Lead large, multi-site projects with cross-functional teams comprising 5--15 people spanning research, engineering, and product. Define project scope, deliverables, and success metrics; proactively identify risks and develop mitigation strategies. Manage cross-organizational alignment.
+        \item Communicate research results to diverse technical and non-technical stakeholders. Generate patentable IP; publish and present research at leading venues (ICML, RLDM, CogSci, ICCC, DCC---Best Paper Award). 
       \end{cvitems}
     }
 
@@ -66,9 +67,8 @@
     {Jun 2016 -- Jan 2021}
     {
       \begin{cvitems}
-        \item Developed and tested multidisciplinary, computational models of behavior change; applied machine learning to predict individual intervention response.
-        \item Leveraged hierarchical, spatial, time series, and multivariate statistical analyses to model large datasets containing survey, behavioral, eye-tracking, and brain imaging data.
-        \item Secured competitive federal funding; managed research teams of 4--10 people.
+        \item Developed and validated multidisciplinary computational models of behavior change. Applied ML and hierarchical, spatial, time series, and multivariate statistical modeling to predict individual intervention response from large datasets containing survey, behavioral, eye-tracking, and brain imaging data. Published in top-tier journals including \textit{PNAS}, \textit{Nature Aging}, and \textit{Nature}.
+        \item Secured competitive federal funding; managed research teams of 4--10 people. Mentored graduate students and research staff. 
       \end{cvitems}
     }
 
@@ -87,17 +87,15 @@
 
   \vspace{2mm}
   \cventry
-    {Behavioral Scientist \& Director, CaféWell Behavioral Labs}
+    {Director, CaféWell Behavioral Labs}
     {Welltok, Inc.}
     {Denver, CO}
     {Aug 2013 -- Jan 2015}
     {
       \begin{cvitems}
-        \item Built computational models to quantify and predict user behavior; defined novel metrics for
-              engagement and outcomes; led redesign of data architecture for experimentation.
-        \item Applied machine learning to user experience and optimize outcomes for individual users; translated algorithms into actionable designs using human-centered design principles.
-        \item Led quantitative and qualitative UX research for mobile and web products;
-              drove product design by synthesizing user testing, analytics, and market research.
+        \item Owned the redesign of instrumentation for measuring user behavior, defining novel outcome metrics and rebuilding the data architecture for multivariate experimentation, translating requirements across engineering, product, and design into a unified, extensible measurement framework.
+        \item Applied ML to user experience and optimized outcomes for individual users; translated algorithms into actionable designs using human-centered design principles.
+        \item Led quantitative and qualitative UX research for mobile and web products; drove product design by synthesizing user testing, analytics, and market research.
       \end{cvitems}
     }
 
@@ -115,7 +113,7 @@
     {Ph.D., Computation and Neural Systems}
     {Caltech}
     {Pasadena, CA}
-    {2013}
+    {2014}
     {}
 
   \cventry

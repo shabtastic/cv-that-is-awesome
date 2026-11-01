@@ -6,8 +6,11 @@
 #   make full-public → cv-full-public.pdf  (full minus mentorship section)
 #   make industry    → cv-industry.pdf     (selected pubs, lean)
 #   make speaking    → cv-speaking.pdf     (talks + selected pubs)
-#   make resume      → resume.pdf          (one-page industry resume; uses resume.tex)
+#   make resume      → resume.pdf          (canonical one-page resume; uses resume.tex)
 #   make all         → builds all five outputs
+#   make tailored    → resumes/shabnam-hakimi-resume-<name>.pdf for every changed
+#                      resumes/<name>.tex (NAME=<name> builds just one)
+#   make new-resume NAME=<name> → start resumes/<name>.tex from resume.tex
 #   make pdf         → compile current cv-preset.tex → cv.pdf (internal)
 #   make clean       → remove LaTeX build artifacts
 #
@@ -18,7 +21,12 @@
 # and does NOT go through cv-preset.tex or biber. Keep both files in sync with the
 # rest of the CV when content changes (see resume.tex header for guidance).
 
-.PHONY: all full full-public industry speaking resume pdf clean fetch fetch-dry dedup test validate check-breaks audit-authors setup check-deps status
+#
+# resumes/ is git-ignored: application-specific resumes, plus contact.tex for
+# details that stay out of the public resume.tex. Build from the repo root so
+# those files find awesome-cv-resume.cls and fonts/.
+
+.PHONY: all full full-public industry speaking resume tailored new-resume pdf clean fetch fetch-dry dedup test validate check-breaks audit-authors setup check-deps status
 
 # Build all outputs
 all: full full-public industry speaking resume
@@ -55,6 +63,26 @@ resume:
 	xelatex -interaction=nonstopmode resume.tex
 	xelatex -interaction=nonstopmode resume.tex
 	@echo "→ resume.pdf"
+
+TAILORED_SRC := $(filter-out resumes/contact.tex,$(wildcard resumes/*.tex))
+TAILORED_PDF := $(TAILORED_SRC:resumes/%.tex=resumes/shabnam-hakimi-resume-%.pdf)
+
+tailored: $(if $(NAME),resumes/shabnam-hakimi-resume-$(NAME).pdf,$(TAILORED_PDF))
+
+resumes/shabnam-hakimi-resume-%.pdf: resumes/%.tex awesome-cv-resume.cls
+	@mkdir -p resumes/.build
+	xelatex -interaction=nonstopmode -halt-on-error -output-directory=resumes/.build $< > /dev/null
+	xelatex -interaction=nonstopmode -halt-on-error -output-directory=resumes/.build $< > /dev/null
+	mv resumes/.build/$*.pdf $@
+	@echo "→ $@"
+
+# Copies resume.tex, adding resumes/contact.tex at its PRIVATE-CONTACT marker.
+new-resume:
+	@test -n "$(NAME)" || { echo "usage: make new-resume NAME=<name>"; exit 1; }
+	@test ! -e resumes/$(NAME).tex || { echo "resumes/$(NAME).tex already exists"; exit 1; }
+	@mkdir -p resumes
+	@if [ -f resumes/contact.tex ]; then sed '/^% PRIVATE-CONTACT$$/r resumes/contact.tex' resume.tex > resumes/$(NAME).tex; else cp resume.tex resumes/$(NAME).tex; fi
+	@echo "→ resumes/$(NAME).tex"
 
 # Core LaTeX compile (used internally by preset targets)
 # cv-preset.tex must exist before calling this directly.
