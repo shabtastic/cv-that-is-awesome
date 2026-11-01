@@ -34,7 +34,9 @@ cp config/full.tex cv-preset.tex   # pick a preset
 xelatex cv.tex && biber cv && xelatex cv.tex && xelatex cv.tex
 ```
 
-CI (`.github/workflows/build.yml`) runs `validate_bib.py` first, then builds all four presets + `resume.pdf` on every push to `main`, attaches the PDFs to a GitHub release tagged `cv-<sha>`, and syncs `shabnam-hakimi-cv.pdf` to the website repo. A validation error blocks all of it.
+CI (`.github/workflows/build.yml`) runs `validate_bib.py` and the test suite first, then builds all four presets + `resume.pdf` on every push to `main`, attaches the PDFs to a GitHub release tagged `cv-<sha>`, and syncs `shabnam-hakimi-cv.pdf` to the website repo. A validation error or test failure blocks all of it.
+
+The TeX image is pinned by `TEXLIVE_IMAGE` in the workflow. A local build can still differ from CI if the local LaTeX kernel is a different version, so check the release PDFs for layout bugs. Keep a blank line between `\cventry` blocks: without one, newer kernels shift every entry after the first to the right.
 
 ## Preset architecture
 
